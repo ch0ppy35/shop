@@ -1,0 +1,21 @@
+# Directories
+**/bin/
+**/obj/
+**/out/
+**/TestResults/
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio specific
+.vs/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
