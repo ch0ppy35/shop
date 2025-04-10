@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace Common.Models;
 
 /// <summary>
 /// Base message for all NATS messages
 /// </summary>
+[Serializable]
 public abstract class BaseMessage
 {
     /// <summary>
@@ -19,6 +22,7 @@ public abstract class BaseMessage
 /// <summary>
 /// Message for product-related operations
 /// </summary>
+[Serializable]
 public class ProductMessage : BaseMessage
 {
     /// <summary>
@@ -55,6 +59,7 @@ public class ProductMessage : BaseMessage
 /// <summary>
 /// Operation types for product messages
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ProductOperationType
 {
     /// <summary>
@@ -86,6 +91,7 @@ public enum ProductOperationType
 /// <summary>
 /// Message for order-related operations
 /// </summary>
+[Serializable]
 public class OrderMessage : BaseMessage
 {
     /// <summary>
@@ -117,6 +123,7 @@ public class OrderMessage : BaseMessage
 /// <summary>
 /// Order item
 /// </summary>
+[Serializable]
 public class OrderItem
 {
     /// <summary>
@@ -143,6 +150,7 @@ public class OrderItem
 /// <summary>
 /// Order status
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum OrderStatus
 {
     /// <summary>
@@ -174,6 +182,7 @@ public enum OrderStatus
 /// <summary>
 /// Operation types for order messages
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum OrderOperationType
 {
     /// <summary>

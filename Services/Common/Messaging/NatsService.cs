@@ -1,6 +1,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NATS.Client.Core;
+using NATS.Client.Core.Commands;
+using NATS.Client.Serializers.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Common.Messaging;
 
@@ -26,12 +30,22 @@ public class NatsService : IAsyncDisposable
                      configuration.GetValue<string>("Nats:Url") ??
                      "nats://localhost:4222";
 
+        // Configure JSON serializer options
+        var jsonSerializerOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            WriteIndented = false,
+            Converters = { new JsonStringEnumConverter() }
+        };
+
         _natsOpts = new NatsOpts
         {
             Url = natsUrl,
             Name = "NatsShop.Service",
             ReconnectWaitMax = TimeSpan.FromSeconds(10),
             ConnectTimeout = TimeSpan.FromSeconds(5),
+            SerializerRegistry = NatsJsonSerializerRegistry.Default,
         };
 
         _logger.LogInformation("NATS configuration: URL={NatsUrl}", natsUrl);

@@ -12,6 +12,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.4" />
+    <PackageReference Include="NATS.Client.Serializers.Json" Version="2.5.15" />
     <PackageReference Include="NATS.Net" Version="2.5.15" />
     <PackageReference Include="System.Text.Json" Version="9.0.4" />
   </ItemGroup>

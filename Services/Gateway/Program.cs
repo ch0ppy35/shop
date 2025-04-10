@@ -64,4 +64,8 @@ _ = Task.Run(async () =>
 
 logger.LogInformation("Gateway service started, NATS connection will be established in the background");
 
+// Configure the web server to listen on 0.0.0.0:8080
+var urls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "http://0.0.0.0:8080";
+logger.LogInformation("Gateway service listening on {Urls}", urls);
+
 await app.RunAsync();

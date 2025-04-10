@@ -11,12 +11,13 @@ services:
 
   gateway:
     build:
-      context: ./Services/Gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Services/Gateway/Dockerfile
     ports:
-      - "5000:5000"
+      - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:8080
       - NATS_URL=nats://nats:4222
     depends_on:
       - nats
@@ -25,8 +26,8 @@ services:
 
   products:
     build:
-      context: ./Services/Products
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Services/Products/Dockerfile
     environment:
       - NATS_URL=nats://nats:4222
     depends_on:

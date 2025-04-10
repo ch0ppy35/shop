@@ -78,26 +78,42 @@ dotnet run
 
 ### Health and Readiness
 
-- `GET /healthz`: Health check endpoint
-- `GET /readinessz`: Readiness check endpoint
+- `GET http://localhost:8080/healthz`: Health check endpoint
+- `GET http://localhost:8080/readinessz`: Readiness check endpoint
 
 ### Products
 
-- `GET /api/products`: Get all products
-- `GET /api/products/{id}`: Get a product by ID
-- `POST /api/products`: Create a new product
-- `PUT /api/products/{id}`: Update a product
-- `DELETE /api/products/{id}`: Delete a product
+- `GET http://localhost:8080/api/products`: Get all products
+- `GET http://localhost:8080/api/products/{id}`: Get a product by ID
+- `POST http://localhost:8080/api/products`: Create a new product
+- `PUT http://localhost:8080/api/products/{id}`: Update a product
+- `DELETE http://localhost:8080/api/products/{id}`: Delete a product
 
 ### Orders
 
-- `GET /api/orders`: Get all orders
-- `GET /api/orders/{id}`: Get an order by ID
-- `POST /api/orders`: Create a new order
-- `PUT /api/orders/{id}`: Update an order
-- `DELETE /api/orders/{id}`: Delete an order
+- `GET http://localhost:8080/api/orders`: Get all orders
+- `GET http://localhost:8080/api/orders/{id}`: Get an order by ID
+- `POST http://localhost:8080/api/orders`: Create a new order
+- `PUT http://localhost:8080/api/orders/{id}`: Update an order
+- `DELETE http://localhost:8080/api/orders/{id}`: Delete an order
 
 ## Environment Variables
 
 - `NATS_URL`: The URL of the NATS server (default: `nats://localhost:4222`)
+- `ASPNETCORE_URLS`: The URLs to listen on (default: `http://0.0.0.0:8080`)
 - `ASPNETCORE_ENVIRONMENT`: The environment (Development, Staging, Production)
+
+## Example API Calls
+
+```bash
+# Health check
+curl http://localhost:8080/healthz
+
+# Create a product
+curl -X POST http://localhost:8080/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test Product","description":"A test product","price":29.99,"quantity":10}'
+
+# Get all products
+curl http://localhost:8080/api/products
+```
