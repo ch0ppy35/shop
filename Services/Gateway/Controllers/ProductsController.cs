@@ -29,8 +29,23 @@ public class ProductsController : ControllerBase
                 OperationType = ProductOperationType.GetAll
             };
 
-            await _natsService.PublishAsync("products.getall", message);
-            return Ok(new { message = "Request to get all products has been sent" });
+            // Send request and wait for reply
+            var response = await _natsService.RequestAsync<ProductMessage, ProductListResponse>(
+                "products.getall",
+                message,
+                TimeSpan.FromSeconds(5));
+
+            if (response == null)
+            {
+                return StatusCode(500, new { error = "No response received from products service" });
+            }
+
+            if (!response.Success)
+            {
+                return StatusCode(500, new { error = response.Error ?? "An error occurred in the products service" });
+            }
+
+            return Ok(response);
         }
         catch (Exception ex)
         {
@@ -52,8 +67,23 @@ public class ProductsController : ControllerBase
                 OperationType = ProductOperationType.Get
             };
 
-            await _natsService.PublishAsync("products.get", message);
-            return Ok(new { message = $"Request to get product {id} has been sent" });
+            // Send request and wait for reply
+            var response = await _natsService.RequestAsync<ProductMessage, ProductResponse>(
+                "products.get",
+                message,
+                TimeSpan.FromSeconds(5));
+
+            if (response == null)
+            {
+                return StatusCode(500, new { error = "No response received from products service" });
+            }
+
+            if (!response.Success)
+            {
+                return StatusCode(404, new { error = response.Error ?? $"Product with ID {id} not found" });
+            }
+
+            return Ok(response);
         }
         catch (Exception ex)
         {
@@ -79,8 +109,23 @@ public class ProductsController : ControllerBase
                 OperationType = ProductOperationType.Create
             };
 
-            await _natsService.PublishAsync("products.create", message);
-            return Ok(new { id = message.ProductId, message = "Product creation request has been sent" });
+            // Send request and wait for reply
+            var response = await _natsService.RequestAsync<ProductMessage, ProductResponse>(
+                "products.create",
+                message,
+                TimeSpan.FromSeconds(5));
+
+            if (response == null)
+            {
+                return StatusCode(500, new { error = "No response received from products service" });
+            }
+
+            if (!response.Success)
+            {
+                return StatusCode(400, new { error = response.Error ?? "Failed to create product" });
+            }
+
+            return StatusCode(201, response);
         }
         catch (Exception ex)
         {
@@ -106,8 +151,23 @@ public class ProductsController : ControllerBase
                 OperationType = ProductOperationType.Update
             };
 
-            await _natsService.PublishAsync("products.update", message);
-            return Ok(new { message = $"Product update request for {id} has been sent" });
+            // Send request and wait for reply
+            var response = await _natsService.RequestAsync<ProductMessage, ProductResponse>(
+                "products.update",
+                message,
+                TimeSpan.FromSeconds(5));
+
+            if (response == null)
+            {
+                return StatusCode(500, new { error = "No response received from products service" });
+            }
+
+            if (!response.Success)
+            {
+                return StatusCode(404, new { error = response.Error ?? $"Product with ID {id} not found" });
+            }
+
+            return Ok(response);
         }
         catch (Exception ex)
         {
@@ -129,8 +189,23 @@ public class ProductsController : ControllerBase
                 OperationType = ProductOperationType.Delete
             };
 
-            await _natsService.PublishAsync("products.delete", message);
-            return Ok(new { message = $"Product deletion request for {id} has been sent" });
+            // Send request and wait for reply
+            var response = await _natsService.RequestAsync<ProductMessage, BaseResponse>(
+                "products.delete",
+                message,
+                TimeSpan.FromSeconds(5));
+
+            if (response == null)
+            {
+                return StatusCode(500, new { error = "No response received from products service" });
+            }
+
+            if (!response.Success)
+            {
+                return StatusCode(404, new { error = response.Error ?? $"Product with ID {id} not found" });
+            }
+
+            return Ok(new { success = true, message = response.Message ?? $"Product with ID {id} deleted successfully" });
         }
         catch (Exception ex)
         {

@@ -17,6 +17,12 @@ public abstract class BaseMessage
     /// Gets or sets the timestamp when the message was created
     /// </summary>
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Gets or sets the reply-to subject for request-reply pattern
+    /// </summary>
+    [JsonIgnore] // This is set by NATS, not serialized in the message
+    public string? ReplyTo { get; set; }
 }
 
 /// <summary>

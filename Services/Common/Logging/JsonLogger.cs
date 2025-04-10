@@ -17,7 +17,15 @@ public class JsonLogger : ILogger
         _config = config;
     }
 
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => default!;
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+    {
+        if (state is IDictionary<string, object> properties)
+        {
+            return new JsonLoggerScope(properties);
+        }
+
+        return default!;
+    }
 
     public bool IsEnabled(LogLevel logLevel) => logLevel >= _config.MinimumLogLevel;
 
@@ -35,7 +43,8 @@ public class JsonLogger : ILogger
             Category = _categoryName,
             EventId = eventId.Id,
             Message = formatter(state, exception),
-            Exception = exception?.ToString()
+            Exception = exception?.ToString(),
+            Properties = JsonLoggerScope.GetCurrentScopeProperties()?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
         };
 
         var json = JsonSerializer.Serialize(logEntry, new JsonSerializerOptions
@@ -54,6 +63,66 @@ public class JsonLogger : ILogger
         public int EventId { get; set; }
         public string? Message { get; set; }
         public string? Exception { get; set; }
+        public Dictionary<string, object>? Properties { get; set; }
+    }
+
+    /// <summary>
+    /// Scope for the JSON logger
+    /// </summary>
+    private class JsonLoggerScope : IDisposable
+    {
+        private static readonly AsyncLocal<Stack<IDictionary<string, object>>> _scopeStack = new();
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonLoggerScope"/> class.
+        /// </summary>
+        public JsonLoggerScope(IDictionary<string, object> properties)
+        {
+            var stack = _scopeStack.Value;
+            if (stack == null)
+            {
+                stack = new Stack<IDictionary<string, object>>();
+                _scopeStack.Value = stack;
+            }
+
+            stack.Push(properties);
+        }
+
+        /// <summary>
+        /// Gets the current scope properties
+        /// </summary>
+        public static IDictionary<string, object>? GetCurrentScopeProperties()
+        {
+            var properties = new Dictionary<string, object>();
+            var stack = _scopeStack.Value;
+
+            if (stack == null || stack.Count == 0)
+            {
+                return null;
+            }
+
+            foreach (var scope in stack)
+            {
+                foreach (var kvp in scope)
+                {
+                    properties[kvp.Key] = kvp.Value;
+                }
+            }
+
+            return properties;
+        }
+
+        /// <summary>
+        /// Disposes the scope
+        /// </summary>
+        public void Dispose()
+        {
+            var stack = _scopeStack.Value;
+            if (stack != null && stack.Count > 0)
+            {
+                stack.Pop();
+            }
+        }
     }
 }
 

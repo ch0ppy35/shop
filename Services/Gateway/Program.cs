@@ -1,6 +1,7 @@
 ﻿using Common;
 using Common.Health;
 using Common.Messaging;
+using Gateway.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Add request logging middleware to log User-Agent
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 // app.UseHttpsRedirection();
 

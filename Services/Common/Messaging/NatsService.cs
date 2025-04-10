@@ -5,6 +5,7 @@ using NATS.Client.Core.Commands;
 using NATS.Client.Serializers.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Common.Models;
 
 namespace Common.Messaging;
 
@@ -156,9 +157,46 @@ public class NatsService : IAsyncDisposable
     }
 
     /// <summary>
+    /// Sends a request message and waits for a reply
+    /// </summary>
+    public async Task<TResponse?> RequestAsync<TRequest, TResponse>(string subject, TRequest message, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+        where TRequest : class
+        where TResponse : class
+    {
+        if (_connection == null || !_isConnected)
+        {
+            throw new InvalidOperationException("Not connected to NATS server");
+        }
+
+        try
+        {
+            _logger.LogDebug("Sending request to subject: {Subject}", subject);
+
+            // Use default timeout of 10 seconds if not specified
+            timeout ??= TimeSpan.FromSeconds(10);
+
+            // Create a cancellation token source with the timeout
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(timeout.Value);
+
+            // Use the built-in request-reply functionality
+            var reply = await _connection.RequestAsync<TRequest, TResponse>(subject, message, cancellationToken: cts.Token);
+
+            _logger.LogDebug("Received reply from subject: {Subject}", subject);
+            return reply.Data;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending request to subject {Subject}: {Message}", subject, ex.Message);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Subscribes to the specified subject
     /// </summary>
     public async IAsyncEnumerable<T> SubscribeAsync<T>(string subject, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        where T : BaseMessage
     {
         if (_connection == null || !_isConnected)
         {
@@ -172,6 +210,13 @@ public class NatsService : IAsyncDisposable
             if (msg.Data != null)
             {
                 _logger.LogDebug("Received message from subject: {Subject}", subject);
+
+                // Set the reply-to subject if available
+                if (!string.IsNullOrEmpty(msg.ReplyTo))
+                {
+                    msg.Data.ReplyTo = msg.ReplyTo;
+                }
+
                 yield return msg.Data;
             }
             else
