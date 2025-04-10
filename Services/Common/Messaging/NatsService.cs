@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NATS.Client.Core;
-using NATS.Client.Core.Commands;
 using NATS.Client.Serializers.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;

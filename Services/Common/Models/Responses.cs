@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Common.Models;
 
 /// <summary>
@@ -48,26 +46,4 @@ public class ProductListResponse : BaseResponse
     public List<ProductMessage>? Products { get; set; }
 }
 
-/// <summary>
-/// Response for order operations
-/// </summary>
-[Serializable]
-public class OrderResponse : BaseResponse
-{
-    /// <summary>
-    /// Gets or sets the order
-    /// </summary>
-    public OrderMessage? Order { get; set; }
-}
 
-/// <summary>
-/// Response for get all orders operation
-/// </summary>
-[Serializable]
-public class OrderListResponse : BaseResponse
-{
-    /// <summary>
-    /// Gets or sets the orders
-    /// </summary>
-    public List<OrderMessage>? Orders { get; set; }
-}

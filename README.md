@@ -16,7 +16,7 @@ The application consists of the following components:
 
 The Gateway service is an ASP.NET Core Web API that:
 
-- Exposes RESTful endpoints for products and orders
+- Exposes RESTful endpoints for products
 - Publishes messages to NATS for processing by other services
 - Provides health and readiness endpoints
 
@@ -89,13 +89,7 @@ dotnet run
 - `PUT http://localhost:8080/api/products/{id}`: Update a product
 - `DELETE http://localhost:8080/api/products/{id}`: Delete a product
 
-### Orders
 
-- `GET http://localhost:8080/api/orders`: Get all orders
-- `GET http://localhost:8080/api/orders/{id}`: Get an order by ID
-- `POST http://localhost:8080/api/orders`: Create a new order
-- `PUT http://localhost:8080/api/orders/{id}`: Update an order
-- `DELETE http://localhost:8080/api/orders/{id}`: Delete an order
 
 ## Environment Variables
 
