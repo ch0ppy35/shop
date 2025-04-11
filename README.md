@@ -46,6 +46,8 @@ The Common library provides shared functionality for all services:
 - NATS connection management
 - Health checking
 - Common message models
+- Database access with Dapper
+- Database migrations with FluentMigrator
 
 ## Running the Application
 
@@ -64,32 +66,48 @@ docker-compose up
 
 To run the services locally:
 
-1. Start NATS:
+1. Start PostgreSQL and NATS:
 
 ```bash
+docker run -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres postgres:16
 docker run -p 4222:4222 -p 8222:8222 nats:latest
 ```
 
-2. Run the Gateway service:
+2. Create the databases:
+
+```bash
+psql -h localhost -U postgres -c "CREATE DATABASE products;"
+psql -h localhost -U postgres -c "CREATE DATABASE inventory;"
+```
+
+3. Run the Gateway service:
 
 ```bash
 cd Services/Gateway
 dotnet run
 ```
 
-3. Run the Products service:
+4. Run the Products service:
 
 ```bash
 cd Services/Products
 dotnet run
 ```
 
-4. Run the Inventory service:
+5. Run the Inventory service:
 
 ```bash
 cd Services/Inventory
 dotnet run
 ```
+
+### Database Migrations
+
+The application uses FluentMigrator to manage database migrations. Migrations are automatically applied when the services start. To add a new migration:
+
+1. Create a new migration class in the appropriate service's Migrations folder
+2. Implement the Up and Down methods
+3. Restart the service to apply the migration
 
 ## API Endpoints
 
@@ -119,6 +137,7 @@ dotnet run
 - `NATS_URL`: The URL of the NATS server (default: `nats://localhost:4222`)
 - `ASPNETCORE_URLS`: The URLs to listen on (default: `http://0.0.0.0:8080`)
 - `ASPNETCORE_ENVIRONMENT`: The environment (Development, Staging, Production)
+- `DB_CONNECTION_STRING`: The PostgreSQL connection string (default for Products: `Host=localhost;Database=products;Username=postgres;Password=postgres`, default for Inventory: `Host=localhost;Database=inventory;Username=postgres;Password=postgres`)
 
 ## Session IDs
 

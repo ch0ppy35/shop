@@ -1,7 +1,5 @@
 using Common.Messaging;
 using Common.Models;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Inventory.Services;
 
@@ -60,7 +58,7 @@ public class InventoryConsumerService : BackgroundService
             // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<InventoryMessage>(subject, stoppingToken))
             {
-                _logger.LogInformation("Received create inventory request for item: {Sku} - SessionId: {SessionId}", 
+                _logger.LogInformation("Received create inventory request for item: {Sku} - SessionId: {SessionId}",
                     msg.Sku, msg.SessionId ?? "Unknown");
 
                 // Prepare the response
@@ -69,7 +67,7 @@ public class InventoryConsumerService : BackgroundService
                 try
                 {
                     // Create the inventory item
-                    var createdItem = _inventoryService.CreateInventoryItem(msg);
+                    var createdItem = await _inventoryService.CreateInventoryItemAsync(msg);
 
                     // Set the response
                     response.Success = true;
@@ -119,7 +117,7 @@ public class InventoryConsumerService : BackgroundService
             // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<InventoryMessage>(subject, stoppingToken))
             {
-                _logger.LogInformation("Received update inventory request for item ID: {InventoryId} - SessionId: {SessionId}", 
+                _logger.LogInformation("Received update inventory request for item ID: {InventoryId} - SessionId: {SessionId}",
                     msg.InventoryId, msg.SessionId ?? "Unknown");
 
                 // Prepare the response
@@ -128,12 +126,12 @@ public class InventoryConsumerService : BackgroundService
                 try
                 {
                     // Update the inventory item
-                    var success = _inventoryService.UpdateInventoryItem(msg);
+                    var success = await _inventoryService.UpdateInventoryItemAsync(msg);
 
                     if (success)
                     {
                         // Get the updated item
-                        var updatedItem = _inventoryService.GetInventoryItem(msg.InventoryId!);
+                        var updatedItem = await _inventoryService.GetInventoryItemAsync(msg.InventoryId!);
 
                         // Set the response
                         response.Success = true;
@@ -189,7 +187,7 @@ public class InventoryConsumerService : BackgroundService
             // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<InventoryMessage>(subject, stoppingToken))
             {
-                _logger.LogInformation("Received delete inventory request for item ID: {InventoryId} - SessionId: {SessionId}", 
+                _logger.LogInformation("Received delete inventory request for item ID: {InventoryId} - SessionId: {SessionId}",
                     msg.InventoryId, msg.SessionId ?? "Unknown");
 
                 // Prepare the response
@@ -198,7 +196,7 @@ public class InventoryConsumerService : BackgroundService
                 try
                 {
                     // Delete the inventory item
-                    var success = _inventoryService.DeleteInventoryItem(msg.InventoryId!);
+                    var success = await _inventoryService.DeleteInventoryItemAsync(msg.InventoryId!);
 
                     if (success)
                     {
@@ -255,7 +253,7 @@ public class InventoryConsumerService : BackgroundService
             // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<InventoryMessage>(subject, stoppingToken))
             {
-                _logger.LogInformation("Received get inventory request for item ID: {InventoryId} - SessionId: {SessionId}", 
+                _logger.LogInformation("Received get inventory request for item ID: {InventoryId} - SessionId: {SessionId}",
                     msg.InventoryId, msg.SessionId ?? "Unknown");
 
                 // Prepare the response
@@ -264,7 +262,7 @@ public class InventoryConsumerService : BackgroundService
                 try
                 {
                     // Get the inventory item
-                    var item = _inventoryService.GetInventoryItem(msg.InventoryId!);
+                    var item = await _inventoryService.GetInventoryItemAsync(msg.InventoryId!);
 
                     if (item != null)
                     {
@@ -322,7 +320,7 @@ public class InventoryConsumerService : BackgroundService
             // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<InventoryMessage>(subject, stoppingToken))
             {
-                _logger.LogInformation("Received get all inventory request - SessionId: {SessionId}", 
+                _logger.LogInformation("Received get all inventory request - SessionId: {SessionId}",
                     msg.SessionId ?? "Unknown");
 
                 // Prepare the response
@@ -331,7 +329,7 @@ public class InventoryConsumerService : BackgroundService
                 try
                 {
                     // Get all inventory items
-                    var items = _inventoryService.GetAllInventory().ToList();
+                    var items = (await _inventoryService.GetAllInventoryAsync()).ToList();
 
                     // Set the response
                     response.Success = true;

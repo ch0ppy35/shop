@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   nats:
     image: nats:latest
@@ -8,6 +6,26 @@ services:
       - "8222:8222"
     networks:
       - nats-shop-network
+
+  postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      # Create both databases on startup
+      - POSTGRES_MULTIPLE_DATABASES=products,inventory
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - nats-shop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   gateway:
     build:
@@ -30,11 +48,29 @@ services:
       dockerfile: Services/Products/Dockerfile
     environment:
       - NATS_URL=nats://nats:4222
+      - DB_CONNECTION_STRING=Host=postgres;Database=products;Username=postgres;Password=postgres
     depends_on:
       - nats
+      - postgres
+    networks:
+      - nats-shop-network
+
+  inventory:
+    build:
+      context: .
+      dockerfile: Services/Inventory/Dockerfile
+    environment:
+      - NATS_URL=nats://nats:4222
+      - DB_CONNECTION_STRING=Host=postgres;Database=inventory;Username=postgres;Password=postgres
+    depends_on:
+      - nats
+      - postgres
     networks:
       - nats-shop-network
 
 networks:
   nats-shop-network:
     driver: bridge
+
+volumes:
+  postgres-data:

@@ -2,7 +2,6 @@ using Common.Messaging;
 using Common.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Linq;
 
 namespace Products.Services;
 
@@ -69,7 +68,7 @@ public class ProductConsumerService : BackgroundService
                 try
                 {
                     // Create the product
-                    var product = _productService.CreateProduct(msg);
+                    var product = await _productService.CreateProductAsync(msg);
 
                     // Set the response
                     response.Success = true;
@@ -133,12 +132,12 @@ public class ProductConsumerService : BackgroundService
                 try
                 {
                     // Update the product
-                    var success = _productService.UpdateProduct(msg);
+                    var success = await _productService.UpdateProductAsync(msg);
 
                     if (success)
                     {
                         // Get the updated product
-                        var updatedProduct = _productService.GetProduct(msg.ProductId!);
+                        var updatedProduct = await _productService.GetProductAsync(msg.ProductId!);
 
                         // Set the response
                         response.Success = true;
@@ -208,7 +207,7 @@ public class ProductConsumerService : BackgroundService
                 try
                 {
                     // Delete the product
-                    var success = _productService.DeleteProduct(msg.ProductId!);
+                    var success = await _productService.DeleteProductAsync(msg.ProductId!);
 
                     if (success)
                     {
@@ -279,7 +278,7 @@ public class ProductConsumerService : BackgroundService
                 try
                 {
                     // Get the product
-                    var product = _productService.GetProduct(msg.ProductId!);
+                    var product = await _productService.GetProductAsync(msg.ProductId!);
 
                     if (product != null)
                     {
@@ -351,7 +350,7 @@ public class ProductConsumerService : BackgroundService
                 try
                 {
                     // Get all products
-                    var products = _productService.GetAllProducts().ToList();
+                    var products = (await _productService.GetAllProductsAsync()).ToList();
 
                     // Set the response
                     response.Success = true;
