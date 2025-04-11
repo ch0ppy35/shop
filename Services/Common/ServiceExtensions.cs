@@ -2,10 +2,9 @@ using Common.Database;
 using Common.Health;
 using Common.Logging;
 using Common.Messaging;
-using FluentMigrator.Runner;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Reflection;
 
 namespace Common;
 
@@ -42,21 +41,17 @@ public static class ServiceExtensions
     }
 
     /// <summary>
-    /// Adds migration services to the service collection
+    /// Adds Entity Framework Core database services to the service collection
     /// </summary>
-    public static IServiceCollection AddMigrationServices(this IServiceCollection services, string connectionString, Assembly migrationsAssembly)
+    public static IServiceCollection AddDatabaseServices(this IServiceCollection services, string connectionString)
     {
-        // Configure FluentMigrator
-        services
-            .AddFluentMigratorCore()
-            .ConfigureRunner(rb => rb
-                .AddPostgres()
-                .WithGlobalConnectionString(connectionString)
-                .ScanIn(migrationsAssembly).For.Migrations())
-            .AddLogging(lb => lb.AddFluentMigratorConsole());
-
-        // Add migration service
-        services.AddSingleton<MigrationService>();
+        // Configure Entity Framework Core
+        services.AddDbContext<ProductDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                // Specify the assembly where migrations are located
+                npgsqlOptions.MigrationsAssembly("Products");
+            }));
 
         return services;
     }

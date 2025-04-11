@@ -39,8 +39,8 @@ The Common library provides shared functionality for all services:
 - NATS connection management
 - Health checking
 - Common message models
-- Database access with Dapper
-- Database migrations with FluentMigrator
+- Database access with Entity Framework Core
+- Database migrations with EF Core
 
 ## Running the Application
 
@@ -97,10 +97,10 @@ dotnet run
 
 ### Database Migrations
 
-The application uses FluentMigrator to manage database migrations. Migrations are automatically applied when the services start. To add a new migration:
+The application uses Entity Framework Core to manage database migrations. Migrations are automatically applied when the services start. To add a new migration:
 
-1. Create a new migration class in the appropriate service's Migrations folder
-2. Implement the Up and Down methods
+1. Navigate to the service directory
+2. Run `dotnet ef migrations add <MigrationName>`
 3. Restart the service to apply the migration
 
 ## API Endpoints

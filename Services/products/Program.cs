@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Products.Migrations;
 using Products.Repositories;
 using Products.Services;
 
@@ -23,14 +22,17 @@ var host = Host.CreateDefaultBuilder(args)
         // Add common services
         services.AddCommonServices();
 
-        // Add migration services
-        services.AddMigrationServices(connectionString, typeof(InitialMigration).Assembly);
+        // Add database services
+        services.AddDatabaseServices(connectionString);
 
         // Add repositories
-        services.AddSingleton<ProductRepository>();
+        services.AddScoped<ProductRepository>();
 
         // Add product service
-        services.AddSingleton<ProductService>();
+        services.AddScoped<ProductService>();
+
+        // Add product seeder
+        services.AddScoped<ProductSeeder>();
 
         // Add hosted service
         services.AddHostedService<ProductConsumerService>();
@@ -51,9 +53,15 @@ try
 
     // Run migrations
     logger.LogInformation("Running database migrations");
-    var migrationService = host.Services.GetRequiredService<MigrationService>();
-    migrationService.RunMigrations();
+    await dbService.MigrateAsync();
     logger.LogInformation("Database migrations completed successfully");
+
+    // Seed database
+    logger.LogInformation("Seeding database");
+    using var scope = host.Services.CreateScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<ProductSeeder>();
+    await seeder.SeedAsync();
+    logger.LogInformation("Database seeding completed");
 }
 catch (Exception ex)
 {

@@ -1,7 +1,7 @@
 using Common.Database;
 using Common.Database.Models;
 using Common.Models;
-using Dapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Products.Repositories;
@@ -12,15 +12,15 @@ namespace Products.Repositories;
 public class ProductRepository
 {
     private readonly ILogger<ProductRepository> _logger;
-    private readonly DatabaseService _databaseService;
+    private readonly ProductDbContext _dbContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProductRepository"/> class.
     /// </summary>
-    public ProductRepository(ILogger<ProductRepository> logger, DatabaseService databaseService)
+    public ProductRepository(ILogger<ProductRepository> logger, ProductDbContext dbContext)
     {
         _logger = logger;
-        _databaseService = databaseService;
+        _dbContext = dbContext;
     }
 
     /// <summary>
@@ -30,24 +30,7 @@ public class ProductRepository
     {
         _logger.LogInformation("Getting all products from database");
 
-        using var connection = _databaseService.CreateConnection();
-        var sql = @"
-            SELECT
-                id,
-                product_id AS ProductId,
-                name,
-                description,
-                price,
-                quantity,
-                sku,
-                location,
-                quantity_in_stock AS QuantityInStock,
-                reorder_threshold AS ReorderThreshold,
-                created_at AS CreatedAt,
-                updated_at AS UpdatedAt
-            FROM products";
-
-        var products = await connection.QueryAsync<ProductEntity>(sql);
+        var products = await _dbContext.Products.ToListAsync();
 
         // Log the first product to debug
         var firstProduct = products.FirstOrDefault();
@@ -67,25 +50,8 @@ public class ProductRepository
     {
         _logger.LogInformation("Getting product with ID: {ProductId} from database", productId);
 
-        using var connection = _databaseService.CreateConnection();
-        var sql = @"
-            SELECT
-                id,
-                product_id AS ProductId,
-                name,
-                description,
-                price,
-                quantity,
-                sku,
-                location,
-                quantity_in_stock AS QuantityInStock,
-                reorder_threshold AS ReorderThreshold,
-                created_at AS CreatedAt,
-                updated_at AS UpdatedAt
-            FROM products
-            WHERE product_id = @ProductId";
-
-        return await connection.QueryFirstOrDefaultAsync<ProductEntity>(sql, new { ProductId = productId });
+        return await _dbContext.Products
+            .FirstOrDefaultAsync(p => p.ProductId == productId);
     }
 
     /// <summary>
@@ -95,13 +61,10 @@ public class ProductRepository
     {
         _logger.LogInformation("Creating new product with ID: {ProductId} in database", product.ProductId);
 
-        using var connection = _databaseService.CreateConnection();
-        var sql = @"
-            INSERT INTO products (product_id, name, description, price, quantity, sku, location, quantity_in_stock, reorder_threshold, created_at, updated_at)
-            VALUES (@ProductId, @Name, @Description, @Price, @Quantity, @Sku, @Location, @QuantityInStock, @ReorderThreshold, @CreatedAt, @UpdatedAt)
-            RETURNING *";
+        _dbContext.Products.Add(product);
+        await _dbContext.SaveChangesAsync();
 
-        return await connection.QueryFirstAsync<ProductEntity>(sql, product);
+        return product;
     }
 
     /// <summary>
@@ -111,35 +74,28 @@ public class ProductRepository
     {
         _logger.LogInformation("Updating product with ID: {ProductId} in database", product.ProductId);
 
-        using var connection = _databaseService.CreateConnection();
-        var sql = @"
-            UPDATE products
-            SET name = @Name,
-                description = @Description,
-                price = @Price,
-                quantity = @Quantity,
-                sku = @Sku,
-                location = @Location,
-                quantity_in_stock = @QuantityInStock,
-                reorder_threshold = @ReorderThreshold,
-                updated_at = @UpdatedAt
-            WHERE product_id = @ProductId";
+        var existingProduct = await _dbContext.Products
+            .FirstOrDefaultAsync(p => p.ProductId == product.ProductId);
 
-        var rowsAffected = await connection.ExecuteAsync(sql, new
+        if (existingProduct == null)
         {
-            product.ProductId,
-            product.Name,
-            product.Description,
-            product.Price,
-            product.Quantity,
-            product.Sku,
-            product.Location,
-            product.QuantityInStock,
-            product.ReorderThreshold,
-            UpdatedAt = DateTime.UtcNow
-        });
+            _logger.LogWarning("Product with ID {ProductId} not found for update", product.ProductId);
+            return false;
+        }
 
-        return rowsAffected > 0;
+        // Update properties
+        existingProduct.Name = product.Name;
+        existingProduct.Description = product.Description;
+        existingProduct.Price = product.Price;
+        existingProduct.Quantity = product.Quantity;
+        existingProduct.Sku = product.Sku;
+        existingProduct.Location = product.Location;
+        existingProduct.QuantityInStock = product.QuantityInStock;
+        existingProduct.ReorderThreshold = product.ReorderThreshold;
+        existingProduct.UpdatedAt = DateTime.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
+        return true;
     }
 
     /// <summary>
@@ -149,12 +105,18 @@ public class ProductRepository
     {
         _logger.LogInformation("Deleting product with ID: {ProductId} from database", productId);
 
-        using var connection = _databaseService.CreateConnection();
-        var sql = "DELETE FROM products WHERE product_id = @ProductId";
+        var product = await _dbContext.Products
+            .FirstOrDefaultAsync(p => p.ProductId == productId);
 
-        var rowsAffected = await connection.ExecuteAsync(sql, new { ProductId = productId });
+        if (product == null)
+        {
+            _logger.LogWarning("Product with ID {ProductId} not found for deletion", productId);
+            return false;
+        }
 
-        return rowsAffected > 0;
+        _dbContext.Products.Remove(product);
+        await _dbContext.SaveChangesAsync();
+        return true;
     }
 
     /// <summary>
