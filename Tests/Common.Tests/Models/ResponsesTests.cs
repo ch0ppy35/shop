@@ -119,5 +119,76 @@ public class ResponsesTests
         deserializedResponse.Products[1].Name.Should().Be("Test Product 2");
     }
 
+    [Fact]
+    public void ProductListResponse_WithPagination_ShouldSerializeAndDeserialize()
+    {
+        // Arrange
+        var products = new List<ProductMessage>
+        {
+            new ProductMessage
+            {
+                ProductId = "123",
+                Name = "Test Product 1",
+                Description = "Test Description 1",
+                Price = 10.99m,
+                Quantity = 5
+            },
+            new ProductMessage
+            {
+                ProductId = "456",
+                Name = "Test Product 2",
+                Description = "Test Description 2",
+                Price = 20.99m,
+                Quantity = 10
+            }
+        };
 
+        var response = new ProductListResponse
+        {
+            Success = true,
+            Message = "Products retrieved successfully",
+            Error = null,
+            Products = products,
+            TotalCount = 50,
+            PageNumber = 2,
+            PageSize = 10,
+            TotalPages = 5,
+            HasPreviousPage = true,
+            HasNextPage = true
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(response);
+        var deserializedResponse = JsonSerializer.Deserialize<ProductListResponse>(json);
+
+        // Assert
+        deserializedResponse.Should().NotBeNull();
+        deserializedResponse!.Success.Should().BeTrue();
+        deserializedResponse.Message.Should().Be("Products retrieved successfully");
+        deserializedResponse.Products.Should().NotBeNull();
+        deserializedResponse.Products!.Count.Should().Be(2);
+
+        // Pagination metadata assertions
+        deserializedResponse.TotalCount.Should().Be(50);
+        deserializedResponse.PageNumber.Should().Be(2);
+        deserializedResponse.PageSize.Should().Be(10);
+        deserializedResponse.TotalPages.Should().Be(5);
+        deserializedResponse.HasPreviousPage.Should().BeTrue();
+        deserializedResponse.HasNextPage.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ProductListResponse_PaginationDefaults_ShouldBeZero()
+    {
+        // Arrange & Act
+        var response = new ProductListResponse();
+
+        // Assert
+        response.TotalCount.Should().Be(0);
+        response.PageNumber.Should().Be(0);
+        response.PageSize.Should().Be(0);
+        response.TotalPages.Should().Be(0);
+        response.HasPreviousPage.Should().BeFalse();
+        response.HasNextPage.Should().BeFalse();
+    }
 }

@@ -63,5 +63,36 @@ public class MessagesTests
         json.Should().Contain("\"OperationType\":\"Create\"");
     }
 
+    [Fact]
+    public void ProductMessage_ShouldHaveDefaultPaginationValues()
+    {
+        // Arrange & Act
+        var message = new ProductMessage();
 
+        // Assert
+        message.PageNumber.Should().Be(1, "Default page number should be 1");
+        message.PageSize.Should().Be(10, "Default page size should be 10");
+    }
+
+    [Fact]
+    public void ProductMessage_ShouldSerializeAndDeserializePaginationProperties()
+    {
+        // Arrange
+        var message = new ProductMessage
+        {
+            ProductId = "123",
+            Name = "Test Product",
+            PageNumber = 2,
+            PageSize = 25
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(message);
+        var deserializedMessage = JsonSerializer.Deserialize<ProductMessage>(json);
+
+        // Assert
+        deserializedMessage.Should().NotBeNull();
+        deserializedMessage!.PageNumber.Should().Be(2);
+        deserializedMessage.PageSize.Should().Be(25);
+    }
 }

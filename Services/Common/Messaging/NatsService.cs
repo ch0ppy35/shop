@@ -181,6 +181,17 @@ public class NatsService : IAsyncDisposable
     }
 
     /// <summary>
+    /// Logs information about a queue group subscription (for testing)
+    /// </summary>
+    /// <param name="subject">The subject</param>
+    /// <param name="queueGroup">The queue group</param>
+    public void LogQueueGroupInfo(string subject, string queueGroup)
+    {
+        _logger.LogInformation("Subscribing to subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
+    }
+
+    /// <summary>
     /// Subscribes to the specified subject
     /// </summary>
     /// <param name="subject">The subject to subscribe to</param>

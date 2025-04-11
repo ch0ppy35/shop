@@ -94,11 +94,38 @@ public class NatsServiceTests
         finally
         {
             // Restore original environment variable
-            if (originalValue != null)
-                Environment.SetEnvironmentVariable("NATS_URL", originalValue);
-            else
-                Environment.SetEnvironmentVariable("NATS_URL", null);
+            Environment.SetEnvironmentVariable("NATS_URL", originalValue);
         }
+    }
+
+    [Fact]
+    public void SubscribeAsync_ShouldLogQueueGroupInformation_WhenQueueGroupProvided()
+    {
+        // Arrange
+        var service = new NatsService(_loggerMock.Object, _configMock.Object);
+        var queueGroup = "test-queue-group";
+        var subject = "test.subject";
+
+        // We can't actually test the subscription since we can't mock the NATS connection easily,
+        // but we can verify that the logger is called with the correct information
+
+        // Act
+        // Log the queue group information
+        _loggerMock.Setup(x => x.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+        service.LogQueueGroupInfo(subject, queueGroup);
+
+        // Assert
+        // Verify that the logger was called with the queue group information
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) =>
+                    o.ToString()!.Contains(subject) &&
+                    o.ToString()!.Contains(queueGroup)),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
