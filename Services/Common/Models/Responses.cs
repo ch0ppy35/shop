@@ -49,5 +49,35 @@ public class ProductListResponse : BaseResponse
     /// Gets or sets the products
     /// </summary>
     public List<ProductMessage>? Products { get; set; }
+
+    /// <summary>
+    /// Gets or sets the total number of products
+    /// </summary>
+    public int TotalCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current page number
+    /// </summary>
+    public int PageNumber { get; set; }
+
+    /// <summary>
+    /// Gets or sets the page size
+    /// </summary>
+    public int PageSize { get; set; }
+
+    /// <summary>
+    /// Gets or sets the total number of pages
+    /// </summary>
+    public int TotalPages { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether there is a previous page
+    /// </summary>
+    public bool HasPreviousPage { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether there is a next page
+    /// </summary>
+    public bool HasNextPage { get; set; }
 }
 

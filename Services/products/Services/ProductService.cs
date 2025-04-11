@@ -34,6 +34,28 @@ public class ProductService
     }
 
     /// <summary>
+    /// Gets paginated products
+    /// </summary>
+    /// <param name="pageNumber">The page number (1-based)</param>
+    /// <param name="pageSize">The page size</param>
+    /// <returns>A tuple containing the paginated products and pagination metadata</returns>
+    public async Task<(IEnumerable<ProductMessage> Products, int TotalCount, int TotalPages)> GetPaginatedProductsAsync(int pageNumber, int pageSize)
+    {
+        _logger.LogInformation("Getting paginated products: Page {PageNumber}, Size {PageSize}", pageNumber, pageSize);
+
+        // Get paginated products from repository
+        var (products, totalCount) = await _productRepository.GetPaginatedProductsAsync(pageNumber, pageSize);
+
+        // Convert to ProductMessage objects
+        var productMessages = products.Select(p => ProductRepository.ToProductMessage(p)).ToList();
+
+        // Calculate total pages
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        return (productMessages, totalCount, totalPages);
+    }
+
+    /// <summary>
     /// Gets a product by ID
     /// </summary>
     public async Task<ProductMessage?> GetProductAsync(string id)

@@ -44,6 +44,41 @@ public class ProductRepository
     }
 
     /// <summary>
+    /// Gets paginated products
+    /// </summary>
+    /// <param name="pageNumber">The page number (1-based)</param>
+    /// <param name="pageSize">The page size</param>
+    /// <returns>A tuple containing the paginated products and the total count</returns>
+    public async Task<(IEnumerable<ProductEntity> Products, int TotalCount)> GetPaginatedProductsAsync(int pageNumber, int pageSize)
+    {
+        _logger.LogInformation("Getting paginated products from database: Page {PageNumber}, Size {PageSize}", pageNumber, pageSize);
+
+        // Ensure valid pagination parameters
+        pageNumber = Math.Max(1, pageNumber);
+        pageSize = Math.Clamp(pageSize, 1, 100); // Limit page size to reasonable values
+
+        // Get total count for pagination metadata
+        var totalCount = await _dbContext.Products.CountAsync();
+
+        // Get paginated data
+        var products = await _dbContext.Products
+            .OrderBy(p => p.Id) // Ensure consistent ordering
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        // Log the first product to debug
+        var firstProduct = products.FirstOrDefault();
+        if (firstProduct != null)
+        {
+            _logger.LogInformation("First product on page {PageNumber}: ID={Id}, ProductId={ProductId}, Name={Name}",
+                pageNumber, firstProduct.Id, firstProduct.ProductId, firstProduct.Name);
+        }
+
+        return (products, totalCount);
+    }
+
+    /// <summary>
     /// Gets a product by ID
     /// </summary>
     public async Task<ProductEntity?> GetProductByIdAsync(string productId)

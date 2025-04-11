@@ -18,19 +18,25 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetProducts()
+    public async Task<IActionResult> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        _logger.LogInformation("Received request to get all products");
+        _logger.LogInformation("Received request to get products: Page {Page}, PageSize {PageSize}", page, pageSize);
 
         try
         {
+            // Validate pagination parameters
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = 10;
+
             // Get the session ID from the HttpContext.Items
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
             {
                 OperationType = ProductOperationType.GetAll,
-                SessionId = sessionId
+                SessionId = sessionId,
+                PageNumber = page,
+                PageSize = pageSize
             };
 
             // Send request and wait for reply

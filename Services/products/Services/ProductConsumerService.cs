@@ -356,13 +356,27 @@ public class ProductConsumerService : BackgroundService
 
                 try
                 {
-                    // Get all products
-                    var products = (await _productService.GetAllProductsAsync()).ToList();
+                    // Validate pagination parameters
+                    int pageNumber = Math.Max(1, msg.PageNumber);
+                    int pageSize = Math.Clamp(msg.PageSize, 1, 100);
 
-                    // Set the response
+                    _logger.LogInformation("Processing get all products request with pagination: Page {PageNumber}, Size {PageSize}",
+                        pageNumber, pageSize);
+
+                    // Get paginated products
+                    var (products, totalCount, totalPages) = await _productService.GetPaginatedProductsAsync(pageNumber, pageSize);
+                    var productsList = products.ToList();
+
+                    // Set the response with pagination metadata
                     response.Success = true;
-                    response.Message = $"Retrieved {products.Count} products";
-                    response.Products = products.ToList();
+                    response.Message = $"Retrieved {productsList.Count} products (page {pageNumber} of {totalPages})";
+                    response.Products = productsList;
+                    response.TotalCount = totalCount;
+                    response.PageNumber = pageNumber;
+                    response.PageSize = pageSize;
+                    response.TotalPages = totalPages;
+                    response.HasPreviousPage = pageNumber > 1;
+                    response.HasNextPage = pageNumber < totalPages;
 
                     // Preserve the session ID in the response
                     if (!string.IsNullOrEmpty(msg.SessionId))
@@ -370,7 +384,8 @@ public class ProductConsumerService : BackgroundService
                         response.SessionId = msg.SessionId;
                     }
 
-                    _logger.LogInformation("Retrieved {Count} products", products.Count);
+                    _logger.LogInformation("Retrieved {Count} products (page {PageNumber} of {TotalPages}, total: {TotalCount})",
+                        productsList.Count, pageNumber, totalPages, totalCount);
                 }
                 catch (Exception ex)
                 {

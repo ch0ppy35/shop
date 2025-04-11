@@ -89,6 +89,16 @@ public class ProductMessage : BaseMessage
     /// Gets or sets the operation type
     /// </summary>
     public ProductOperationType OperationType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the page number for pagination (1-based)
+    /// </summary>
+    public int PageNumber { get; set; } = 1;
+
+    /// <summary>
+    /// Gets or sets the page size for pagination
+    /// </summary>
+    public int PageSize { get; set; } = 10;
 }
 
 /// <summary>
