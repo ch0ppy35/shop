@@ -31,9 +31,33 @@ public class ProductRepository
         _logger.LogInformation("Getting all products from database");
 
         using var connection = _databaseService.CreateConnection();
-        var sql = "SELECT * FROM products";
+        var sql = @"
+            SELECT
+                id,
+                product_id AS ProductId,
+                name,
+                description,
+                price,
+                quantity,
+                sku,
+                location,
+                quantity_in_stock AS QuantityInStock,
+                reorder_threshold AS ReorderThreshold,
+                created_at AS CreatedAt,
+                updated_at AS UpdatedAt
+            FROM products";
 
-        return await connection.QueryAsync<ProductEntity>(sql);
+        var products = await connection.QueryAsync<ProductEntity>(sql);
+
+        // Log the first product to debug
+        var firstProduct = products.FirstOrDefault();
+        if (firstProduct != null)
+        {
+            _logger.LogInformation("First product: ID={Id}, ProductId={ProductId}, Name={Name}",
+                firstProduct.Id, firstProduct.ProductId, firstProduct.Name);
+        }
+
+        return products;
     }
 
     /// <summary>
@@ -44,7 +68,22 @@ public class ProductRepository
         _logger.LogInformation("Getting product with ID: {ProductId} from database", productId);
 
         using var connection = _databaseService.CreateConnection();
-        var sql = "SELECT * FROM products WHERE product_id = @ProductId";
+        var sql = @"
+            SELECT
+                id,
+                product_id AS ProductId,
+                name,
+                description,
+                price,
+                quantity,
+                sku,
+                location,
+                quantity_in_stock AS QuantityInStock,
+                reorder_threshold AS ReorderThreshold,
+                created_at AS CreatedAt,
+                updated_at AS UpdatedAt
+            FROM products
+            WHERE product_id = @ProductId";
 
         return await connection.QueryFirstOrDefaultAsync<ProductEntity>(sql, new { ProductId = productId });
     }
@@ -123,9 +162,12 @@ public class ProductRepository
     /// </summary>
     public static ProductMessage ToProductMessage(ProductEntity entity, ProductOperationType operationType = ProductOperationType.Get)
     {
+        // Ensure the ProductId is not null or empty
+        var productId = !string.IsNullOrEmpty(entity.ProductId) ? entity.ProductId : Guid.NewGuid().ToString();
+
         return new ProductMessage
         {
-            ProductId = entity.ProductId,
+            ProductId = productId,
             Name = entity.Name,
             Description = entity.Description,
             Price = entity.Price,

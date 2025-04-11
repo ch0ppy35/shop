@@ -1,4 +1,6 @@
 using System.Text.Json.Serialization;
+using System.Text.Json;
+
 
 namespace Common.Models;
 
@@ -21,6 +23,7 @@ public abstract class BaseMessage
     /// <summary>
     /// Gets or sets the session ID for tracking requests across services
     /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? SessionId { get; set; }
 
     /// <summary>
@@ -39,6 +42,7 @@ public class ProductMessage : BaseMessage
     /// <summary>
     /// Gets or sets the product ID
     /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ProductId { get; set; }
 
     /// <summary>
