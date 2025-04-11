@@ -58,8 +58,8 @@ public class ProductRepository
 
         using var connection = _databaseService.CreateConnection();
         var sql = @"
-            INSERT INTO products (product_id, name, description, price, quantity, created_at, updated_at)
-            VALUES (@ProductId, @Name, @Description, @Price, @Quantity, @CreatedAt, @UpdatedAt)
+            INSERT INTO products (product_id, name, description, price, quantity, sku, location, quantity_in_stock, reorder_threshold, created_at, updated_at)
+            VALUES (@ProductId, @Name, @Description, @Price, @Quantity, @Sku, @Location, @QuantityInStock, @ReorderThreshold, @CreatedAt, @UpdatedAt)
             RETURNING *";
 
         return await connection.QueryFirstAsync<ProductEntity>(sql, product);
@@ -79,6 +79,10 @@ public class ProductRepository
                 description = @Description,
                 price = @Price,
                 quantity = @Quantity,
+                sku = @Sku,
+                location = @Location,
+                quantity_in_stock = @QuantityInStock,
+                reorder_threshold = @ReorderThreshold,
                 updated_at = @UpdatedAt
             WHERE product_id = @ProductId";
 
@@ -89,6 +93,10 @@ public class ProductRepository
             product.Description,
             product.Price,
             product.Quantity,
+            product.Sku,
+            product.Location,
+            product.QuantityInStock,
+            product.ReorderThreshold,
             UpdatedAt = DateTime.UtcNow
         });
 
@@ -122,6 +130,10 @@ public class ProductRepository
             Description = entity.Description,
             Price = entity.Price,
             Quantity = entity.Quantity,
+            Sku = entity.Sku,
+            Location = entity.Location,
+            QuantityInStock = entity.QuantityInStock,
+            ReorderThreshold = entity.ReorderThreshold,
             OperationType = operationType
         };
     }
@@ -138,6 +150,10 @@ public class ProductRepository
             Description = message.Description,
             Price = message.Price,
             Quantity = message.Quantity,
+            Sku = message.Sku ?? string.Empty,
+            Location = message.Location ?? string.Empty,
+            QuantityInStock = message.QuantityInStock,
+            ReorderThreshold = message.ReorderThreshold,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

@@ -41,7 +41,9 @@ public class ProductConsumerService : BackgroundService
             HandleUpdateProductRequests(stoppingToken),
             HandleDeleteProductRequests(stoppingToken),
             HandleGetProductRequests(stoppingToken),
-            HandleGetAllProductsRequests(stoppingToken)
+            HandleGetAllProductsRequests(stoppingToken),
+            HandleGetInventoryRequests(stoppingToken),
+            HandleUpdateInventoryRequests(stoppingToken)
         };
 
         // Wait for any task to complete (which should only happen on error or cancellation)
@@ -393,6 +395,155 @@ public class ProductConsumerService : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling get all products requests");
+        }
+    }
+
+    private async Task HandleGetInventoryRequests(CancellationToken stoppingToken)
+    {
+        const string subject = "products.inventory.get";
+        _logger.LogInformation("Starting to handle requests from subject: {Subject}", subject);
+
+        try
+        {
+            // Subscribe to the subject and handle each request
+            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
+            {
+                _logger.LogInformation("Received get inventory request for product ID: {ProductId} - SessionId: {SessionId}",
+                    msg.ProductId, msg.SessionId ?? "Unknown");
+
+                // Prepare the response
+                var response = new ProductResponse { Success = false };
+
+                try
+                {
+                    // Get the product with inventory information
+                    var product = await _productService.GetInventoryAsync(msg.ProductId ?? string.Empty);
+
+                    if (product != null)
+                    {
+                        // Set the response
+                        response.Success = true;
+                        response.Message = $"Retrieved inventory for product {product.ProductId}";
+                        response.Product = product;
+
+                        // Preserve the session ID in the response
+                        if (!string.IsNullOrEmpty(msg.SessionId))
+                        {
+                            response.SessionId = msg.SessionId;
+                        }
+
+                        _logger.LogInformation("Found inventory for product with ID: {ProductId}", msg.ProductId);
+                    }
+                    else
+                    {
+                        response.Error = $"Product with ID {msg.ProductId} not found";
+                        _logger.LogWarning("Product not found with ID: {ProductId}", msg.ProductId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error processing get inventory request");
+                    response.Error = $"Error getting inventory: {ex.Message}";
+                }
+
+                // Reply to the request if a reply subject is provided
+                if (!string.IsNullOrEmpty(msg.ReplyTo))
+                {
+                    try
+                    {
+                        await _natsService.PublishAsync(msg.ReplyTo, response, stoppingToken);
+                        _logger.LogDebug("Sent response to {ReplyTo}", msg.ReplyTo);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error sending response to {ReplyTo}", msg.ReplyTo);
+                    }
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Get inventory request handling cancelled");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling get inventory requests");
+        }
+    }
+
+    private async Task HandleUpdateInventoryRequests(CancellationToken stoppingToken)
+    {
+        const string subject = "products.inventory.update";
+        _logger.LogInformation("Starting to handle requests from subject: {Subject}", subject);
+
+        try
+        {
+            // Subscribe to the subject and handle each request
+            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
+            {
+                _logger.LogInformation("Received update inventory request for product ID: {ProductId} - SessionId: {SessionId}",
+                    msg.ProductId, msg.SessionId ?? "Unknown");
+
+                // Prepare the response
+                var response = new ProductResponse { Success = false };
+
+                try
+                {
+                    // Update the inventory
+                    var success = await _productService.UpdateInventoryAsync(msg);
+
+                    if (success)
+                    {
+                        // Get the updated product to include in the response
+                        var updatedProduct = await _productService.GetInventoryAsync(msg.ProductId ?? string.Empty);
+
+                        // Set the response
+                        response.Success = true;
+                        response.Message = $"Updated inventory for product {msg.ProductId}";
+                        response.Product = updatedProduct;
+
+                        // Preserve the session ID in the response
+                        if (!string.IsNullOrEmpty(msg.SessionId))
+                        {
+                            response.SessionId = msg.SessionId;
+                        }
+
+                        _logger.LogInformation("Updated inventory for product with ID: {ProductId}", msg.ProductId);
+                    }
+                    else
+                    {
+                        response.Error = $"Failed to update inventory for product with ID {msg.ProductId}";
+                        _logger.LogWarning("Failed to update inventory for product with ID: {ProductId}", msg.ProductId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error processing update inventory request");
+                    response.Error = $"Error updating inventory: {ex.Message}";
+                }
+
+                // Reply to the request if a reply subject is provided
+                if (!string.IsNullOrEmpty(msg.ReplyTo))
+                {
+                    try
+                    {
+                        await _natsService.PublishAsync(msg.ReplyTo, response, stoppingToken);
+                        _logger.LogDebug("Sent response to {ReplyTo}", msg.ReplyTo);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error sending response to {ReplyTo}", msg.ReplyTo);
+                    }
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Update inventory request handling cancelled");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling update inventory requests");
         }
     }
 }

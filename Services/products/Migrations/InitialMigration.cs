@@ -20,6 +20,10 @@ public class InitialMigration : Migration
             .WithColumn("description").AsString(500).Nullable()
             .WithColumn("price").AsDecimal(10, 2).NotNullable()
             .WithColumn("quantity").AsInt32().NotNullable().WithDefaultValue(0)
+            .WithColumn("sku").AsString(50).Nullable().Unique()
+            .WithColumn("location").AsString(100).Nullable()
+            .WithColumn("quantity_in_stock").AsInt32().NotNullable().WithDefaultValue(0)
+            .WithColumn("reorder_threshold").AsInt32().NotNullable().WithDefaultValue(0)
             .WithColumn("created_at").AsDateTime().NotNullable().WithDefault(SystemMethods.CurrentDateTime)
             .WithColumn("updated_at").AsDateTime().NotNullable().WithDefault(SystemMethods.CurrentDateTime);
 

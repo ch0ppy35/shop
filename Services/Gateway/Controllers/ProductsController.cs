@@ -117,6 +117,10 @@ public class ProductsController : ControllerBase
                 Description = product.Description,
                 Price = product.Price,
                 Quantity = product.Quantity,
+                Sku = product.Sku,
+                Location = product.Location,
+                QuantityInStock = product.QuantityInStock,
+                ReorderThreshold = product.ReorderThreshold,
                 OperationType = ProductOperationType.Create,
                 SessionId = sessionId
             };
@@ -163,6 +167,10 @@ public class ProductsController : ControllerBase
                 Description = product.Description,
                 Price = product.Price,
                 Quantity = product.Quantity,
+                Sku = product.Sku,
+                Location = product.Location,
+                QuantityInStock = product.QuantityInStock,
+                ReorderThreshold = product.ReorderThreshold,
                 OperationType = ProductOperationType.Update,
                 SessionId = sessionId
             };
@@ -233,6 +241,94 @@ public class ProductsController : ControllerBase
             return StatusCode(500, new { error = "An error occurred while processing your request" });
         }
     }
+
+    [HttpGet("{id}/inventory")]
+    public async Task<IActionResult> GetProductInventory(string id)
+    {
+        _logger.LogInformation("Received request to get inventory for product with ID: {ProductId}", id);
+
+        try
+        {
+            // Get the session ID from the HttpContext.Items
+            var sessionId = HttpContext.Items["SessionId"]?.ToString();
+
+            var message = new ProductMessage
+            {
+                ProductId = id,
+                OperationType = ProductOperationType.GetInventory,
+                SessionId = sessionId
+            };
+
+            // Send request and wait for reply
+            var response = await _natsService.RequestAsync<ProductMessage, ProductResponse>(
+                "products.inventory.get",
+                message,
+                TimeSpan.FromSeconds(5));
+
+            if (response == null)
+            {
+                return StatusCode(500, new { error = "No response received from products service" });
+            }
+
+            if (!response.Success)
+            {
+                return StatusCode(404, new { error = response.Error ?? $"Inventory for product with ID {id} not found" });
+            }
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting inventory for product with ID: {ProductId}", id);
+            return StatusCode(500, new { error = "An error occurred while processing your request" });
+        }
+    }
+
+    [HttpPut("{id}/inventory")]
+    public async Task<IActionResult> UpdateProductInventory(string id, [FromBody] InventoryUpdateDto item)
+    {
+        _logger.LogInformation("Received request to update inventory for product with ID: {ProductId}", id);
+
+        try
+        {
+            // Get the session ID from the HttpContext.Items
+            var sessionId = HttpContext.Items["SessionId"]?.ToString();
+
+            var message = new ProductMessage
+            {
+                ProductId = id,
+                Sku = item.Sku,
+                Location = item.Location,
+                QuantityInStock = item.QuantityInStock,
+                ReorderThreshold = item.ReorderThreshold,
+                OperationType = ProductOperationType.UpdateInventory,
+                SessionId = sessionId
+            };
+
+            // Send request and wait for reply
+            var response = await _natsService.RequestAsync<ProductMessage, ProductResponse>(
+                "products.inventory.update",
+                message,
+                TimeSpan.FromSeconds(5));
+
+            if (response == null)
+            {
+                return StatusCode(500, new { error = "No response received from products service" });
+            }
+
+            if (!response.Success)
+            {
+                return StatusCode(404, new { error = response.Error ?? $"Failed to update inventory for product with ID {id}" });
+            }
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating inventory for product with ID: {ProductId}", id);
+            return StatusCode(500, new { error = "An error occurred while processing your request" });
+        }
+    }
 }
 
 public class ProductDto
@@ -241,4 +337,16 @@ public class ProductDto
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public int Quantity { get; set; }
+    public string? Sku { get; set; }
+    public string? Location { get; set; }
+    public int QuantityInStock { get; set; }
+    public int ReorderThreshold { get; set; }
+}
+
+public class InventoryUpdateDto
+{
+    public string? Sku { get; set; }
+    public string? Location { get; set; }
+    public int QuantityInStock { get; set; }
+    public int ReorderThreshold { get; set; }
 }

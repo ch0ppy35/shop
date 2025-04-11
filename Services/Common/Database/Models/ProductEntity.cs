@@ -41,6 +41,26 @@ public class ProductEntity
     public int Quantity { get; set; }
 
     /// <summary>
+    /// Gets or sets the SKU (Stock Keeping Unit)
+    /// </summary>
+    public string Sku { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the location of the inventory item
+    /// </summary>
+    public string Location { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the quantity in stock
+    /// </summary>
+    public int QuantityInStock { get; set; }
+
+    /// <summary>
+    /// Gets or sets the reorder threshold
+    /// </summary>
+    public int ReorderThreshold { get; set; }
+
+    /// <summary>
     /// Gets or sets the created timestamp
     /// </summary>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
