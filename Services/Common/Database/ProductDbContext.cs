@@ -120,11 +120,7 @@ public class ProductDbContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseNpgsql(_connectionString, options =>
-            {
-                // Specify the assembly where migrations are located
-                options.MigrationsAssembly("Products");
-            });
+            optionsBuilder.UseNpgsql(_connectionString);
         }
     }
 }

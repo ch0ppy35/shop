@@ -55,12 +55,13 @@ public class ProductConsumerService : BackgroundService
     private async Task HandleCreateProductRequests(CancellationToken stoppingToken)
     {
         const string subject = "products.create";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject}", subject);
+        const string queueGroup = "products-service";
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
 
         try
         {
             // Subscribe to the subject and handle each request
-            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
+            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received create product request for product: {ProductName} - SessionId: {SessionId}", msg.Name, msg.SessionId ?? "Unknown");
 
@@ -119,12 +120,13 @@ public class ProductConsumerService : BackgroundService
     private async Task HandleUpdateProductRequests(CancellationToken stoppingToken)
     {
         const string subject = "products.update";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject}", subject);
+        const string queueGroup = "products-service";
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
 
         try
         {
             // Subscribe to the subject and handle each request
-            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
+            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received update product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId, msg.SessionId ?? "Unknown");
 
@@ -194,12 +196,13 @@ public class ProductConsumerService : BackgroundService
     private async Task HandleDeleteProductRequests(CancellationToken stoppingToken)
     {
         const string subject = "products.delete";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject}", subject);
+        const string queueGroup = "products-service";
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
 
         try
         {
             // Subscribe to the subject and handle each request
-            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
+            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received delete product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId, msg.SessionId ?? "Unknown");
 
@@ -265,12 +268,13 @@ public class ProductConsumerService : BackgroundService
     private async Task HandleGetProductRequests(CancellationToken stoppingToken)
     {
         const string subject = "products.get";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject}", subject);
+        const string queueGroup = "products-service";
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
 
         try
         {
             // Subscribe to the subject and handle each request
-            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
+            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received get product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId, msg.SessionId ?? "Unknown");
 
@@ -337,12 +341,13 @@ public class ProductConsumerService : BackgroundService
     private async Task HandleGetAllProductsRequests(CancellationToken stoppingToken)
     {
         const string subject = "products.getall";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject}", subject);
+        const string queueGroup = "products-service";
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
 
         try
         {
             // Subscribe to the subject and handle each request
-            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
+            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received get all products request - SessionId: {SessionId}", msg.SessionId ?? "Unknown");
 
@@ -401,12 +406,13 @@ public class ProductConsumerService : BackgroundService
     private async Task HandleGetInventoryRequests(CancellationToken stoppingToken)
     {
         const string subject = "products.inventory.get";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject}", subject);
+        const string queueGroup = "products-service";
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
 
         try
         {
             // Subscribe to the subject and handle each request
-            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
+            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received get inventory request for product ID: {ProductId} - SessionId: {SessionId}",
                     msg.ProductId, msg.SessionId ?? "Unknown");
@@ -474,12 +480,13 @@ public class ProductConsumerService : BackgroundService
     private async Task HandleUpdateInventoryRequests(CancellationToken stoppingToken)
     {
         const string subject = "products.inventory.update";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject}", subject);
+        const string queueGroup = "products-service";
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
 
         try
         {
             // Subscribe to the subject and handle each request
-            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
+            await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received update inventory request for product ID: {ProductId} - SessionId: {SessionId}",
                     msg.ProductId, msg.SessionId ?? "Unknown");

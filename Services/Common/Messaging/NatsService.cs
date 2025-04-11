@@ -2,8 +2,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NATS.Client.Core;
 using NATS.Client.Serializers.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Common.Models;
 
 namespace Common.Messaging;
@@ -29,15 +27,6 @@ public class NatsService : IAsyncDisposable
         var natsUrl = Environment.GetEnvironmentVariable("NATS_URL") ??
                      configuration.GetValue<string>("Nats:Url") ??
                      "nats://localhost:4222";
-
-        // Configure JSON serializer options
-        var jsonSerializerOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            WriteIndented = false,
-            Converters = { new JsonStringEnumConverter() }
-        };
 
         _natsOpts = new NatsOpts
         {
@@ -194,7 +183,11 @@ public class NatsService : IAsyncDisposable
     /// <summary>
     /// Subscribes to the specified subject
     /// </summary>
-    public async IAsyncEnumerable<T> SubscribeAsync<T>(string subject, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    /// <param name="subject">The subject to subscribe to</param>
+    /// <param name="queueGroup">Optional queue group name for load balancing across multiple subscribers</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>An async enumerable of messages</returns>
+    public async IAsyncEnumerable<T> SubscribeAsync<T>(string subject, string? queueGroup = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         where T : BaseMessage
     {
         if (_connection == null || !_isConnected)
@@ -202,9 +195,25 @@ public class NatsService : IAsyncDisposable
             throw new InvalidOperationException("Not connected to NATS server");
         }
 
-        _logger.LogInformation("Subscribing to subject: {Subject}", subject);
+        _logger.LogInformation("Subscribing to subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup ?? "none");
 
-        await foreach (var msg in _connection.SubscribeAsync<T>(subject, cancellationToken: cancellationToken))
+        // Create subscription with or without queue group
+        IAsyncEnumerable<NatsMsg<T>> asyncEnumerable;
+
+        if (string.IsNullOrEmpty(queueGroup))
+        {
+            // Standard subscription without queue group
+            asyncEnumerable = _connection.SubscribeAsync<T>(subject, cancellationToken: cancellationToken);
+        }
+        else
+        {
+            // Queue subscription for load balancing
+            // For NATS.Net client, the queue group is passed as the second parameter
+            asyncEnumerable = _connection.SubscribeAsync<T>(subject, queueGroup, cancellationToken: cancellationToken);
+        }
+
+        await foreach (var msg in asyncEnumerable)
         {
             if (msg.Data != null)
             {
@@ -237,5 +246,8 @@ public class NatsService : IAsyncDisposable
             _isConnected = false;
             _logger.LogInformation("NATS connection disposed");
         }
+
+        // Call GC.SuppressFinalize to prevent derived types from needing to re-implement IDisposable
+        GC.SuppressFinalize(this);
     }
 }
