@@ -8,4 +8,4 @@ publish:
 	dotnet publish -c Release -o ./publish
 
 test:
-	dotnet test
+	dotnet test --collect:"XPlat Code Coverage"
