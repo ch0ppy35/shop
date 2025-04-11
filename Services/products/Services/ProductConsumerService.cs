@@ -12,7 +12,7 @@ public class ProductConsumerService : BackgroundService
 {
     private readonly ILogger<ProductConsumerService> _logger;
     private readonly NatsService _natsService;
-    private readonly ProductService _productService;
+    private readonly IProductService _productService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProductConsumerService"/> class.
@@ -20,7 +20,7 @@ public class ProductConsumerService : BackgroundService
     public ProductConsumerService(
         ILogger<ProductConsumerService> logger,
         NatsService natsService,
-        ProductService productService)
+        IProductService productService)
     {
         _logger = logger;
         _natsService = natsService;
@@ -512,7 +512,7 @@ public class ProductConsumerService : BackgroundService
                 try
                 {
                     // Update the inventory
-                    var success = await _productService.UpdateInventoryAsync(msg);
+                    var success = await _productService.UpdateInventoryAsync(msg.ProductId ?? string.Empty, msg.QuantityInStock);
 
                     if (success)
                     {

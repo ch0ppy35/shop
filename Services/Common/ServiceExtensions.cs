@@ -53,6 +53,9 @@ public static class ServiceExtensions
                 npgsqlOptions.MigrationsAssembly("Products");
             }));
 
+        // Register the DbContext as the interface implementation
+        services.AddScoped<IProductDbContext>(provider => provider.GetRequiredService<ProductDbContext>());
+
         return services;
     }
 }

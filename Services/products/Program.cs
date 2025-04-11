@@ -26,10 +26,10 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddDatabaseServices(connectionString);
 
         // Add repositories
-        services.AddScoped<ProductRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
 
         // Add product service
-        services.AddScoped<ProductService>();
+        services.AddScoped<IProductService, ProductService>();
 
         // Add product seeder
         services.AddScoped<ProductSeeder>();

@@ -8,7 +8,7 @@ namespace Common.Database;
 /// <summary>
 /// Entity Framework Core DbContext for the Products database
 /// </summary>
-public class ProductDbContext : DbContext
+public class ProductDbContext : DbContext, IProductDbContext
 {
     private readonly ILogger<ProductDbContext> _logger;
     private readonly string _connectionString;

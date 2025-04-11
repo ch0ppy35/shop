@@ -9,15 +9,15 @@ namespace Products.Repositories;
 /// <summary>
 /// Repository for product data
 /// </summary>
-public class ProductRepository
+public class ProductRepository : IProductRepository
 {
     private readonly ILogger<ProductRepository> _logger;
-    private readonly ProductDbContext _dbContext;
+    private readonly IProductDbContext _dbContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProductRepository"/> class.
     /// </summary>
-    public ProductRepository(ILogger<ProductRepository> logger, ProductDbContext dbContext)
+    public ProductRepository(ILogger<ProductRepository> logger, IProductDbContext dbContext)
     {
         _logger = logger;
         _dbContext = dbContext;

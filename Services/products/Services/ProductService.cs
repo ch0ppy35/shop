@@ -7,15 +7,15 @@ namespace Products.Services;
 /// <summary>
 /// Service for managing products
 /// </summary>
-public class ProductService
+public class ProductService : IProductService
 {
     private readonly ILogger<ProductService> _logger;
-    private readonly ProductRepository _productRepository;
+    private readonly IProductRepository _productRepository;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProductService"/> class.
     /// </summary>
-    public ProductService(ILogger<ProductService> logger, ProductRepository productRepository)
+    public ProductService(ILogger<ProductService> logger, IProductRepository productRepository)
     {
         _logger = logger;
         _productRepository = productRepository;
@@ -163,5 +163,33 @@ public class ProductService
 
         _logger.LogWarning("Product with ID {ProductId} not found for inventory query", id);
         return null;
+    }
+
+    /// <summary>
+    /// Updates inventory for a product
+    /// </summary>
+    public async Task<bool> UpdateInventoryAsync(string id, int quantity)
+    {
+        _logger.LogInformation("Updating inventory for product with ID: {ProductId} to quantity: {Quantity}", id, quantity);
+
+        if (string.IsNullOrEmpty(id))
+        {
+            _logger.LogWarning("Cannot update inventory with null or empty product ID");
+            return false;
+        }
+
+        var product = await _productRepository.GetProductByIdAsync(id);
+        if (product == null)
+        {
+            _logger.LogWarning("Product with ID {ProductId} not found for inventory update", id);
+            return false;
+        }
+
+        // Update the inventory quantity
+        product.QuantityInStock = quantity;
+        product.UpdatedAt = DateTime.UtcNow;
+
+        // Save the changes
+        return await _productRepository.UpdateProductAsync(product);
     }
 }
