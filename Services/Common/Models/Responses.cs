@@ -51,4 +51,27 @@ public class ProductListResponse : BaseResponse
     public List<ProductMessage>? Products { get; set; }
 }
 
+/// <summary>
+/// Response for inventory operations
+/// </summary>
+[Serializable]
+public class InventoryResponse : BaseResponse
+{
+    /// <summary>
+    /// Gets or sets the inventory item
+    /// </summary>
+    public InventoryMessage? Inventory { get; set; }
+}
+
+/// <summary>
+/// Response for get all inventory items operation
+/// </summary>
+[Serializable]
+public class InventoryListResponse : BaseResponse
+{
+    /// <summary>
+    /// Gets or sets the inventory items
+    /// </summary>
+    public List<InventoryMessage>? Inventory { get; set; }
+}
 

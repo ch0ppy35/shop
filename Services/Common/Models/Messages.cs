@@ -99,4 +99,77 @@ public enum ProductOperationType
     GetAll
 }
 
+/// <summary>
+/// Message for inventory-related operations
+/// </summary>
+[Serializable]
+public class InventoryMessage : BaseMessage
+{
+    /// <summary>
+    /// Gets or sets the inventory item ID
+    /// </summary>
+    public string? InventoryId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the product ID associated with this inventory item
+    /// </summary>
+    public string? ProductId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the SKU (Stock Keeping Unit)
+    /// </summary>
+    public string? Sku { get; set; }
+
+    /// <summary>
+    /// Gets or sets the location of the inventory item
+    /// </summary>
+    public string? Location { get; set; }
+
+    /// <summary>
+    /// Gets or sets the quantity in stock
+    /// </summary>
+    public int QuantityInStock { get; set; }
+
+    /// <summary>
+    /// Gets or sets the reorder threshold
+    /// </summary>
+    public int ReorderThreshold { get; set; }
+
+    /// <summary>
+    /// Gets or sets the operation type
+    /// </summary>
+    public InventoryOperationType OperationType { get; set; }
+}
+
+/// <summary>
+/// Operation types for inventory messages
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum InventoryOperationType
+{
+    /// <summary>
+    /// Create a new inventory item
+    /// </summary>
+    Create,
+
+    /// <summary>
+    /// Update an existing inventory item
+    /// </summary>
+    Update,
+
+    /// <summary>
+    /// Delete an inventory item
+    /// </summary>
+    Delete,
+
+    /// <summary>
+    /// Get an inventory item
+    /// </summary>
+    Get,
+
+    /// <summary>
+    /// Get all inventory items
+    /// </summary>
+    GetAll
+}
 
