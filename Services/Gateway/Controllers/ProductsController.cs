@@ -24,9 +24,13 @@ public class ProductsController : ControllerBase
 
         try
         {
+            // Get the session ID from the HttpContext.Items
+            var sessionId = HttpContext.Items["SessionId"]?.ToString();
+
             var message = new ProductMessage
             {
-                OperationType = ProductOperationType.GetAll
+                OperationType = ProductOperationType.GetAll,
+                SessionId = sessionId
             };
 
             // Send request and wait for reply
@@ -61,10 +65,14 @@ public class ProductsController : ControllerBase
 
         try
         {
+            // Get the session ID from the HttpContext.Items
+            var sessionId = HttpContext.Items["SessionId"]?.ToString();
+
             var message = new ProductMessage
             {
                 ProductId = id,
-                OperationType = ProductOperationType.Get
+                OperationType = ProductOperationType.Get,
+                SessionId = sessionId
             };
 
             // Send request and wait for reply
@@ -99,6 +107,9 @@ public class ProductsController : ControllerBase
 
         try
         {
+            // Get the session ID from the HttpContext.Items
+            var sessionId = HttpContext.Items["SessionId"]?.ToString();
+
             var message = new ProductMessage
             {
                 ProductId = Guid.NewGuid().ToString(),
@@ -106,7 +117,8 @@ public class ProductsController : ControllerBase
                 Description = product.Description,
                 Price = product.Price,
                 Quantity = product.Quantity,
-                OperationType = ProductOperationType.Create
+                OperationType = ProductOperationType.Create,
+                SessionId = sessionId
             };
 
             // Send request and wait for reply
@@ -141,6 +153,9 @@ public class ProductsController : ControllerBase
 
         try
         {
+            // Get the session ID from the HttpContext.Items
+            var sessionId = HttpContext.Items["SessionId"]?.ToString();
+
             var message = new ProductMessage
             {
                 ProductId = id,
@@ -148,7 +163,8 @@ public class ProductsController : ControllerBase
                 Description = product.Description,
                 Price = product.Price,
                 Quantity = product.Quantity,
-                OperationType = ProductOperationType.Update
+                OperationType = ProductOperationType.Update,
+                SessionId = sessionId
             };
 
             // Send request and wait for reply
@@ -183,10 +199,14 @@ public class ProductsController : ControllerBase
 
         try
         {
+            // Get the session ID from the HttpContext.Items
+            var sessionId = HttpContext.Items["SessionId"]?.ToString();
+
             var message = new ProductMessage
             {
                 ProductId = id,
-                OperationType = ProductOperationType.Delete
+                OperationType = ProductOperationType.Delete,
+                SessionId = sessionId
             };
 
             // Send request and wait for reply

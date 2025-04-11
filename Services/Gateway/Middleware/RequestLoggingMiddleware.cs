@@ -36,11 +36,13 @@ public class RequestLoggingMiddleware
             var queryString = context.Request.QueryString;
             var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
             var requestId = Guid.NewGuid().ToString();
+            var sessionId = context.Items["SessionId"]?.ToString() ?? "Unknown";
 
             // Create a scope with request details
             using (_logger.BeginScope(new Dictionary<string, object>
             {
                 ["RequestId"] = requestId,
+                ["SessionId"] = sessionId,
                 ["UserAgent"] = userAgent,
                 ["ClientIP"] = clientIp,
                 ["Method"] = method,
@@ -50,8 +52,8 @@ public class RequestLoggingMiddleware
             {
                 // Log the incoming request
                 _logger.LogInformation(
-                    "Request: {Method} {Path}{QueryString} - ClientIP: {ClientIP} - UserAgent: {UserAgent}",
-                    method, path, queryString, clientIp, userAgent);
+                    "Request: {Method} {Path}{QueryString} - ClientIP: {ClientIP} - UserAgent: {UserAgent} - SessionId: {SessionId}",
+                    method, path, queryString, clientIp, userAgent, sessionId);
 
                 // Call the next middleware in the pipeline
                 await _next(context);

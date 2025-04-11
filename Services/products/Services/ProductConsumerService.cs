@@ -61,7 +61,7 @@ public class ProductConsumerService : BackgroundService
             // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
             {
-                _logger.LogInformation("Received create product request for product: {ProductName}", msg.Name);
+                _logger.LogInformation("Received create product request for product: {ProductName} - SessionId: {SessionId}", msg.Name, msg.SessionId ?? "Unknown");
 
                 // Prepare the response
                 var response = new ProductResponse { Success = false };
@@ -75,6 +75,12 @@ public class ProductConsumerService : BackgroundService
                     response.Success = true;
                     response.Message = $"Product created with ID: {product.ProductId}";
                     response.Product = product;
+
+                    // Preserve the session ID in the response
+                    if (!string.IsNullOrEmpty(msg.SessionId))
+                    {
+                        response.SessionId = msg.SessionId;
+                    }
 
                     _logger.LogInformation("Product created with ID: {ProductId}", product.ProductId);
                 }
@@ -119,7 +125,7 @@ public class ProductConsumerService : BackgroundService
             // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
             {
-                _logger.LogInformation("Received update product request for product ID: {ProductId}", msg.ProductId);
+                _logger.LogInformation("Received update product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId, msg.SessionId ?? "Unknown");
 
                 // Prepare the response
                 var response = new ProductResponse { Success = false };
@@ -138,6 +144,12 @@ public class ProductConsumerService : BackgroundService
                         response.Success = true;
                         response.Message = $"Product updated with ID: {msg.ProductId}";
                         response.Product = updatedProduct;
+
+                        // Preserve the session ID in the response
+                        if (!string.IsNullOrEmpty(msg.SessionId))
+                        {
+                            response.SessionId = msg.SessionId;
+                        }
 
                         _logger.LogInformation("Product updated with ID: {ProductId}", msg.ProductId);
                     }
@@ -188,7 +200,7 @@ public class ProductConsumerService : BackgroundService
             // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
             {
-                _logger.LogInformation("Received delete product request for product ID: {ProductId}", msg.ProductId);
+                _logger.LogInformation("Received delete product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId, msg.SessionId ?? "Unknown");
 
                 // Prepare the response
                 var response = new BaseResponse { Success = false };
@@ -203,6 +215,12 @@ public class ProductConsumerService : BackgroundService
                         // Set the response
                         response.Success = true;
                         response.Message = $"Product with ID {msg.ProductId} deleted successfully";
+
+                        // Preserve the session ID in the response
+                        if (!string.IsNullOrEmpty(msg.SessionId))
+                        {
+                            response.SessionId = msg.SessionId;
+                        }
 
                         _logger.LogInformation("Product deleted with ID: {ProductId}", msg.ProductId);
                     }
@@ -253,7 +271,7 @@ public class ProductConsumerService : BackgroundService
             // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
             {
-                _logger.LogInformation("Received get product request for product ID: {ProductId}", msg.ProductId);
+                _logger.LogInformation("Received get product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId, msg.SessionId ?? "Unknown");
 
                 // Prepare the response
                 var response = new ProductResponse { Success = false };
@@ -269,6 +287,12 @@ public class ProductConsumerService : BackgroundService
                         response.Success = true;
                         response.Message = $"Product with ID {msg.ProductId} found";
                         response.Product = product;
+
+                        // Preserve the session ID in the response
+                        if (!string.IsNullOrEmpty(msg.SessionId))
+                        {
+                            response.SessionId = msg.SessionId;
+                        }
 
                         _logger.LogInformation("Found product with ID: {ProductId}", msg.ProductId);
                     }
@@ -319,7 +343,7 @@ public class ProductConsumerService : BackgroundService
             // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, stoppingToken))
             {
-                _logger.LogInformation("Received get all products request");
+                _logger.LogInformation("Received get all products request - SessionId: {SessionId}", msg.SessionId ?? "Unknown");
 
                 // Prepare the response
                 var response = new ProductListResponse { Success = false };
@@ -333,6 +357,12 @@ public class ProductConsumerService : BackgroundService
                     response.Success = true;
                     response.Message = $"Retrieved {products.Count} products";
                     response.Products = products.ToList();
+
+                    // Preserve the session ID in the response
+                    if (!string.IsNullOrEmpty(msg.SessionId))
+                    {
+                        response.SessionId = msg.SessionId;
+                    }
 
                     _logger.LogInformation("Retrieved {Count} products", products.Count);
                 }

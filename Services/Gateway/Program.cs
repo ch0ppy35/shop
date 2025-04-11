@@ -27,6 +27,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Add session middleware to handle session IDs
+app.UseMiddleware<SessionMiddleware>();
+
 // Add request logging middleware to log User-Agent
 app.UseMiddleware<RequestLoggingMiddleware>();
 

@@ -19,6 +19,11 @@ public abstract class BaseMessage
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
     /// <summary>
+    /// Gets or sets the session ID for tracking requests across services
+    /// </summary>
+    public string? SessionId { get; set; }
+
+    /// <summary>
     /// Gets or sets the reply-to subject for request-reply pattern
     /// </summary>
     [JsonIgnore] // This is set by NATS, not serialized in the message

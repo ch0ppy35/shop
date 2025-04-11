@@ -20,6 +20,11 @@ public class BaseResponse
     /// Gets or sets the error message
     /// </summary>
     public string? Error { get; set; }
+
+    /// <summary>
+    /// Gets or sets the session ID for tracking requests across services
+    /// </summary>
+    public string? SessionId { get; set; }
 }
 
 /// <summary>
