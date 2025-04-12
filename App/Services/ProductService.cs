@@ -29,13 +29,8 @@ public class ProductService
     {
         try
         {
-            // Get the API base URL
-            var apiBaseUrl = await _configService.GetApiBaseUrlAsync();
-
-            // Create a new HttpClient with the correct base address
-            using var client = new HttpClient { BaseAddress = new Uri(apiBaseUrl) };
-
-            var response = await client.GetFromJsonAsync<ProductListResponse>($"/api/products?page={page}&pageSize={pageSize}");
+            // Use the injected HttpClient which already has the session ID header
+            var response = await _httpClient.GetFromJsonAsync<ProductListResponse>($"/api/products?page={page}&pageSize={pageSize}");
 
             if (response == null || response.Products == null)
             {
@@ -91,13 +86,8 @@ public class ProductService
     {
         try
         {
-            // Get the API base URL
-            var apiBaseUrl = await _configService.GetApiBaseUrlAsync();
-
-            // Create a new HttpClient with the correct base address
-            using var client = new HttpClient { BaseAddress = new Uri(apiBaseUrl) };
-
-            var response = await client.GetFromJsonAsync<ProductResponse>($"/api/products/{id}");
+            // Use the injected HttpClient which already has the session ID header
+            var response = await _httpClient.GetFromJsonAsync<ProductResponse>($"/api/products/{id}");
 
             if (response == null || response.Product == null)
             {

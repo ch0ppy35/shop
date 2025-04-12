@@ -1,0 +1,9 @@
+.session-info {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-align: right;
+}
+
+.session-info span {
+    border-bottom: 1px dotted #6c757d;
+}

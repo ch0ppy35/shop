@@ -20,11 +20,28 @@ builder.Services.AddSingleton<IConfiguration>(configuration);
 var apiBaseUrl = configuration["ApiBaseUrl"] ?? "http://localhost:8080";
 Console.WriteLine($"Using API base URL from config: {apiBaseUrl}");
 
-// Register HttpClient factory that can be dynamically configured
+// Register session service
+builder.Services.AddScoped<SessionService>();
+
+// Register session HTTP message handler
+builder.Services.AddScoped<SessionHttpMessageHandler>();
+
+// Register HttpClient with the session message handler
 builder.Services.AddScoped(sp =>
 {
-    // Use the configuration from appsettings.json as default
-    return new HttpClient { BaseAddress = new Uri(apiBaseUrl) };
+    // Get the session message handler
+    var sessionHandler = sp.GetRequiredService<SessionHttpMessageHandler>();
+
+    // Set the inner handler
+    sessionHandler.InnerHandler = new HttpClientHandler();
+
+    // Create the HttpClient with the handler
+    var client = new HttpClient(sessionHandler)
+    {
+        BaseAddress = new Uri(apiBaseUrl)
+    };
+
+    return client;
 });
 
 // Register services
