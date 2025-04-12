@@ -7,6 +7,19 @@ services:
     networks:
       - nats-shop-network
 
+  frontend:
+    build:
+      context: ./App
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    depends_on:
+      - gateway
+    networks:
+      - nats-shop-network
+
   postgres:
     image: postgres:16
     environment:
@@ -35,7 +48,7 @@ services:
       - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://0.0.0.0:8080
+      - ASPNETCORE_URLS=http://127.0.0.1:8080
       - NATS_URL=nats://nats:4222
     depends_on:
       - nats
