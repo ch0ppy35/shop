@@ -73,9 +73,7 @@ public class ProductDbContext : DbContext, IProductDbContext
                 .HasColumnName("price")
                 .HasPrecision(10, 2);
 
-            entity.Property(e => e.Quantity)
-                .HasColumnName("quantity")
-                .HasDefaultValue(0);
+            // Quantity field removed - using QuantityInStock instead
 
             entity.Property(e => e.Sku)
                 .HasColumnName("sku")

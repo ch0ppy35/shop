@@ -35,10 +35,7 @@ public class ProductEntity
     /// </summary>
     public decimal Price { get; set; }
 
-    /// <summary>
-    /// Gets or sets the product quantity
-    /// </summary>
-    public int Quantity { get; set; }
+    // Quantity field removed - using QuantityInStock instead
 
     /// <summary>
     /// Gets or sets the SKU (Stock Keeping Unit)

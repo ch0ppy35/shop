@@ -43,11 +43,11 @@ public class ProductSeeder
             {
                 new ProductEntity
                 {
-                    ProductId = "prod-001",
+                    ProductId = Guid.NewGuid().ToString(),
                     Name = "Ergonomic Keyboard",
                     Description = "Comfortable keyboard for long typing sessions",
                     Price = 89.99m,
-                    Quantity = 100,
+                    // Quantity field removed - using QuantityInStock instead
                     Sku = "KB-ERG-001",
                     Location = "Warehouse A",
                     QuantityInStock = 50,
@@ -57,11 +57,11 @@ public class ProductSeeder
                 },
                 new ProductEntity
                 {
-                    ProductId = "prod-002",
+                    ProductId = Guid.NewGuid().ToString(),
                     Name = "Wireless Mouse",
                     Description = "High-precision wireless mouse",
                     Price = 49.99m,
-                    Quantity = 150,
+                    // Quantity field removed - using QuantityInStock instead
                     Sku = "MS-WRL-002",
                     Location = "Warehouse A",
                     QuantityInStock = 75,
@@ -71,11 +71,11 @@ public class ProductSeeder
                 },
                 new ProductEntity
                 {
-                    ProductId = "prod-003",
+                    ProductId = Guid.NewGuid().ToString(),
                     Name = "Ultra-wide Monitor",
                     Description = "34-inch curved ultra-wide monitor",
                     Price = 399.99m,
-                    Quantity = 30,
+                    // Quantity field removed - using QuantityInStock instead
                     Sku = "MN-UW-003",
                     Location = "Warehouse B",
                     QuantityInStock = 15,
@@ -85,11 +85,11 @@ public class ProductSeeder
                 },
                 new ProductEntity
                 {
-                    ProductId = "prod-004",
+                    ProductId = Guid.NewGuid().ToString(),
                     Name = "Mechanical Keyboard",
                     Description = "Tactile mechanical keyboard with RGB lighting",
                     Price = 129.99m,
-                    Quantity = 80,
+                    // Quantity field removed - using QuantityInStock instead
                     Sku = "KB-MCH-004",
                     Location = "Warehouse A",
                     QuantityInStock = 40,
@@ -99,11 +99,11 @@ public class ProductSeeder
                 },
                 new ProductEntity
                 {
-                    ProductId = "prod-005",
+                    ProductId = Guid.NewGuid().ToString(),
                     Name = "Laptop Stand",
                     Description = "Adjustable aluminum laptop stand",
                     Price = 39.99m,
-                    Quantity = 200,
+                    // Quantity field removed - using QuantityInStock instead
                     Sku = "ACC-STD-005",
                     Location = "Warehouse C",
                     QuantityInStock = 100,
@@ -113,11 +113,11 @@ public class ProductSeeder
                 },
                 new ProductEntity
                 {
-                    ProductId = "prod-006",
+                    ProductId = Guid.NewGuid().ToString(),
                     Name = "USB-C Hub",
                     Description = "7-in-1 USB-C hub with HDMI and card readers",
                     Price = 59.99m,
-                    Quantity = 120,
+                    // Quantity field removed - using QuantityInStock instead
                     Sku = "ACC-HUB-006",
                     Location = "Warehouse C",
                     QuantityInStock = 60,
@@ -127,11 +127,11 @@ public class ProductSeeder
                 },
                 new ProductEntity
                 {
-                    ProductId = "prod-007",
+                    ProductId = Guid.NewGuid().ToString(),
                     Name = "Wireless Headphones",
                     Description = "Noise-cancelling wireless headphones",
                     Price = 199.99m,
-                    Quantity = 50,
+                    // Quantity field removed - using QuantityInStock instead
                     Sku = "AUD-WH-007",
                     Location = "Warehouse B",
                     QuantityInStock = 25,
@@ -141,11 +141,11 @@ public class ProductSeeder
                 },
                 new ProductEntity
                 {
-                    ProductId = "prod-008",
+                    ProductId = Guid.NewGuid().ToString(),
                     Name = "Webcam",
                     Description = "4K webcam with microphone",
                     Price = 79.99m,
-                    Quantity = 90,
+                    // Quantity field removed - using QuantityInStock instead
                     Sku = "CAM-WEB-008",
                     Location = "Warehouse B",
                     QuantityInStock = 45,
@@ -155,11 +155,11 @@ public class ProductSeeder
                 },
                 new ProductEntity
                 {
-                    ProductId = "prod-009",
+                    ProductId = Guid.NewGuid().ToString(),
                     Name = "External SSD",
                     Description = "1TB portable SSD drive",
                     Price = 149.99m,
-                    Quantity = 60,
+                    // Quantity field removed - using QuantityInStock instead
                     Sku = "STR-SSD-009",
                     Location = "Warehouse D",
                     QuantityInStock = 30,
@@ -169,11 +169,11 @@ public class ProductSeeder
                 },
                 new ProductEntity
                 {
-                    ProductId = "prod-010",
+                    ProductId = Guid.NewGuid().ToString(),
                     Name = "Gaming Mouse",
                     Description = "High-DPI gaming mouse with programmable buttons",
                     Price = 69.99m,
-                    Quantity = 70,
+                    // Quantity field removed - using QuantityInStock instead
                     Sku = "MS-GAM-010",
                     Location = "Warehouse A",
                     QuantityInStock = 35,

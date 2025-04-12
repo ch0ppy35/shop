@@ -122,7 +122,7 @@ public class ProductsController : ControllerBase
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
-                Quantity = product.Quantity,
+                // Quantity field removed - using QuantityInStock instead
                 Sku = product.Sku,
                 Location = product.Location,
                 QuantityInStock = product.QuantityInStock,
@@ -172,7 +172,7 @@ public class ProductsController : ControllerBase
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
-                Quantity = product.Quantity,
+                // Quantity field removed - using QuantityInStock instead
                 Sku = product.Sku,
                 Location = product.Location,
                 QuantityInStock = product.QuantityInStock,
@@ -342,7 +342,7 @@ public class ProductDto
     public string? Name { get; set; }
     public string? Description { get; set; }
     public decimal Price { get; set; }
-    public int Quantity { get; set; }
+    // Quantity field removed - using QuantityInStock instead
     public string? Sku { get; set; }
     public string? Location { get; set; }
     public int QuantityInStock { get; set; }

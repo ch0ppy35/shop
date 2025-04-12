@@ -26,11 +26,6 @@ public class Product
     public decimal Price { get; set; }
 
     /// <summary>
-    /// Gets or sets the product quantity
-    /// </summary>
-    public int Quantity { get; set; }
-
-    /// <summary>
     /// Gets or sets the SKU (Stock Keeping Unit)
     /// </summary>
     public string? Sku { get; set; }

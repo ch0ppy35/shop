@@ -23,6 +23,7 @@ The frontend is a single-page application built with Blazor WebAssembly that run
 - **Features**:
   - Responsive product catalog with pagination
   - Product details view
+  - Admin interface for managing products
   - Session tracking across page loads
   - Configurable API endpoints for different environments
 

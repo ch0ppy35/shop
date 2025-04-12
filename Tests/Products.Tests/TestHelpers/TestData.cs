@@ -20,11 +20,11 @@ public static class TestData
             products.Add(new ProductEntity
             {
                 Id = i, // Use integer ID for tests
-                ProductId = $"test-product-{i}",
+                ProductId = Guid.NewGuid().ToString(),
                 Name = $"Test Product {i}",
                 Description = $"Description for test product {i}",
                 Price = 10.99m + i,
-                Quantity = 100 + i,
+                // Quantity field removed - using QuantityInStock instead
                 Sku = $"SKU-{i}",
                 Location = $"Warehouse {(i % 3) + 1}",
                 QuantityInStock = 50 + i,
@@ -40,16 +40,16 @@ public static class TestData
     /// <summary>
     /// Creates a test product entity
     /// </summary>
-    public static ProductEntity GetTestProductEntity(string productId = "test-product-1")
+    public static ProductEntity GetTestProductEntity(string? productId = null)
     {
         return new ProductEntity
         {
             Id = 1, // Use integer ID for tests
-            ProductId = productId,
+            ProductId = productId ?? Guid.NewGuid().ToString(),
             Name = "Test Product",
             Description = "Description for test product",
             Price = 19.99m,
-            Quantity = 100,
+            // Quantity field removed - using QuantityInStock instead
             Sku = "SKU-TEST",
             Location = "Warehouse A",
             QuantityInStock = 50,
@@ -62,15 +62,15 @@ public static class TestData
     /// <summary>
     /// Creates a test product message
     /// </summary>
-    public static ProductMessage GetTestProductMessage(string productId = "test-product-1")
+    public static ProductMessage GetTestProductMessage(string? productId = null)
     {
         return new ProductMessage
         {
-            ProductId = productId,
+            ProductId = productId ?? Guid.NewGuid().ToString(),
             Name = "Test Product",
             Description = "Description for test product",
             Price = 19.99m,
-            Quantity = 100,
+            // Quantity field removed - using QuantityInStock instead
             Sku = "SKU-TEST",
             Location = "Warehouse A",
             QuantityInStock = 50,

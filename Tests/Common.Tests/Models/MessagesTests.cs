@@ -27,7 +27,7 @@ public class MessagesTests
             Name = "Test Product",
             Description = "Test Description",
             Price = 10.99m,
-            Quantity = 5,
+            QuantityInStock = 5,
             OperationType = ProductOperationType.Create
         };
 
@@ -41,7 +41,7 @@ public class MessagesTests
         deserializedMessage.Name.Should().Be("Test Product");
         deserializedMessage.Description.Should().Be("Test Description");
         deserializedMessage.Price.Should().Be(10.99m);
-        deserializedMessage.Quantity.Should().Be(5);
+        deserializedMessage.QuantityInStock.Should().Be(5);
         deserializedMessage.OperationType.Should().Be(ProductOperationType.Create);
     }
 

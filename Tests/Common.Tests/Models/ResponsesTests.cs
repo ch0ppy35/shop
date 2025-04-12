@@ -38,7 +38,7 @@ public class ResponsesTests
             Name = "Test Product",
             Description = "Test Description",
             Price = 10.99m,
-            Quantity = 5,
+            QuantityInStock = 5,
             OperationType = ProductOperationType.Create
         };
 
@@ -64,7 +64,7 @@ public class ResponsesTests
         deserializedResponse.Product.Name.Should().Be("Test Product");
         deserializedResponse.Product.Description.Should().Be("Test Description");
         deserializedResponse.Product.Price.Should().Be(10.99m);
-        deserializedResponse.Product.Quantity.Should().Be(5);
+        deserializedResponse.Product.QuantityInStock.Should().Be(5);
         deserializedResponse.Product.OperationType.Should().Be(ProductOperationType.Create);
     }
 
@@ -80,7 +80,7 @@ public class ResponsesTests
                 Name = "Test Product 1",
                 Description = "Test Description 1",
                 Price = 10.99m,
-                Quantity = 5,
+                QuantityInStock = 5,
                 OperationType = ProductOperationType.Create
             },
             new ProductMessage
@@ -89,7 +89,7 @@ public class ResponsesTests
                 Name = "Test Product 2",
                 Description = "Test Description 2",
                 Price = 20.99m,
-                Quantity = 10,
+                QuantityInStock = 10,
                 OperationType = ProductOperationType.Create
             }
         };
@@ -131,7 +131,7 @@ public class ResponsesTests
                 Name = "Test Product 1",
                 Description = "Test Description 1",
                 Price = 10.99m,
-                Quantity = 5
+                QuantityInStock = 5
             },
             new ProductMessage
             {
@@ -139,7 +139,7 @@ public class ResponsesTests
                 Name = "Test Product 2",
                 Description = "Test Description 2",
                 Price = 20.99m,
-                Quantity = 10
+                QuantityInStock = 10
             }
         };
 

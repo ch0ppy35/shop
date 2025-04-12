@@ -1,3 +1,9 @@
+FROM golang:1.24-alpine AS webserver-builder
+
+WORKDIR /app
+COPY Scripts/webserver/webserver.go .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o webserver webserver.go
+
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 WORKDIR /src
@@ -6,12 +12,6 @@ RUN dotnet restore
 COPY . .
 RUN dotnet build "Frontend.csproj" -c Release -o /app/build
 RUN dotnet publish "Frontend.csproj" -c Release -o /app/publish
-
-FROM golang:1.24-alpine AS webserver-builder
-
-WORKDIR /app
-COPY Scripts/webserver/webserver.go .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o webserver webserver.go
 
 FROM scratch AS dist
 

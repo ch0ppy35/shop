@@ -122,7 +122,7 @@ public class ProductRepository : IProductRepository
         existingProduct.Name = product.Name;
         existingProduct.Description = product.Description;
         existingProduct.Price = product.Price;
-        existingProduct.Quantity = product.Quantity;
+        // Quantity field removed - using QuantityInStock instead
         existingProduct.Sku = product.Sku;
         existingProduct.Location = product.Location;
         existingProduct.QuantityInStock = product.QuantityInStock;
@@ -168,7 +168,7 @@ public class ProductRepository : IProductRepository
             Name = entity.Name,
             Description = entity.Description,
             Price = entity.Price,
-            Quantity = entity.Quantity,
+            // Quantity field removed - using QuantityInStock instead
             Sku = entity.Sku,
             Location = entity.Location,
             QuantityInStock = entity.QuantityInStock,
@@ -188,7 +188,7 @@ public class ProductRepository : IProductRepository
             Name = message.Name ?? string.Empty,
             Description = message.Description,
             Price = message.Price,
-            Quantity = message.Quantity,
+            // Quantity field removed - using QuantityInStock instead
             Sku = message.Sku ?? string.Empty,
             Location = message.Location ?? string.Empty,
             QuantityInStock = message.QuantityInStock,
