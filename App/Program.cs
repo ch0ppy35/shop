@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.JSInterop;
 using Frontend;
 using Frontend.Services;
 
@@ -22,7 +21,7 @@ var apiBaseUrl = configuration["ApiBaseUrl"] ?? "http://localhost:8080";
 Console.WriteLine($"Using API base URL from config: {apiBaseUrl}");
 
 // Register HttpClient factory that can be dynamically configured
-builder.Services.AddScoped<HttpClient>(sp =>
+builder.Services.AddScoped(sp =>
 {
     // Use the configuration from appsettings.json as default
     return new HttpClient { BaseAddress = new Uri(apiBaseUrl) };

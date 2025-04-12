@@ -39,22 +39,25 @@ else
     <nav aria-label="Page navigation">
         <ul class="pagination justify-content-center">
             <li class="page-item @(products.HasPreviousPage ? "" : "disabled")">
-                <a class="page-link" href="@GetPageUrl(products.PageNumber - 1)" aria-label="Previous">
+                <button class="page-link" @onclick="() => NavigateToPage(products.PageNumber - 1)"
+                    disabled="@(!products.HasPreviousPage)" aria-label="Previous">
                     <span aria-hidden="true">&laquo;</span>
-                </a>
+                </button>
             </li>
 
             @for (int i = 1; i <= products.TotalPages; i++)
             {
-                <li class="page-item @(i == products.PageNumber ? "active" : "")">
-                    <a class="page-link" href="@GetPageUrl(i)">@i</a>
+                var pageNumber = i;
+                <li class="page-item @(pageNumber == products.PageNumber ? "active" : "")">
+                    <button class="page-link" @onclick="() => NavigateToPage(pageNumber)">@pageNumber</button>
                 </li>
             }
 
             <li class="page-item @(products.HasNextPage ? "" : "disabled")">
-                <a class="page-link" href="@GetPageUrl(products.PageNumber + 1)" aria-label="Next">
+                <button class="page-link" @onclick="() => NavigateToPage(products.PageNumber + 1)"
+                    disabled="@(!products.HasNextPage)" aria-label="Next">
                     <span aria-hidden="true">&raquo;</span>
-                </a>
+                </button>
             </li>
         </ul>
     </nav>
@@ -75,11 +78,20 @@ else
         var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("page", out var pageValue))
         {
-            if (int.TryParse(pageValue, out var page))
+            if (int.TryParse(pageValue, out var page) && page > 0)
             {
-                currentPage = page;
-                await LoadProductsAsync(currentPage);
+                // Only load if the page is different from the current page
+                if (page != currentPage)
+                {
+                    currentPage = page;
+                    await LoadProductsAsync(currentPage);
+                }
             }
+        }
+        else if (currentPage != 1)
+        {
+            // If no page parameter is in the URL, go to page 1
+            await NavigateToPage(1);
         }
     }
 
@@ -89,8 +101,18 @@ else
         currentPage = products.PageNumber;
     }
 
-    private string GetPageUrl(int page)
+    private async Task NavigateToPage(int page)
     {
-        return $"/products?page={page}";
+        if (page < 1 || (products != null && page > products.TotalPages))
+        {
+            return;
+        }
+
+        currentPage = page;
+        await LoadProductsAsync(page);
+
+        // Update the URL without causing a navigation
+        var uri = NavigationManager.GetUriWithQueryParameter("page", page);
+        NavigationManager.NavigateTo(uri, false);
     }
 }

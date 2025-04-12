@@ -1,6 +1,5 @@
 using System.Net.Http.Json;
 using Frontend.Models;
-using Microsoft.Extensions.Configuration;
 
 namespace Frontend.Services;
 
