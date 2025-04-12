@@ -1,0 +1,96 @@
+@page "/products"
+@inject ProductService ProductService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Products</PageTitle>
+
+<h1>Products</h1>
+
+<p>Browse our selection of products.</p>
+
+@if (products == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (products.Items == null || !products.Items.Any())
+{
+    <p>No products found.</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+        @foreach (var product in products.Items)
+        {
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">@product.Name</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">$@product.Price.ToString("F2")</h6>
+                        <p class="card-text">@(product.Description?.Length > 100 ? product.Description.Substring(0, 100) + "..."
+                                                : product.Description)</p>
+                <p class="card-text"><small class="text-muted">In Stock: @product.QuantityInStock</small></p>
+                <a href="/products/@product.Id" class="btn btn-primary">View Details</a>
+            </div>
+        </div>
+    </div>
+        }
+    </div>
+
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(products.HasPreviousPage ? "" : "disabled")">
+                <a class="page-link" href="@GetPageUrl(products.PageNumber - 1)" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+
+            @for (int i = 1; i <= products.TotalPages; i++)
+            {
+                <li class="page-item @(i == products.PageNumber ? "active" : "")">
+                    <a class="page-link" href="@GetPageUrl(i)">@i</a>
+                </li>
+            }
+
+            <li class="page-item @(products.HasNextPage ? "" : "disabled")">
+                <a class="page-link" href="@GetPageUrl(products.PageNumber + 1)" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+}
+
+@code {
+    private PaginatedList<Product>? products;
+    private int currentPage = 1;
+    private const int PageSize = 5;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProductsAsync(currentPage);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("page", out var pageValue))
+        {
+            if (int.TryParse(pageValue, out var page))
+            {
+                currentPage = page;
+                await LoadProductsAsync(currentPage);
+            }
+        }
+    }
+
+    private async Task LoadProductsAsync(int page)
+    {
+        products = await ProductService.GetProductsAsync(page, PageSize);
+        currentPage = products.PageNumber;
+    }
+
+    private string GetPageUrl(int page)
+    {
+        return $"/products?page={page}";
+    }
+}

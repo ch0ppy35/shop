@@ -12,7 +12,7 @@ RUN dotnet build "Frontend.csproj" -c Release -o /app/build
 RUN dotnet publish "Frontend.csproj" -c Release -o /app/publish
 
 # Stage 2: Create the Nginx container with the published app
-FROM nginx:1.27.4 AS final
+FROM nginx:1.27.4 AS dist
 WORKDIR /usr/share/nginx/html
 
 # Copy the published app to the nginx html directory

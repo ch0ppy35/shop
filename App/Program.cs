@@ -1,31 +1,35 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
+using Microsoft.JSInterop;
 using Frontend;
+using Frontend.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // Load configuration from appsettings.json
-var http = new HttpClient();
-http.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
-builder.Services.AddScoped(sp => http);
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
+    .AddJsonFile($"appsettings.{builder.HostEnvironment.Environment}.json", optional: true)
+    .Build();
 
-// Add configuration services
-builder.Services.AddScoped<IConfiguration>(sp =>
-    new ConfigurationBuilder()
-        .AddJsonFile("appsettings.json")
-        .AddJsonFile($"appsettings.{builder.HostEnvironment.Environment}.json", optional: true)
-        .Build());
+// Register configuration
+builder.Services.AddSingleton<IConfiguration>(configuration);
 
 // Configure HttpClient with API base address from configuration
-builder.Services.AddScoped(sp =>
+var apiBaseUrl = configuration["ApiBaseUrl"] ?? "http://localhost:8080";
+Console.WriteLine($"Using API base URL from config: {apiBaseUrl}");
+
+// Register HttpClient factory that can be dynamically configured
+builder.Services.AddScoped<HttpClient>(sp =>
 {
-    var config = sp.GetRequiredService<IConfiguration>();
-    var apiBaseUrl = config["ApiBaseUrl"] ?? "http://localhost:8080";
+    // Use the configuration from appsettings.json as default
     return new HttpClient { BaseAddress = new Uri(apiBaseUrl) };
 });
+
+// Register services
+builder.Services.AddScoped<ConfigurationService>();
+builder.Services.AddScoped<ProductService>();
 
 await builder.Build().RunAsync();
