@@ -1,0 +1,84 @@
+@page "/products/{id}"
+@inject ProductService ProductService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Product Details</PageTitle>
+
+@if (product == null && !loading)
+{
+    <div class="alert alert-warning" role="alert">
+        Product not found.
+    </div>
+    <button class="btn btn-primary" @onclick="GoBack">Back to Products</button>
+}
+else if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-8">
+            <h1>@product?.Name</h1>
+            <div class="mb-3">
+                <span class="badge bg-primary">SKU: @product?.Sku</span>
+                <span class="badge bg-info">@product?.QuantityInStock in stock</span>
+            </div>
+            <h2 class="text-primary">$@product?.Price.ToString("F2")</h2>
+            <hr />
+            <h3>Description</h3>
+            <p>@product?.Description</p>
+            <hr />
+            <h3>Inventory Details</h3>
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th>Location</th>
+                        <td>@product?.Location</td>
+                    </tr>
+                    <tr>
+                        <th>Quantity in Stock</th>
+                        <td>@product?.QuantityInStock</td>
+                    </tr>
+                    <tr>
+                        <th>Reorder Threshold</th>
+                        <td>@product?.ReorderThreshold</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="mt-4">
+                <button class="btn btn-primary" @onclick="GoBack">Back to Products</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    private Product? product;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProductAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadProductAsync();
+    }
+
+    private async Task LoadProductAsync()
+    {
+        loading = true;
+        product = await ProductService.GetProductAsync(Id);
+        loading = false;
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+}

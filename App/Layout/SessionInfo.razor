@@ -1,0 +1,37 @@
+@inject SessionService SessionService
+@implements IAsyncDisposable
+
+<div class="session-info small text-muted">
+    <span title="Session ID">Session ID: @_sessionId</span>
+</div>
+
+@code {
+    private string _sessionId = "Loading...";
+    private Timer? _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await UpdateSessionIdAsync();
+        
+        // Set up a timer to refresh the session ID every 30 seconds
+        _timer = new Timer(async _ => 
+        {
+            await UpdateSessionIdAsync();
+            await InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+    }
+
+    private async Task UpdateSessionIdAsync()
+    {
+        _sessionId = await SessionService.GetSessionIdAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_timer != null)
+        {
+            await _timer.DisposeAsync();
+            _timer = null;
+        }
+    }
+}

@@ -1,14 +1,27 @@
 services:
   nats:
-    image: nats:2.11
+    image: nats:2.11-scratch
     ports:
       - "4222:4222"
       - "8222:8222"
     networks:
       - nats-shop-network
 
+  frontend:
+    build:
+      context: ./App
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    depends_on:
+      - gateway
+    networks:
+      - nats-shop-network
+
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres

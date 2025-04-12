@@ -1,46 +1,96 @@
 # NATS Shop
 
-A microservice-based webshop using NATS for messaging.
+A modern microservice-based webshop application built with .NET, Blazor WebAssembly, and NATS messaging.
 
-## Architecture
+## Architecture Overview
 
-The application consists of the following components:
+NATS Shop is designed as a microservice architecture with the following components:
 
-- **Gateway**: An ASP.NET Core Web API that handles HTTP requests and publishes messages to NATS.
-- **Products Service**: A .NET console application that consumes product-related messages from NATS and manages product data including inventory.
-- **NATS**: The messaging system that enables communication between services.
+- **Frontend**: A Blazor WebAssembly application that provides the user interface
+- **API Gateway**: An ASP.NET Core Web API that handles HTTP requests and publishes messages to NATS
+- **Products Service**: A .NET console application that consumes product-related messages from NATS and manages product data including inventory
+- **NATS**: The messaging system that enables communication between services
+- **PostgreSQL**: The database for storing product and inventory data
 
-## Services
+## Architecture Details
 
-### Gateway
+### Frontend (Blazor WebAssembly)
 
-The Gateway service is an ASP.NET Core Web API that:
+The frontend is a single-page application built with Blazor WebAssembly that runs entirely in the browser:
 
-- Exposes RESTful endpoints for products and inventory
-- Publishes messages to NATS for processing by other services
-- Provides health and readiness endpoints
+- **Technology**: .NET 9.0, Blazor WebAssembly
+- **Deployment**: Containerized with a lightweight Go webserver
+- **Features**:
+  - Responsive product catalog with pagination
+  - Product details view
+  - Admin interface for managing products
+  - Session tracking across page loads
+  - Configurable API endpoints for different environments
+
+### API Gateway
+
+The Gateway service is an ASP.NET Core Web API that acts as the entry point for all client requests:
+
+- **Technology**: ASP.NET Core 9.0
+- **Responsibilities**:
+  - Exposes RESTful endpoints for products and inventory
+  - Publishes messages to NATS for processing by other services
+  - Implements request/reply pattern with NATS
+  - Provides health and readiness endpoints
+  - Manages session IDs for request tracking
+  - Handles CORS for browser requests
 
 ### Products Service
 
-The Products service is a .NET console application that:
+The Products service is a .NET console application that manages product data and inventory:
 
-- Consumes product-related messages from NATS
-- Manages product data including inventory information
-- Processes product operations (create, update, delete, get)
-- Manages inventory levels for products
-- Processes inventory-related operations
-- Provides real-time inventory status updates
+- **Technology**: .NET 9.0, Entity Framework Core
+- **Responsibilities**:
+  - Consumes product-related messages from NATS
+  - Manages product data including inventory information
+  - Processes product operations (create, update, delete, get)
+  - Manages inventory levels for products
+  - Handles database migrations and seeding
+  - Preserves session IDs in responses
 
-## Common Library
+### Common Library
 
-The Common library provides shared functionality for all services:
+The Common library provides shared functionality for all backend services:
 
-- JSON logging
-- NATS connection management
-- Health checking
-- Common message models
-- Database access with Entity Framework Core
-- Database migrations with EF Core
+- **Technology**: .NET 9.0
+- **Features**:
+  - Structured JSON logging
+  - NATS connection management with retry logic
+  - Health checking endpoints
+  - Common message models and DTOs
+  - Database access with Entity Framework Core
+  - Database migrations
+  - Shared service extensions
+
+## Communication Flow
+
+```
+┌─────────────┐      HTTP      ┌─────────────┐     NATS     ┌─────────────┐
+│   Frontend  │ ─────────────> │   Gateway   │ ───────────> │  Products   │
+│  (Browser)  │ <───────────── │    (API)    │ <─────────── │  Service    │
+└─────────────┘                └─────────────┘              └──────┬──────┘
+                                                                   │
+                                                                   │
+                                                            ┌──────▼──────┐
+                                                            │  PostgreSQL  │
+                                                            │  Database    │
+                                                            └─────────────┘
+```
+
+The communication flow works as follows:
+
+1. **User Interaction**: The user interacts with the Blazor WebAssembly frontend
+2. **API Request**: The frontend makes HTTP requests to the Gateway API
+3. **Session Tracking**: Each request includes a session ID for tracking
+4. **Message Publishing**: The Gateway publishes messages to NATS
+5. **Service Processing**: The Products service consumes messages and processes them
+6. **Database Operations**: The Products service performs database operations
+7. **Response**: Results are sent back through NATS to the Gateway and then to the frontend
 
 ## Running the Application
 
@@ -51,19 +101,25 @@ The Common library provides shared functionality for all services:
 
 ### Using Docker Compose
 
+The easiest way to run the entire application stack is with Docker Compose:
+
 ```bash
 # Start all services
 docker-compose up
-
-# Wait for services to start and migrations to complete, then in a new terminal:
-./docker-seed.sh
 ```
 
-This will seed the database with sample product data after the services have started and migrations have completed.
+This will start:
+- The frontend on http://localhost:8081
+- The Gateway API on http://localhost:8080
+- The Products service
+- NATS messaging system
+- PostgreSQL database
 
-### Development
+The Products service will automatically run database migrations and seed the database with sample data.
 
-To run the services locally:
+### Development Environment
+
+To run the services locally for development:
 
 1. Start PostgreSQL and NATS:
 
@@ -72,72 +128,126 @@ docker run -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres 
 docker run -p 4222:4222 -p 8222:8222 nats:latest
 ```
 
-2. Create the database and seed it with sample data:
+2. Create the database:
 
 ```bash
 psql -h localhost -U postgres -c "CREATE DATABASE products;"
-
-# After running the Products service to apply migrations, seed the database
-./seed-database.sh
 ```
 
-3. Run the Gateway service:
-
-```bash
-cd Services/Gateway
-dotnet run
-```
-
-4. Run the Products service:
+3. Run the Products service (this will apply migrations):
 
 ```bash
 cd Services/Products
 dotnet run
 ```
 
-### Database Migrations
+4. Run the Gateway service:
 
-The application uses Entity Framework Core to manage database migrations. Migrations are automatically applied when the services start. To add a new migration:
+```bash
+cd Services/Gateway
+dotnet run
+```
 
-1. Navigate to the service directory
-2. Run `dotnet ef migrations add <MigrationName>`
-3. Restart the service to apply the migration
+5. Run the Frontend application:
 
-## API Endpoints
+```bash
+cd App
+dotnet run
+```
 
-### Health and Readiness
+## Technical Features
+
+### Frontend Application Structure
+
+The Blazor WebAssembly frontend is organized as follows:
+
+- **Pages**: Contains the main application pages
+  - `Home.razor`: Landing page
+  - `Products.razor`: Product catalog with pagination
+  - `ProductDetails.razor`: Detailed view of a single product
+  - `About.razor`: Information about the application
+- **Layout**: Contains layout components
+  - `MainLayout.razor`: Main application layout
+  - `NavMenu.razor`: Navigation menu
+  - `SessionInfo.razor`: Displays the current session ID
+- **Services**: Contains service classes for API communication
+  - `ProductService.cs`: Handles product API requests
+  - `SessionService.cs`: Manages session IDs
+  - `ConfigurationService.cs`: Handles application configuration
+- **Models**: Contains data models
+  - `Product.cs`: Product data model
+  - `PaginatedList.cs`: Pagination support
+
+### Database Management
+
+The application uses Entity Framework Core to manage database operations:
+
+- **Migrations**: Automatically applied when the Products service starts
+- **Seeding**: Sample product data is loaded on first run
+- **Entity Framework Core**: Used for database access and modeling
+- **PostgreSQL**: Used as the database engine
+
+To add a new migration during development:
+
+```bash
+cd Services/Products
+dotnet ef migrations add <MigrationName>
+```
+
+### Session Management
+
+The application implements cross-service session tracking:
+
+- **Browser Storage**: Frontend stores session IDs in local storage
+- **Request Headers**: Session IDs are included in all API requests via the `X-Session-ID` header
+- **Middleware**: Gateway adds session IDs to requests if not present
+- **Message Propagation**: Session IDs are included in NATS messages
+- **Response Headers**: Session IDs are returned in response headers
+
+### Messaging with NATS
+
+NATS is used for service-to-service communication:
+
+- **Request/Reply Pattern**: Used for synchronous operations
+- **Message Serialization**: JSON serialization for messages
+- **Connection Resilience**: Automatic reconnection and retry logic
+- **Message Routing**: Subject-based routing for different operations
+
+### API Endpoints
+
+#### Health and Readiness
 
 - `GET http://localhost:8080/healthz`: Health check endpoint
 - `GET http://localhost:8080/readinessz`: Readiness check endpoint
 
-### Products
+#### Products
 
-- `GET http://localhost:8080/api/products`: Get all products
+- `GET http://localhost:8080/api/products`: Get paginated products
 - `GET http://localhost:8080/api/products/{id}`: Get a product by ID
 - `POST http://localhost:8080/api/products`: Create a new product
 - `PUT http://localhost:8080/api/products/{id}`: Update a product
 - `DELETE http://localhost:8080/api/products/{id}`: Delete a product
 
-### Inventory
+#### Inventory
 
-- `GET http://localhost:8080/api/products/{id}/inventory`: Get inventory status for a specific product
-- `PUT http://localhost:8080/api/products/{id}/inventory`: Update inventory for a product
+- `GET http://localhost:8080/api/products/{id}/inventory`: Get inventory status
+- `PUT http://localhost:8080/api/products/{id}/inventory`: Update inventory
 
-## Environment Variables
+## Configuration
 
+### Environment Variables
+
+#### Gateway Service
 - `NATS_URL`: The URL of the NATS server (default: `nats://localhost:4222`)
 - `ASPNETCORE_URLS`: The URLs to listen on (default: `http://0.0.0.0:8080`)
 - `ASPNETCORE_ENVIRONMENT`: The environment (Development, Staging, Production)
+
+#### Products Service
+- `NATS_URL`: The URL of the NATS server (default: `nats://localhost:4222`)
 - `DB_CONNECTION_STRING`: The PostgreSQL connection string (default: `Host=localhost;Database=products;Username=postgres;Password=postgres`)
 
-## Session IDs
-
-The application supports session IDs for tracking requests across services:
-
-- Session IDs can be provided in the `X-Session-ID` header
-- If no session ID is provided, a new one is generated
-- Session IDs are passed to all downstream services
-- Session IDs are included in response headers and response bodies
+#### Frontend
+- `ApiBaseUrl`: Configured in appsettings.json or can be overridden with JavaScript
 
 ## Example API Calls
 
@@ -145,23 +255,57 @@ The application supports session IDs for tracking requests across services:
 # Health check
 curl http://localhost:8080/healthz
 
+# Get products with pagination
+curl http://localhost:8080/api/products?page=1&pageSize=5
+
+# Get a specific product
+curl http://localhost:8080/api/products/prod-001
+
 # Create a product
 curl -X POST http://localhost:8080/api/products \
   -H "Content-Type: application/json" \
   -d '{"name":"Test Product","description":"A test product","price":29.99,"quantity":10,"sku":"SKU123","location":"Warehouse A","quantityInStock":50,"reorderThreshold":10}'
 
-# Get all products
-curl http://localhost:8080/api/products
-
-# Get inventory status for a product
-curl http://localhost:8080/api/products/prod-001/inventory
-
-# Update inventory for a product
-curl -X PUT http://localhost:8080/api/products/prod-001/inventory \
-  -H "Content-Type: application/json" \
-  -d '{"sku":"KB-ERG-001","location":"Warehouse A","quantityInStock":60,"reorderThreshold":15}'
-
 # Using a session ID
 curl -X GET http://localhost:8080/api/products \
   -H "X-Session-ID: my-custom-session-id"
 ```
+
+## Testing
+
+The application includes comprehensive test suites for each component:
+
+### Running Tests
+
+```bash
+# Run all tests
+dotnet test
+
+# Run specific test project
+dotnet test Tests/Common.Tests/Common.Tests.csproj
+dotnet test Tests/Products.Tests/Products.Tests.csproj
+dotnet test Tests/App.Tests/App.Tests.csproj
+```
+
+### Test Projects
+
+- **Common.Tests**: Tests for the Common library
+  - Database utilities
+  - Logging functionality
+  - Messaging components
+  - Health checks
+  - Model serialization
+
+- **Products.Tests**: Tests for the Products service
+  - Repository operations
+  - Service methods
+  - Message handling
+  - Database operations
+
+- **App.Tests**: Tests for the frontend application
+  - Component rendering
+  - Service functionality
+  - Session management
+  - Navigation
+
+The tests use xUnit as the test framework, Moq for mocking, and bUnit for Blazor component testing.

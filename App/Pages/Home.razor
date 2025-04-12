@@ -1,0 +1,28 @@
+﻿@page "/"
+@inject NavigationManager NavigationManager
+
+<PageTitle>NATS Shop - Home</PageTitle>
+
+<div class="text-center my-5">
+    <h1 class="display-4">Welcome to NATS Shop</h1>
+    <p class="lead">A microservice-based webshop built with .NET, Wasm, and NATS messaging</p>
+    <hr class="my-4">
+    <p>Browse our selection of products or learn more about this application.</p>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <button type="button" class="btn btn-primary btn-lg px-4 gap-3" @onclick="NavigateToProducts">Browse
+            Products</button>
+        <button type="button" class="btn btn-outline-secondary btn-lg px-4" @onclick="NavigateToAbout">About</button>
+    </div>
+</div>
+
+@code {
+    private void NavigateToProducts()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+
+    private void NavigateToAbout()
+    {
+        NavigationManager.NavigateTo("/about");
+    }
+}
