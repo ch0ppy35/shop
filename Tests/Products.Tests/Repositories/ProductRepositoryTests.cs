@@ -212,7 +212,7 @@ public class ProductRepositoryTests : IClassFixture<InMemoryDbContextFixture>
         entity.Name.Should().Be(message.Name);
         entity.Description.Should().Be(message.Description);
         entity.Price.Should().Be(message.Price);
-        entity.Quantity.Should().Be(message.Quantity);
+        // Quantity field removed - using QuantityInStock instead
         entity.Sku.Should().Be(message.Sku);
         entity.Location.Should().Be(message.Location);
         entity.QuantityInStock.Should().Be(message.QuantityInStock);

@@ -68,6 +68,31 @@ services:
     networks:
       - nats-shop-network
 
+  cart:
+    build:
+      context: .
+      dockerfile: Services/Cart/Dockerfile
+    environment:
+      - NATS_URL=nats://nats:4222
+      - REDIS_CONNECTION_STRING=valkey:6379
+    depends_on:
+      - nats
+      - valkey
+    networks:
+      - nats-shop-network
+
+  valkey:
+    image: valkey/valkey:8.1-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - nats-shop-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 networks:
   nats-shop-network:
     driver: bridge
