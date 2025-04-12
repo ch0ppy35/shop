@@ -20,16 +20,20 @@ public class NavMenuTests : TestContext
 
         // Check for the navigation links
         var navLinks = cut.FindAll("a.nav-link");
-        Assert.Equal(3, navLinks.Count);
+        Assert.Equal(4, navLinks.Count);
 
         // Check the Home link
         Assert.Contains(navLinks, link => link.TextContent.Contains("Home"));
 
+        // Check the About link
+        Assert.Contains(navLinks, link => link.TextContent.Contains("About"));
+
+        // Check the Admin link
+        Assert.Contains(navLinks, link => link.TextContent.Contains("Admin"));
+
         // Check the Products link
         Assert.Contains(navLinks, link => link.TextContent.Contains("Products"));
 
-        // Check the About link
-        Assert.Contains(navLinks, link => link.TextContent.Contains("About"));
     }
 
     [Fact]
