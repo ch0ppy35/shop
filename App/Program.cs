@@ -20,6 +20,9 @@ builder.Services.AddSingleton<IConfiguration>(configuration);
 var apiBaseUrl = configuration["ApiBaseUrl"] ?? "http://localhost:8080";
 Console.WriteLine($"Using API base URL from config: {apiBaseUrl}");
 
+// Register JavaScript interop service
+builder.Services.AddScoped<IJavaScriptInterop, JavaScriptInterop>();
+
 // Register session service
 builder.Services.AddScoped<SessionService>();
 

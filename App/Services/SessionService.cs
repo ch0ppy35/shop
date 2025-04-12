@@ -1,5 +1,3 @@
-using Microsoft.JSInterop;
-
 namespace Frontend.Services;
 
 /// <summary>
@@ -7,16 +5,16 @@ namespace Frontend.Services;
 /// </summary>
 public class SessionService
 {
-    private readonly IJSRuntime _jsRuntime;
+    private readonly IJavaScriptInterop _jsInterop;
     private string? _sessionId;
     private const string SessionIdStorageKey = "nats_shop_session_id";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionService"/> class
     /// </summary>
-    public SessionService(IJSRuntime jsRuntime)
+    public SessionService(IJavaScriptInterop jsInterop)
     {
-        _jsRuntime = jsRuntime;
+        _jsInterop = jsInterop;
     }
 
     /// <summary>
@@ -33,7 +31,7 @@ public class SessionService
         try
         {
             // Try to get the session ID from local storage using our JavaScript helper
-            var storedSessionId = await _jsRuntime.InvokeAsync<string?>("configHelper.session.getSessionId");
+            var storedSessionId = await _jsInterop.GetSessionId();
 
             if (!string.IsNullOrEmpty(storedSessionId))
             {
@@ -52,7 +50,7 @@ public class SessionService
         try
         {
             // Store the new session ID in local storage using our JavaScript helper
-            await _jsRuntime.InvokeVoidAsync("configHelper.session.setSessionId", _sessionId);
+            await _jsInterop.SetSessionId(_sessionId);
         }
         catch (Exception ex)
         {
