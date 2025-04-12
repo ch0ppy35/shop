@@ -1,31 +1,29 @@
 # Stage 1: Build the Blazor WebAssembly app
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /src
 
-# Copy csproj and restore dependencies
+WORKDIR /src
 COPY ["Frontend.csproj", "./"]
 RUN dotnet restore
-
-# Copy the rest of the files and build
 COPY . .
 RUN dotnet build "Frontend.csproj" -c Release -o /app/build
 RUN dotnet publish "Frontend.csproj" -c Release -o /app/publish
 
-# Stage 2: Create the Nginx container with the published app
-FROM nginx:1.27.4 AS dist
-WORKDIR /usr/share/nginx/html
+FROM golang:1.24-alpine AS webserver-builder
 
-# Copy the published app to the nginx html directory
-COPY --from=build /app/publish/wwwroot /usr/share/nginx/html
+WORKDIR /app
+COPY Scripts/webserver/webserver.go .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o webserver webserver.go
 
+FROM scratch AS dist
+
+WORKDIR /app
+COPY --from=webserver-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=webserver-builder /app/webserver /app/webserver
+COPY --from=build /app/publish/wwwroot /app/wwwroot
 # Set environment to Production
 ENV ASPNETCORE_ENVIRONMENT=Production
-
-# Copy custom nginx configuration if needed
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 80
+ENV SERVE_DIR=/app/wwwroot
+ENV SERVER_PORT=80
 EXPOSE 80
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/app/webserver"]

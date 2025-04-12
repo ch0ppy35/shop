@@ -19,3 +19,5 @@
 # Temporary files
 *.tmp
 *.temp
+
+publish/
