@@ -9,3 +9,6 @@ publish:
 
 test:
 	dotnet test --collect:"XPlat Code Coverage"
+
+build-web:	
+	dotnet publish -c Release -o ./App/publish

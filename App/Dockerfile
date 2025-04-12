@@ -1,8 +1,7 @@
-# Stage 1: Build the Blazor WebAssembly app
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 WORKDIR /src
-COPY ["Frontend.csproj", "./"]
+COPY  Frontend.csproj .
 RUN dotnet restore
 COPY . .
 RUN dotnet build "Frontend.csproj" -c Release -o /app/build
@@ -20,7 +19,7 @@ WORKDIR /app
 COPY --from=webserver-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=webserver-builder /app/webserver /app/webserver
 COPY --from=build /app/publish/wwwroot /app/wwwroot
-# Set environment to Production
+
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV SERVE_DIR=/app/wwwroot
 ENV SERVER_PORT=80
