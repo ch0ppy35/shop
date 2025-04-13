@@ -114,6 +114,12 @@ public class CartTests : TestContext
         // Check that the buttons are present
         var buttons = cut.FindAll("button");
         Assert.True(buttons.Count >= 5); // At least 5 buttons (quantity controls, remove, clear cart, continue shopping, checkout)
+
+        // Check that the quantity buttons have the correct icons
+        var minusButton = cut.Find("button.btn-primary:nth-child(1)");
+        var plusButton = cut.Find("button.btn-primary:nth-child(3)");
+        Assert.Contains("bi-dash", minusButton.OuterHtml);
+        Assert.Contains("bi-plus", plusButton.OuterHtml);
     }
 
     [Fact]

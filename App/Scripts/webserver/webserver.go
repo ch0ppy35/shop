@@ -64,6 +64,13 @@ func (fs *customFileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.FileServer(fs.root).ServeHTTP(w, r)
 }
 
+func addServerHeader(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Server", "NATS-Shop")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	port := flag.String("port", "8080", "Port to serve on")
 	dir := flag.String("dir", "/app", "Directory to serve files from")
@@ -89,7 +96,7 @@ func main() {
 	fs := &customFileServer{root: secureFS}
 
 	// Create a handler for SPA routing
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mainHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 
 		cleanedPath := filepath.Clean(path)
@@ -114,6 +121,8 @@ func main() {
 
 		fs.ServeHTTP(w, r)
 	})
+
+	http.Handle("/", addServerHeader(mainHandler))
 
 	// Start the server
 	addr := fmt.Sprintf("0.0.0.0:%s", *port)

@@ -1,0 +1,43 @@
+@using Microsoft.AspNetCore.Components.Web
+
+<div class="tooltip-container">
+    <span class="tooltip-content" @onmouseover="ShowTooltip" @onmouseout="HideTooltip">@Content</span>
+    @if (IsVisible)
+    {
+        <div class="custom-tooltip @PositionClass" style="@TooltipStyle">
+            @TooltipText
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Content { get; set; } = "";
+
+    [Parameter]
+    public string TooltipText { get; set; } = "";
+
+    [Parameter]
+    public string Position { get; set; } = "top";
+
+    [Parameter]
+    public string Width { get; set; } = "auto";
+
+    private bool IsVisible { get; set; }
+
+    private string PositionClass => $"tooltip-{Position}";
+
+    private string TooltipStyle => $"width: {Width};";
+
+    private void ShowTooltip()
+    {
+        IsVisible = true;
+        StateHasChanged();
+    }
+
+    private void HideTooltip()
+    {
+        IsVisible = false;
+        StateHasChanged();
+    }
+}

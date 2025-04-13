@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using Frontend.Models
 @using Frontend.Services
+@using Frontend.Components
 @inject ProductService ProductService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
@@ -45,11 +46,8 @@ else
                 {
                     <tr>
                         <td>
-                            <div class="position-relative" style="cursor: help;">
-                                <span data-bs-toggle="tooltip" data-bs-placement="top" title="@product.Id">
-                                    @(product.Id?.Length > 8 ? product.Id.Substring(0, 8) + "..." : product.Id)
-                                </span>
-                            </div>
+                            <Tooltip Content="@(product.Id?.Length > 8 ? product.Id.Substring(0, 8) + "..." : product.Id)"
+                                TooltipText="@product.Id" Position="top" Width="auto" />
                         </td>
                         <td>@product.Name</td>
                         <td>$@product.Price.ToString("F2")</td>

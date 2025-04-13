@@ -41,16 +41,16 @@ else
                         </td>
                         <td>$@item.Price.ToString("F2")</td>
                         <td>
-                            <div class="input-group" style="width: 120px;">
+                            <div class="input-group" style="width: 150px;">
                                 <button class="btn btn-sm btn-primary" type="button"
                                     @onclick="() => UpdateQuantity(item.ProductId, Math.Max(1, item.Quantity - 1))">
-                                    <span class="bi bi-dash"></span>
+                                    <span class="bi bi-dash">-</span>
                                 </button>
-                                <input type="text" class="form-control form-control-sm text-center" value="@item.Quantity"
-                                    readonly style="-moz-appearance: textfield; -webkit-appearance: none; margin: 0;" />
+                                <input type="text" class="form-control form-control-sm text-center quantity-input" value="@item.Quantity"
+                                    readonly />
                                 <button class="btn btn-sm btn-primary" type="button"
                                     @onclick="() => UpdateQuantity(item.ProductId, item.Quantity + 1)">
-                                    <span class="bi bi-plus"></span>
+                                    <span class="bi bi-plus">+</span>
                                 </button>
                             </div>
                         </td>
