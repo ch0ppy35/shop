@@ -1,10 +1,34 @@
 using Bunit;
 using Frontend.Layout;
+using Frontend.Models;
+using Frontend.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
 
 namespace App.Tests.Layout;
 
 public class NavMenuTests : TestContext
 {
+    public NavMenuTests()
+    {
+        // Register mock CartService
+        var mockCartService = new Mock<ICartService>();
+        mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(new ShoppingCart
+        {
+            Items = new List<CartItem>(),
+            TotalPrice = 0,
+            ItemCount = 0
+        });
+        Services.AddSingleton(mockCartService.Object);
+
+        // Register mock IJSRuntime
+        var mockJsRuntime = new Mock<Microsoft.JSInterop.IJSRuntime>();
+        mockJsRuntime
+            .Setup(js => js.InvokeAsync<object>(It.IsAny<string>(), It.IsAny<object[]>()))
+            .ReturnsAsync((object)null!);
+        Services.AddSingleton(mockJsRuntime.Object);
+    }
+
     [Fact]
     public void NavMenu_ShouldRender_WithCorrectLinks()
     {
@@ -20,7 +44,7 @@ public class NavMenuTests : TestContext
 
         // Check for the navigation links
         var navLinks = cut.FindAll("a.nav-link");
-        Assert.Equal(4, navLinks.Count);
+        Assert.Equal(5, navLinks.Count);
 
         // Check the Home link
         Assert.Contains(navLinks, link => link.TextContent.Contains("Home"));
@@ -33,6 +57,9 @@ public class NavMenuTests : TestContext
 
         // Check the Products link
         Assert.Contains(navLinks, link => link.TextContent.Contains("Products"));
+
+        // Check the Cart link
+        Assert.Contains(navLinks, link => link.TextContent.Contains("Cart"));
 
     }
 

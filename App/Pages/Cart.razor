@@ -1,0 +1,256 @@
+@page "/cart"
+@inject ICartService CartService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Shopping Cart</PageTitle>
+
+<h1>Shopping Cart</h1>
+
+@if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (cart.IsEmpty)
+{
+    <div class="alert alert-info" role="alert">
+        Your cart is empty. <a href="/products" class="alert-link">Browse products</a> to add items to your cart.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in cart.Items)
+                {
+                    <tr>
+                        <td>
+                            <a href="/products/@item.ProductId">@item.Name</a>
+                        </td>
+                        <td>$@item.Price.ToString("F2")</td>
+                        <td>
+                            <div class="input-group" style="width: 120px;">
+                                <button class="btn btn-sm btn-outline-secondary" type="button"
+                                    @onclick="() => UpdateQuantity(item.ProductId, Math.Max(1, item.Quantity - 1))">
+                                    <span class="bi bi-dash"></span>
+                                </button>
+                                <input type="number" class="form-control form-control-sm text-center" value="@item.Quantity"
+                                    @onchange="@(e => UpdateQuantity(item.ProductId, int.Parse(e.Value?.ToString() ?? "1")))"
+                                    min="1" />
+                                <button class="btn btn-sm btn-outline-secondary" type="button"
+                                    @onclick="() => UpdateQuantity(item.ProductId, item.Quantity + 1)">
+                                    <span class="bi bi-plus"></span>
+                                </button>
+                            </div>
+                        </td>
+                        <td>$@item.TotalPrice.ToString("F2")</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" @onclick="() => RemoveItem(item.ProductId)">
+                                <span class="bi bi-trash"></span> Remove
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="3" class="text-end">Total:</th>
+                    <th>$@cart.TotalPrice.ToString("F2")</th>
+                    <th></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <div>
+            <button class="btn btn-outline-danger" @onclick="ClearCart">
+                <span class="bi bi-trash"></span> Clear Cart
+            </button>
+        </div>
+        <div>
+            <button class="btn btn-primary me-2" @onclick="ContinueShopping">
+                <span class="bi bi-arrow-left"></span> Continue Shopping
+            </button>
+            <button class="btn btn-success" disabled style="opacity: 0.65;">
+                <span class="bi bi-credit-card"></span> Checkout
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    private ShoppingCart cart = new ShoppingCart();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCartAsync();
+    }
+
+    private async Task LoadCartAsync()
+    {
+        loading = true;
+        cart = await CartService.GetCartAsync();
+        loading = false;
+    }
+
+    private async Task UpdateQuantity(string? productId, int quantity)
+    {
+        if (string.IsNullOrEmpty(productId) || quantity < 1)
+        {
+            return;
+        }
+
+        var success = await CartService.UpdateItemAsync(productId, quantity);
+        if (success)
+        {
+            await LoadCartAsync();
+#if !TEST
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("cartHelper.refreshNavMenu");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error refreshing nav menu: {ex.Message}");
+            }
+#endif
+        }
+        else
+        {
+#if !TEST
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Failed to update quantity. Please try again.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error showing alert: {ex.Message}");
+            }
+#endif
+        }
+    }
+
+    private async Task RemoveItem(string? productId)
+    {
+        if (string.IsNullOrEmpty(productId))
+        {
+            return;
+        }
+
+#if TEST
+var confirmed = true;
+#else
+        bool confirmed = false;
+        try
+        {
+            confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to remove this item from your cart?");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error showing confirmation: {ex.Message}");
+            confirmed = true; // Default to true in case of error
+        }
+#endif
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var success = await CartService.RemoveItemAsync(productId);
+        if (success)
+        {
+            await LoadCartAsync();
+#if !TEST
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("cartHelper.refreshNavMenu");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error refreshing nav menu: {ex.Message}");
+            }
+#endif
+        }
+        else
+        {
+#if !TEST
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Failed to remove item. Please try again.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error showing alert: {ex.Message}");
+            }
+#endif
+        }
+    }
+
+    private async Task ClearCart()
+    {
+#if TEST
+var confirmed = true;
+#else
+        bool confirmed = false;
+        try
+        {
+            confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to clear your cart?");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error showing confirmation: {ex.Message}");
+            confirmed = true; // Default to true in case of error
+        }
+#endif
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var success = await CartService.ClearCartAsync();
+        if (success)
+        {
+            await LoadCartAsync();
+#if !TEST
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("cartHelper.refreshNavMenu");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error refreshing nav menu: {ex.Message}");
+            }
+#endif
+        }
+        else
+        {
+#if !TEST
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Failed to clear cart. Please try again.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error showing alert: {ex.Message}");
+            }
+#endif
+        }
+    }
+
+    private void ContinueShopping()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+}

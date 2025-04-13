@@ -1,6 +1,8 @@
 @page "/products"
 @inject ProductService ProductService
+@inject ICartService CartService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Products</PageTitle>
 
@@ -29,7 +31,10 @@ else
                         <p class="card-text">@(product.Description?.Length > 100 ? product.Description.Substring(0, 100) + "..."
                                                 : product.Description)</p>
                 <p class="card-text"><small class="text-muted">In Stock: @product.QuantityInStock</small></p>
-                <a href="/products/@product.Id" class="btn btn-primary">View Details</a>
+                <div class="d-flex justify-content-between">
+                    <a href="/products/@product.Id" class="btn btn-primary">View Details</a>
+                    <button class="btn btn-success" @onclick="() => AddToCart(product.Id)">Add to Cart</button>
+                </div>
             </div>
         </div>
     </div>
@@ -115,4 +120,45 @@ else
         var uri = NavigationManager.GetUriWithQueryParameter("page", page);
         NavigationManager.NavigateTo(uri, false);
     }
+
+    private async Task AddToCart(string? productId)
+    {
+        if (string.IsNullOrEmpty(productId))
+        {
+            return;
+        }
+
+        var success = await CartService.AddItemAsync(productId);
+
+        if (success)
+        {
+#if !TEST
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Item added to cart!");
+                // Refresh the cart count in the navigation menu
+                await JSRuntime.InvokeVoidAsync("cartHelper.refreshNavMenu");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error with JS interop: {ex.Message}");
+            }
+#endif
+        }
+        else
+        {
+#if !TEST
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Failed to add item to cart. Please try again.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error showing alert: {ex.Message}");
+            }
+#endif
+        }
+    }
+
+
 }

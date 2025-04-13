@@ -10,5 +10,11 @@ publish:
 test:
 	dotnet test --collect:"XPlat Code Coverage"
 
-build-web:	
+test-app:
+	dotnet test Tests/App.Tests/App.Tests.csproj
+
+build-app:	
 	dotnet publish -c Release -o ./App/publish
+
+build-app-docker:
+	docker build -t nats-shop-frontend:latest ./App
