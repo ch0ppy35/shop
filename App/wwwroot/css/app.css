@@ -26,6 +26,55 @@
     display: inline-block;
 }
 
+/* Dark theme enhancements */
+.mud-theme-dark .mud-card {
+    background-color: #1E1E2D;
+}
+
+.mud-theme-dark .mud-paper {
+    background-color: #1E1E2D;
+}
+
+.mud-theme-dark .mud-drawer {
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mud-theme-dark .mud-table {
+    background-color: #1E1E2D;
+}
+
+.mud-theme-dark .mud-table-container {
+    background-color: #1E1E2D;
+}
+
+.mud-theme-dark .mud-table-head {
+    background-color: #1E1E2D;
+}
+
+.mud-theme-dark .mud-table-cell {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.mud-theme-dark .mud-button-outlined.mud-button-color-primary {
+    border-color: rgba(99, 102, 241, 0.5);
+}
+
+.mud-theme-dark .mud-button-outlined.mud-button-color-info {
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+.mud-theme-dark .mud-button-outlined.mud-button-color-success {
+    border-color: rgba(16, 185, 129, 0.5);
+}
+
+.mud-theme-dark .mud-button-outlined.mud-button-color-error {
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+.mud-theme-dark .mud-button-outlined.mud-button-color-warning {
+    border-color: rgba(245, 158, 11, 0.5);
+}
+
 .content {
     padding-top: 1.1rem;
 }

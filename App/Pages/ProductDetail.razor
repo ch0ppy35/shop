@@ -24,12 +24,10 @@ else
                 <MudText Typo="Typo.h3" Class="mb-2">@product?.Name</MudText>
 
                 <div class="mb-4">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" DisableElevation="true" Class="mr-2"
-                        Style="text-transform: none;">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mr-2" Style="text-transform: none;">
                         SKU: @product?.Sku
                     </MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Info" DisableElevation="true"
-                        Style="text-transform: none;">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" Style="text-transform: none;">
                         @product?.QuantityInStock in stock
                     </MudButton>
                 </div>
