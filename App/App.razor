@@ -1,4 +1,8 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
+﻿<MudThemeProvider Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
@@ -6,7 +10,33 @@
     <NotFound>
         <PageTitle>Not found</PageTitle>
         <LayoutView Layout="@typeof(MainLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
+            <MudText Typo="Typo.h4" Class="my-4" Align="Align.Center">Sorry, there's nothing at this address.</MudText>
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    private MudTheme _theme = new MudTheme()
+    {
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#4361ee",
+            Secondary = "#3a56d4",
+            AppbarBackground = "#4361ee",
+            Background = "#f5f5f5",
+            DrawerBackground = "#ffffff",
+            DrawerText = "rgba(0,0,0, 0.7)",
+            Success = "#198754"
+        },
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#4361ee",
+            Secondary = "#3a56d4",
+            AppbarBackground = "#4361ee",
+            Background = "#f5f5f5",
+            DrawerBackground = "#ffffff",
+            DrawerText = "rgba(0,0,0, 0.7)",
+            Success = "#198754"
+        }
+    };
+}

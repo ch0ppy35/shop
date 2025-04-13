@@ -2,68 +2,163 @@
 
 <PageTitle>About NATS Shop</PageTitle>
 
-<div class="container my-5">
-    <h1>About NATS Shop</h1>
-    
-    <div class="row mt-5">
-        <div class="col-md-8">
-            <h2>Project Overview</h2>
-            <p>
-                NATS Shop is a demonstration of a modern microservice-based e-commerce application built with .NET 9.0.
-                It showcases how to build scalable, resilient, and maintainable web applications using a microservice architecture.
-            </p>
-            
-            <h3 class="mt-4">Key Features</h3>
-            <ul>
-                <li><strong>Microservice Architecture</strong> - Separate services for products, with clear boundaries and responsibilities</li>
-                <li><strong>NATS Messaging</strong> - Using NATS as a lightweight, high-performance messaging system for service communication</li>
-                <li><strong>Request/Reply Pattern</strong> - Implementing synchronous communication between services</li>
-                <li><strong>PostgreSQL Database</strong> - Storing product and inventory data in a relational database</li>
-                <li><strong>Entity Framework Core</strong> - Using EF Core for database access and migrations</li>
-                <li><strong>Blazor WebAssembly Frontend</strong> - Modern, component-based UI running in the browser</li>
-                <li><strong>Docker Containerization</strong> - Packaging the application for consistent deployment</li>
-                <li><strong>Health Monitoring</strong> - Implementing health checks for services</li>
-            </ul>
-            
-            <h3 class="mt-4">Architecture</h3>
-            <p>
-                The application follows a microservice architecture with the following components:
-            </p>
-            <ul>
-                <li><strong>Frontend</strong> - Blazor WebAssembly application that provides the user interface</li>
-                <li><strong>API Gateway</strong> - Entry point for all client requests, routing them to appropriate services</li>
-                <li><strong>Products Service</strong> - Manages product data and inventory</li>
-                <li><strong>NATS Server</strong> - Message broker for service communication</li>
-                <li><strong>PostgreSQL Database</strong> - Persistent storage for product data</li>
-            </ul>
-            
-            <h3 class="mt-4">Technologies Used</h3>
-            <ul>
-                <li>.NET 9.0</li>
-                <li>ASP.NET Core</li>
-                <li>Blazor WebAssembly</li>
-                <li>Entity Framework Core</li>
-                <li>NATS</li>
-                <li>PostgreSQL</li>
-                <li>Docker</li>
-                <li>Bootstrap 5</li>
-            </ul>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Project Information</h4>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h3" Class="mb-6">About NATS Shop</MudText>
+
+    <MudGrid Class="mt-6">
+        <MudItem xs="12" md="8">
+            <MudPaper Elevation="0" Class="pa-4">
+                <MudText Typo="Typo.h5" Class="mb-4">Project Overview</MudText>
+                <MudText Typo="Typo.body1" Class="mb-6">
+                    NATS Shop is a demonstration of a modern microservice-based e-commerce application built with .NET
+                    9.0.
+                    It showcases how to build scalable, resilient, and maintainable web applications using a
+                    microservice architecture.
+                </MudText>
+
+                <MudText Typo="Typo.h6" Class="mt-6 mb-3">Key Features</MudText>
+                <MudPaper Elevation="0" Class="pa-0">
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Architecture" Class="mr-2" />
+                        <MudText>Microservice Architecture - Separate services for products, with clear boundaries and
+                            responsibilities</MudText>
+                    </div>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Send" Class="mr-2" />
+                        <MudText>NATS Messaging - Using NATS as a lightweight, high-performance messaging system for
+                            service communication</MudText>
+                    </div>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Reply" Class="mr-2" />
+                        <MudText>Request/Reply Pattern - Implementing synchronous communication between services
+                        </MudText>
+                    </div>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Storage" Class="mr-2" />
+                        <MudText>PostgreSQL Database - Storing product and inventory data in a relational database
+                        </MudText>
+                    </div>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.DataObject" Class="mr-2" />
+                        <MudText>Entity Framework Core - Using EF Core for database access and migrations</MudText>
+                    </div>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Web" Class="mr-2" />
+                        <MudText>Blazor WebAssembly Frontend - Modern, component-based UI running in the browser
+                        </MudText>
+                    </div>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.ViewInAr" Class="mr-2" />
+                        <MudText>Docker Containerization - Packaging the application for consistent deployment</MudText>
+                    </div>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.HealthAndSafety" Class="mr-2" />
+                        <MudText>Health Monitoring - Implementing health checks for services</MudText>
+                    </div>
+                </MudPaper>
+
+                <MudText Typo="Typo.h6" Class="mt-6 mb-3">Architecture</MudText>
+                <MudText Typo="Typo.body1" Class="mb-3">
+                    The application follows a microservice architecture with the following components:
+                </MudText>
+                <MudPaper Elevation="0" Class="pa-0">
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Devices" Class="mr-2" />
+                        <MudText>Frontend - Blazor WebAssembly application that provides the user interface</MudText>
+                    </div>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Hub" Class="mr-2" />
+                        <MudText>API Gateway - Entry point for all client requests, routing them to appropriate
+                            services</MudText>
+                    </div>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Inventory" Class="mr-2" />
+                        <MudText>Products Service - Manages product data and inventory</MudText>
+                    </div>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Class="mr-2" />
+                        <MudText>NATS Server - Message broker for service communication</MudText>
+                    </div>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Storage" Class="mr-2" />
+                        <MudText>PostgreSQL Database - Persistent storage for product data</MudText>
+                    </div>
+                </MudPaper>
+
+                <MudText Typo="Typo.h6" Class="mt-6 mb-3">Technologies Used</MudText>
+                <div class="d-flex flex-wrap gap-2">
+                    <MudPaper Elevation="0" Class="pa-2 rounded-pill"
+                        Style="background-color: var(--mud-palette-primary-lighten)">
+                        <MudText Color="Color.Primary" Typo="Typo.caption">.NET 9.0</MudText>
+                    </MudPaper>
+                    <MudPaper Elevation="0" Class="pa-2 rounded-pill"
+                        Style="background-color: var(--mud-palette-primary-lighten)">
+                        <MudText Color="Color.Primary" Typo="Typo.caption">ASP.NET Core</MudText>
+                    </MudPaper>
+                    <MudPaper Elevation="0" Class="pa-2 rounded-pill"
+                        Style="background-color: var(--mud-palette-primary-lighten)">
+                        <MudText Color="Color.Primary" Typo="Typo.caption">Blazor WebAssembly</MudText>
+                    </MudPaper>
+                    <MudPaper Elevation="0" Class="pa-2 rounded-pill"
+                        Style="background-color: var(--mud-palette-primary-lighten)">
+                        <MudText Color="Color.Primary" Typo="Typo.caption">Entity Framework Core</MudText>
+                    </MudPaper>
+                    <MudPaper Elevation="0" Class="pa-2 rounded-pill"
+                        Style="background-color: var(--mud-palette-primary-lighten)">
+                        <MudText Color="Color.Primary" Typo="Typo.caption">NATS</MudText>
+                    </MudPaper>
+                    <MudPaper Elevation="0" Class="pa-2 rounded-pill"
+                        Style="background-color: var(--mud-palette-primary-lighten)">
+                        <MudText Color="Color.Primary" Typo="Typo.caption">PostgreSQL</MudText>
+                    </MudPaper>
+                    <MudPaper Elevation="0" Class="pa-2 rounded-pill"
+                        Style="background-color: var(--mud-palette-primary-lighten)">
+                        <MudText Color="Color.Primary" Typo="Typo.caption">Docker</MudText>
+                    </MudPaper>
+                    <MudPaper Elevation="0" Class="pa-2 rounded-pill"
+                        Style="background-color: var(--mud-palette-primary-lighten)">
+                        <MudText Color="Color.Primary" Typo="Typo.caption">MudBlazor</MudText>
+                    </MudPaper>
                 </div>
-                <div class="card-body">
-                    <p><strong>Version:</strong> 1.0.0</p>
-                    <p><strong>Framework:</strong> .NET 9.0</p>
-                    <p><strong>Frontend:</strong> Blazor WebAssembly</p>
-                    <p><strong>Backend:</strong> ASP.NET Core Microservices</p>
-                    <p><strong>Database:</strong> PostgreSQL</p>
-                    <p><strong>Messaging:</strong> NATS</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudCard Elevation="3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Project Information</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <div>
+                        <MudText Class="d-flex align-center mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Tag" Class="mr-2" Size="Size.Small" />
+                            <span>Version: 1.0.0</span>
+                        </MudText>
+                        <MudText Class="d-flex align-center mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Code" Class="mr-2" Size="Size.Small" />
+                            <span>Framework: .NET 9.0</span>
+                        </MudText>
+                        <MudText Class="d-flex align-center mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Web" Class="mr-2" Size="Size.Small" />
+                            <span>Frontend: Blazor WebAssembly</span>
+                        </MudText>
+                        <MudText Class="d-flex align-center mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Api" Class="mr-2" Size="Size.Small" />
+                            <span>Backend: ASP.NET Core Microservices</span>
+                        </MudText>
+                        <MudText Class="d-flex align-center mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Storage" Class="mr-2" Size="Size.Small" />
+                            <span>Database: PostgreSQL</span>
+                        </MudText>
+                        <MudText Class="d-flex align-center mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Send" Class="mr-2" Size="Size.Small" />
+                            <span>Messaging: NATS</span>
+                        </MudText>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>

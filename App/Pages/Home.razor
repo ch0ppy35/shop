@@ -3,17 +3,31 @@
 
 <PageTitle>NATS Shop - Home</PageTitle>
 
-<div class="text-center my-5">
-    <h1 class="display-4">Welcome to NATS Shop</h1>
-    <p class="lead">A microservice-based webshop built with .NET, Wasm, and NATS messaging</p>
-    <hr class="my-4">
-    <p>Browse our selection of products or learn more about this application.</p>
-    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-        <button type="button" class="btn btn-primary btn-lg px-4 gap-3" @onclick="NavigateToProducts">Browse
-            Products</button>
-        <button type="button" class="btn btn-outline-secondary btn-lg px-4" @onclick="NavigateToAbout">About</button>
-    </div>
-</div>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-16">
+    <MudText Typo="Typo.h2" Align="Align.Center" GutterBottom="true" Class="mt-8">Welcome to NATS Shop</MudText>
+    <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-8">A microservice-based webshop built with .NET, Wasm, and
+        NATS messaging</MudText>
+
+    <MudDivider Class="my-6" />
+
+    <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-8">Browse our selection of products or learn more about
+        this application.</MudText>
+
+    <MudGrid Justify="Justify.Center" Class="mt-8">
+        <MudItem>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="NavigateToProducts"
+                StartIcon="@Icons.Material.Filled.ShoppingBag">
+                Browse Products
+            </MudButton>
+        </MudItem>
+        <MudItem>
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Large" OnClick="NavigateToAbout"
+                StartIcon="@Icons.Material.Filled.Info">
+                About
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
     private void NavigateToProducts()

@@ -7,85 +7,66 @@
 
 <PageTitle>Shopping Cart</PageTitle>
 
-<h1>Shopping Cart</h1>
+<MudText Typo="Typo.h3" Class="mb-4">Shopping Cart</MudText>
 
 @if (loading)
 {
-    <p><em>Loading...</em></p>
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
 }
 else if (cart.IsEmpty)
 {
-    <div class="alert alert-info" role="alert">
-        Your cart is empty. <a href="/products" class="alert-link">Browse products</a> to add items to your cart.
-    </div>
+    <MudAlert Severity="Severity.Info" Class="my-4">
+        Your cart is empty. <MudLink Href="/products" Underline="Underline.Always">Browse products</MudLink> to add items to
+        your cart.
+    </MudAlert>
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in cart.Items)
-                {
-                    <tr>
-                        <td>
-                            <a href="/products/@item.ProductId">@item.Name</a>
-                        </td>
-                        <td>$@item.Price.ToString("F2")</td>
-                        <td>
-                            <div class="input-group" style="width: 150px;">
-                                <button class="btn btn-sm btn-primary" type="button"
-                                    @onclick="() => UpdateQuantity(item.ProductId, Math.Max(1, item.Quantity - 1))">
-                                    <span class="bi bi-dash">-</span>
-                                </button>
-                                <input type="text" class="form-control form-control-sm text-center quantity-input" value="@item.Quantity"
-                                    readonly />
-                                <button class="btn btn-sm btn-primary" type="button"
-                                    @onclick="() => UpdateQuantity(item.ProductId, item.Quantity + 1)">
-                                    <span class="bi bi-plus">+</span>
-                                </button>
-                            </div>
-                        </td>
-                        <td>$@item.TotalPrice.ToString("F2")</td>
-                        <td>
-                            <button class="btn btn-sm btn-danger" @onclick="() => RemoveItem(item.ProductId)">
-                                <span class="bi bi-trash"></span> Remove
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="3" class="text-end">Total:</th>
-                    <th>$@cart.TotalPrice.ToString("F2")</th>
-                    <th></th>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
+    <MudPaper Elevation="2" Class="pa-4 mb-4">
+        <MudTable Items="@cart.Items" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>Product</MudTh>
+                <MudTh>Price</MudTh>
+                <MudTh>Quantity</MudTh>
+                <MudTh>Total</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>
+                    <MudLink Href="@($"/products/{context.ProductId}")" Underline="Underline.Hover">@context.Name</MudLink>
+                </MudTd>
+                <MudTd>$@context.Price.ToString("F2")</MudTd>
+                <MudTd>
+                    <div class="d-flex align-center" style="width: 150px;">
+                        <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Primary"
+                            OnClick="() => UpdateQuantity(context.ProductId, Math.Max(1, context.Quantity - 1))" />
+                        <MudText Class="mx-3 text-center" Style="min-width: 30px;">@context.Quantity</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
+                            OnClick="() => UpdateQuantity(context.ProductId, context.Quantity + 1)" />
+                    </div>
+                </MudTd>
+                <MudTd>$@context.TotalPrice.ToString("F2")</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                        OnClick="() => RemoveItem(context.ProductId)" />
+                </MudTd>
+            </RowTemplate>
+            <FooterContent>
+                <MudTh Class="text-right" Style="width: 60%;">Total:</MudTh>
+                <MudTh>$@cart.TotalPrice.ToString("F2")</MudTh>
+                <MudTh></MudTh>
+            </FooterContent>
+        </MudTable>
+    </MudPaper>
 
-    <div class="d-flex justify-content-between mt-4">
+    <div class="d-flex justify-space-between mt-6">
+        <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.RemoveShoppingCart"
+            OnClick="ClearCart">Clear Cart</MudButton>
         <div>
-            <button class="btn btn-outline-danger" @onclick="ClearCart">
-                <span class="bi bi-trash"></span> Clear Cart
-            </button>
-        </div>
-        <div>
-            <button class="btn btn-primary me-2" @onclick="ContinueShopping">
-                <span class="bi bi-arrow-left"></span> Continue Shopping
-            </button>
-            <button class="btn btn-success" disabled style="opacity: 0.65;">
-                <span class="bi bi-credit-card"></span> Checkout
-            </button>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack"
+                OnClick="ContinueShopping" Class="mr-3">Continue Shopping</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Payment"
+                Disabled="true">Checkout</MudButton>
         </div>
     </div>
 }

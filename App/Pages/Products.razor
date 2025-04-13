@@ -7,66 +7,52 @@
 
 <PageTitle>Products</PageTitle>
 
-<h1>Products</h1>
+<MudText Typo="Typo.h3" Class="mb-4">Products</MudText>
 
-<p>Browse our selection of products.</p>
+<MudText Typo="Typo.body1" Class="mb-4">Browse our selection of products.</MudText>
 
 @if (products == null)
 {
-    <p><em>Loading...</em></p>
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
 }
 else if (products.Items == null || !products.Items.Any())
 {
-    <p>No products found.</p>
+    <MudAlert Severity="Severity.Info">No products found.</MudAlert>
 }
 else
 {
-    <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+    <MudGrid Spacing="4" Class="mb-8">
         @foreach (var product in products.Items)
         {
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">@product.Name</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">$@product.Price.ToString("F2")</h6>
-                        <p class="card-text">@(product.Description?.Length > 100 ? product.Description.Substring(0, 100) + "..."
-                                                : product.Description)</p>
-                <p class="card-text"><small class="text-muted">In Stock: @product.QuantityInStock</small></p>
-                <div class="d-flex justify-content-between">
-                    <a href="/products/@product.Id" class="btn btn-primary">View Details</a>
-                    <button class="btn btn-success" @onclick="() => AddToCart(product.Id)">Add to Cart</button>
-                </div>
-            </div>
-        </div>
-    </div>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">@product.Name</MudText>
+                        <MudText Typo="Typo.subtitle1" Color="Color.Primary">$@product.Price.ToString("F2")</MudText>
+                        <MudText Typo="Typo.body2" Class="mt-3">
+                            @(product.Description?.Length > 100 ? product.Description.Substring(0, 100) + "..." :
+                                                product.Description)
+                </MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                    In Stock: @product.QuantityInStock
+                </MudText>
+            </MudCardContent>
+            <MudCardActions Class="d-flex justify-space-between">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                    OnClick="() => NavigateToProductDetails(product.Id)">
+                    View Details
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="() => AddToCart(product.Id)">
+                    Add to Cart
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
         }
-    </div>
+    </MudGrid>
 
-    <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center">
-            <li class="page-item @(products.HasPreviousPage ? "" : "disabled")">
-                <button class="page-link" @onclick="() => NavigateToPage(products.PageNumber - 1)"
-                    disabled="@(!products.HasPreviousPage)" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                </button>
-            </li>
-
-            @for (int i = 1; i <= products.TotalPages; i++)
-            {
-                var pageNumber = i;
-                <li class="page-item @(pageNumber == products.PageNumber ? "active" : "")">
-                    <button class="page-link" @onclick="() => NavigateToPage(pageNumber)">@pageNumber</button>
-                </li>
-            }
-
-            <li class="page-item @(products.HasNextPage ? "" : "disabled")">
-                <button class="page-link" @onclick="() => NavigateToPage(products.PageNumber + 1)"
-                    disabled="@(!products.HasNextPage)" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                </button>
-            </li>
-        </ul>
-    </nav>
+    <MudPagination Count="@products.TotalPages" SelectedChanged="NavigateToPage" Selected="@products.PageNumber"
+        Class="d-flex justify-center" />
 }
 
 @code {
@@ -120,6 +106,14 @@ else
         // Update the URL without causing a navigation
         var uri = NavigationManager.GetUriWithQueryParameter("page", page);
         NavigationManager.NavigateTo(uri, false);
+    }
+
+    private void NavigateToProductDetails(string? productId)
+    {
+        if (!string.IsNullOrEmpty(productId))
+        {
+            NavigationManager.NavigateTo($"/products/{productId}");
+        }
     }
 
     private async Task AddToCart(string? productId)
