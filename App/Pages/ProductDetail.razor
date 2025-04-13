@@ -24,14 +24,14 @@ else
                 <MudText Typo="Typo.h3" Class="mb-2">@product?.Name</MudText>
 
                 <div class="mb-4">
-                    <MudPaper Elevation="0" Class="d-inline-flex pa-2 mr-2"
-                        Style="background-color: var(--mud-palette-primary-lighten)">
-                        <MudText Color="Color.Primary" Typo="Typo.caption">SKU: @product?.Sku</MudText>
-                    </MudPaper>
-                    <MudPaper Elevation="0" Class="d-inline-flex pa-2"
-                        Style="background-color: var(--mud-palette-info-lighten)">
-                        <MudText Color="Color.Info" Typo="Typo.caption">@product?.QuantityInStock in stock</MudText>
-                    </MudPaper>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" DisableElevation="true" Class="mr-2"
+                        Style="text-transform: none;">
+                        SKU: @product?.Sku
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" DisableElevation="true"
+                        Style="text-transform: none;">
+                        @product?.QuantityInStock in stock
+                    </MudButton>
                 </div>
 
                 <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">$@product?.Price.ToString("F2")</MudText>

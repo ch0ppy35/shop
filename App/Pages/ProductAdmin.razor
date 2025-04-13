@@ -42,9 +42,11 @@ else
             </HeaderContent>
             <RowTemplate>
                 <MudTd>
-                    <MudTooltip Text="@context.Id" Placement="Placement.Top" Arrow="true">
-                        <MudText>@(context.Id?.Length > 8 ? context.Id.Substring(0, 8) + "..." : context.Id)</MudText>
-                    </MudTooltip>
+                    <div style="position: relative; display: inline-block;">
+                        <MudTooltip Text="@context.Id" Placement="Placement.Top" Color="Color.Primary">
+                            <MudText>@(context.Id?.Length > 8 ? context.Id.Substring(0, 8) + "..." : context.Id)</MudText>
+                        </MudTooltip>
+                    </div>
                 </MudTd>
                 <MudTd>@context.Name</MudTd>
                 <MudTd>$@context.Price.ToString("F2")</MudTd>
