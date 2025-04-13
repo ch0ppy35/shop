@@ -46,8 +46,9 @@ else
                 {
                     <tr>
                         <td>
-                            <Tooltip Content="@(product.Id?.Length > 8 ? product.Id.Substring(0, 8) + "..." : product.Id)"
-                                TooltipText="@product.Id" Position="top" Width="auto" />
+                            <SimpleTooltip Text="@product.Id">
+                                @(product.Id?.Length > 8 ? product.Id.Substring(0, 8) + "..." : product.Id)
+                            </SimpleTooltip>
                         </td>
                         <td>@product.Name</td>
                         <td>$@product.Price.ToString("F2")</td>

@@ -254,40 +254,38 @@ input[type=number] {
     border-right: 0 !important;
 }
 
-/* Custom Tooltip styles */
-.tooltip-container {
+/* Simple Tooltip styles */
+.tooltip-wrapper {
     position: relative;
     display: inline-block;
+    border-bottom: 1px dotted #4361ee;
     cursor: help;
 }
 
-.tooltip-content {
-    border-bottom: 1px dotted #666;
-}
-
-.custom-tooltip {
+.tooltip-wrapper span {
+    visibility: hidden;
     position: absolute;
-    background-color: #0d6efd;
-    /* Bootstrap primary color */
-    color: white;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    z-index: 1000;
-    white-space: nowrap;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s ease-in-out;
-    opacity: 0.95;
-    font-family: var(--bs-font-monospace);
-}
-
-.tooltip-top {
-    bottom: 125%;
+    width: auto;
+    min-width: 120px;
+    max-width: 300px;
+    bottom: 150%;
     left: 50%;
     transform: translateX(-50%);
+    background-color: #4361ee;
+    color: #fff;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    z-index: 9999;
+    font-family: var(--bs-font-monospace);
+    font-size: 0.875rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+    /* Prevents tooltip from interfering with mouse events */
 }
 
-.tooltip-top::after {
+.tooltip-wrapper span::after {
     content: "";
     position: absolute;
     top: 100%;
@@ -295,56 +293,9 @@ input[type=number] {
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: #333 transparent transparent transparent;
+    border-color: #4361ee transparent transparent transparent;
 }
 
-.tooltip-bottom {
-    top: 125%;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.tooltip-bottom::after {
-    content: "";
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    margin-left: -5px;
-    border-width: 5px;
-    border-style: solid;
-    border-color: transparent transparent #333 transparent;
-}
-
-.tooltip-left {
-    top: 50%;
-    right: 125%;
-    transform: translateY(-50%);
-}
-
-.tooltip-left::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 100%;
-    margin-top: -5px;
-    border-width: 5px;
-    border-style: solid;
-    border-color: transparent transparent transparent #333;
-}
-
-.tooltip-right {
-    top: 50%;
-    left: 125%;
-    transform: translateY(-50%);
-}
-
-.tooltip-right::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    right: 100%;
-    margin-top: -5px;
-    border-width: 5px;
-    border-style: solid;
-    border-color: transparent #333 transparent transparent;
+.tooltip-wrapper:hover span {
+    visibility: visible;
 }

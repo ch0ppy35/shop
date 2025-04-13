@@ -23,11 +23,17 @@
     [Parameter]
     public string Width { get; set; } = "auto";
 
+    [Parameter]
+    public int OffsetY { get; set; } = 0;
+
+    [Parameter]
+    public int OffsetX { get; set; } = 0;
+
     private bool IsVisible { get; set; }
 
     private string PositionClass => $"tooltip-{Position}";
 
-    private string TooltipStyle => $"width: {Width};";
+    private string TooltipStyle => $"width: {Width}; margin-top: {OffsetY}px; margin-left: {OffsetX}px;";
 
     private void ShowTooltip()
     {
