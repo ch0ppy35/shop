@@ -51,5 +51,7 @@ builder.Services.AddScoped(sp =>
 builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<ToastService>();
+builder.Services.AddScoped<IConfirmService, ConfirmService>();
 
 await builder.Build().RunAsync();

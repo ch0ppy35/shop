@@ -199,3 +199,43 @@ code {
 .form-floating>.form-control:focus::placeholder {
     text-align: start;
 }
+
+/* Toast styles */
+.toast-container {
+    z-index: 1100;
+}
+
+.toast {
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: none;
+    opacity: 1;
+}
+
+.toast .toast-header {
+    color: white;
+    padding: 0.75rem 1rem;
+    border-bottom: none;
+}
+
+.toast .toast-body {
+    padding: 1rem;
+    background-color: white;
+    border-radius: 0 0 0.25rem 0.25rem;
+}
+
+.toast .btn-close {
+    margin-left: 0.5rem;
+    opacity: 0.8;
+}
+
+/* Hide number input arrows */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
+}

@@ -5,6 +5,8 @@
 @inject ProductService ProductService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@inject ToastService ToastService
+@inject IConfirmService ConfirmService
 
 <PageTitle>Product Administration</PageTitle>
 
@@ -57,7 +59,7 @@ else
                             <div class="btn-group" role="group">
                                 <button class="btn btn-sm btn-primary" @onclick="() => OpenProductModal(product)">Edit</button>
                                 <button class="btn btn-sm btn-outline-danger"
-                                    @onclick="() => ConfirmDelete(product)">Delete</button>
+                                    @onclick="async () => await ConfirmDelete(product)">Delete</button>
                             </div>
                         </td>
                     </tr>
@@ -162,37 +164,13 @@ else
     <div class="modal-backdrop fade show"></div>
 }
 
-<!-- Delete Confirmation Modal -->
-@if (showDeleteModal)
-{
-    <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Delete</h5>
-                    <button type="button" class="btn-close" @onclick="() => showDeleteModal = false"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete the product "@productToDelete?.Name"?</p>
-                    <p class="text-danger">This action cannot be undone.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="() => showDeleteModal = false">Cancel</button>
-                    <button type="button" class="btn btn-danger" @onclick="DeleteProduct">Delete</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
-}
+
 
 @code {
     private PaginatedList<Product>? products;
     private int currentPage = 1;
     private const int PageSize = 10;
     private bool showProductModal = false;
-    private bool showDeleteModal = false;
     private Product editingProduct = new();
     private Product? productToDelete;
 
@@ -293,11 +271,11 @@ else
             var createdProduct = await ProductService.CreateProductAsync(editingProduct);
             if (createdProduct != null)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Product created successfully!");
+                ToastService.ShowSuccess("Product created successfully!");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Failed to create product. Please try again.");
+                ToastService.ShowError("Failed to create product. Please try again.");
             }
         }
         else
@@ -306,11 +284,11 @@ else
             var success = await ProductService.UpdateProductAsync(editingProduct);
             if (success)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Product updated successfully!");
+                ToastService.ShowSuccess("Product updated successfully!");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Failed to update product. Please try again.");
+                ToastService.ShowError("Failed to update product. Please try again.");
             }
         }
 
@@ -319,10 +297,19 @@ else
         await LoadProductsAsync(currentPage);
     }
 
-    private void ConfirmDelete(Product product)
+    private async Task ConfirmDelete(Product product)
     {
         productToDelete = product;
-        showDeleteModal = true;
+        var confirmed = await ConfirmService.ShowConfirmation(
+        $"Are you sure you want to delete the product \"{product.Name}\"?",
+        "Delete Product",
+        "Danger",
+        "Delete");
+
+        if (confirmed)
+        {
+            await DeleteProduct();
+        }
     }
 
     private async Task DeleteProduct()
@@ -332,15 +319,14 @@ else
             var success = await ProductService.DeleteProductAsync(productToDelete.Id!);
             if (success)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Product deleted successfully!");
+                ToastService.ShowSuccess("Product deleted successfully!");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Failed to delete product. Please try again.");
+                ToastService.ShowError("Failed to delete product. Please try again.");
             }
 
-            // Close the modal and refresh the product list
-            showDeleteModal = false;
+            // Refresh the product list
             await LoadProductsAsync(currentPage);
         }
     }

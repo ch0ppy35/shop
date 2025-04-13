@@ -1,0 +1,34 @@
+@implements IDisposable
+@inject IConfirmService ConfirmService
+
+<ConfirmDialog @ref="confirmDialog" OnResult="HandleResult" />
+
+@code {
+    private ConfirmDialog? confirmDialog;
+    private TaskCompletionSource<bool>? _resultTask;
+
+    protected override void OnInitialized()
+    {
+        ConfirmService.OnConfirmationRequested += ShowConfirmation;
+    }
+
+    private async Task<bool> ShowConfirmation(string message, string title, string confirmType, string confirmText)
+    {
+        _resultTask = new TaskCompletionSource<bool>();
+
+        var type = Enum.Parse<ConfirmDialog.ConfirmType>(confirmType);
+        confirmDialog?.Show(message, title, type, confirmText);
+
+        return await _resultTask.Task;
+    }
+
+    private void HandleResult(bool result)
+    {
+        _resultTask?.SetResult(result);
+    }
+
+    public void Dispose()
+    {
+        ConfirmService.OnConfirmationRequested -= ShowConfirmation;
+    }
+}

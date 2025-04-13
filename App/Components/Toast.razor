@@ -1,0 +1,80 @@
+@if (IsVisible)
+{
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header @HeaderClass">
+                <strong class="me-auto text-white">@Title</strong>
+                <button type="button" class="btn-close btn-close-white" @onclick="Close" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                @Message
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "Notification";
+
+    [Parameter]
+    public string Message { get; set; } = "";
+
+    [Parameter]
+    public ToastType Type { get; set; } = ToastType.Success;
+
+    [Parameter]
+    public int AutoHideDelayMs { get; set; } = 3000;
+
+    [Parameter]
+    public bool IsVisible { get; set; }
+    private System.Threading.Timer? _timer;
+
+    private string HeaderClass => Type switch
+    {
+        ToastType.Success => "bg-success",
+        ToastType.Error => "bg-danger",
+        ToastType.Info => "bg-info",
+        ToastType.Warning => "bg-warning",
+        _ => "bg-primary"
+    };
+
+    public void Show(string message, string title = "Notification", ToastType type = ToastType.Success, int autoHideDelayMs
+    = 3000)
+    {
+        Message = message;
+        Title = title;
+        Type = type;
+        AutoHideDelayMs = autoHideDelayMs;
+        IsVisible = true;
+
+        // Auto-hide after delay
+        _timer?.Dispose();
+        _timer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(() =>
+    {
+            IsVisible = false;
+            StateHasChanged();
+        });
+        }, null, AutoHideDelayMs, Timeout.Infinite);
+
+        StateHasChanged();
+    }
+
+    public void Close()
+    {
+        IsVisible = false;
+        _timer?.Dispose();
+        _timer = null;
+        StateHasChanged();
+    }
+
+    public enum ToastType
+    {
+        Success,
+        Error,
+        Info,
+        Warning
+    }
+}

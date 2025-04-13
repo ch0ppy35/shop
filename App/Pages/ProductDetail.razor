@@ -3,6 +3,7 @@
 @inject ICartService CartService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@inject ToastService ToastService
 
 <PageTitle>Product Details</PageTitle>
 
@@ -133,10 +134,11 @@ else
 
         if (success)
         {
+            ToastService.ShowSuccess($"{quantity} item(s) added to cart!");
+
 #if !TEST
             try
             {
-                await JSRuntime.InvokeVoidAsync("alert", $"{quantity} item(s) added to cart!");
                 // Refresh the cart count in the navigation menu
                 await JSRuntime.InvokeVoidAsync("cartHelper.refreshNavMenu");
             }
@@ -149,16 +151,7 @@ else
         }
         else
         {
-#if !TEST
-            try
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Failed to add item to cart. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error showing alert: {ex.Message}");
-            }
-#endif
+            ToastService.ShowError("Failed to add item to cart. Please try again.");
         }
     }
 }

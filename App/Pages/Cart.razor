@@ -2,6 +2,8 @@
 @inject ICartService CartService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@inject ToastService ToastService
+@inject IConfirmService ConfirmService
 
 <PageTitle>Shopping Cart</PageTitle>
 
@@ -40,14 +42,13 @@ else
                         <td>$@item.Price.ToString("F2")</td>
                         <td>
                             <div class="input-group" style="width: 120px;">
-                                <button class="btn btn-sm btn-outline-secondary" type="button"
+                                <button class="btn btn-sm btn-primary" type="button"
                                     @onclick="() => UpdateQuantity(item.ProductId, Math.Max(1, item.Quantity - 1))">
                                     <span class="bi bi-dash"></span>
                                 </button>
-                                <input type="number" class="form-control form-control-sm text-center" value="@item.Quantity"
-                                    @onchange="@(e => UpdateQuantity(item.ProductId, int.Parse(e.Value?.ToString() ?? "1")))"
-                                    min="1" />
-                                <button class="btn btn-sm btn-outline-secondary" type="button"
+                                <input type="text" class="form-control form-control-sm text-center" value="@item.Quantity"
+                                    readonly style="-moz-appearance: textfield; -webkit-appearance: none; margin: 0;" />
+                                <button class="btn btn-sm btn-primary" type="button"
                                     @onclick="() => UpdateQuantity(item.ProductId, item.Quantity + 1)">
                                     <span class="bi bi-plus"></span>
                                 </button>
@@ -129,16 +130,7 @@ else
         }
         else
         {
-#if !TEST
-            try
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Failed to update quantity. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error showing alert: {ex.Message}");
-            }
-#endif
+            ToastService.ShowError("Failed to update quantity. Please try again.");
         }
     }
 
@@ -149,20 +141,12 @@ else
             return;
         }
 
-#if TEST
-var confirmed = true;
-#else
-        bool confirmed = false;
-        try
-        {
-            confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to remove this item from your cart?");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error showing confirmation: {ex.Message}");
-            confirmed = true; // Default to true in case of error
-        }
-#endif
+        var confirmed = await ConfirmService.ShowConfirmation(
+        "Are you sure you want to remove this item from your cart?",
+        "Remove Item",
+        "Warning",
+        "Remove");
+
         if (!confirmed)
         {
             return;
@@ -185,35 +169,18 @@ var confirmed = true;
         }
         else
         {
-#if !TEST
-            try
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Failed to remove item. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error showing alert: {ex.Message}");
-            }
-#endif
+            ToastService.ShowError("Failed to remove item. Please try again.");
         }
     }
 
     private async Task ClearCart()
     {
-#if TEST
-var confirmed = true;
-#else
-        bool confirmed = false;
-        try
-        {
-            confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to clear your cart?");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error showing confirmation: {ex.Message}");
-            confirmed = true; // Default to true in case of error
-        }
-#endif
+        var confirmed = await ConfirmService.ShowConfirmation(
+        "Are you sure you want to clear your cart?",
+        "Clear Cart",
+        "Danger",
+        "Clear");
+
         if (!confirmed)
         {
             return;
@@ -236,16 +203,7 @@ var confirmed = true;
         }
         else
         {
-#if !TEST
-            try
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Failed to clear cart. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error showing alert: {ex.Message}");
-            }
-#endif
+            ToastService.ShowError("Failed to clear cart. Please try again.");
         }
     }
 

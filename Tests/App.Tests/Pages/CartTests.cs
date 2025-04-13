@@ -12,23 +12,30 @@ public class CartTests : TestContext
 {
     private readonly Mock<ICartService> _mockCartService;
     private readonly Mock<IJSRuntime> _mockJsRuntime;
+    private readonly Mock<ToastService> _mockToastService;
+    private readonly Mock<IConfirmService> _mockConfirmService;
 
     public CartTests()
     {
         _mockCartService = new Mock<ICartService>();
         _mockJsRuntime = new Mock<IJSRuntime>();
+        _mockToastService = new Mock<ToastService>();
+        _mockConfirmService = new Mock<IConfirmService>();
 
         // Register the mocked services
         Services.AddSingleton(_mockCartService.Object);
         Services.AddSingleton(_mockJsRuntime.Object);
+        Services.AddSingleton(_mockToastService.Object);
+        Services.AddSingleton(_mockConfirmService.Object);
 
         // Setup default JS interop calls
         _mockJsRuntime
             .Setup(js => js.InvokeAsync<object>(It.IsAny<string>(), It.IsAny<object[]>()))
             .ReturnsAsync((object)null!);
 
-        _mockJsRuntime
-            .Setup(js => js.InvokeAsync<bool>("confirm", It.IsAny<object[]>()))
+        // Setup ConfirmService to return true for confirmations
+        _mockConfirmService
+            .Setup(cs => cs.ShowConfirmation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(true);
     }
 
@@ -141,7 +148,7 @@ public class CartTests : TestContext
         var cut = RenderComponent<Cart>();
 
         // Find the plus button and click it
-        var plusButton = cut.Find("button.btn-outline-secondary:nth-child(3)");
+        var plusButton = cut.Find("button.btn-primary:nth-child(3)");
         await cut.InvokeAsync(() => plusButton.Click());
 
         // Assert
@@ -190,7 +197,7 @@ public class CartTests : TestContext
         await cut.InvokeAsync(() => removeButton.Click());
 
         // Assert
-        _mockJsRuntime.Verify(js => js.InvokeAsync<bool>("confirm", It.IsAny<object[]>()), Times.Once);
+        _mockConfirmService.Verify(cs => cs.ShowConfirmation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         _mockCartService.Verify(s => s.RemoveItemAsync("prod-1"), Times.Once);
         _mockCartService.Verify(s => s.GetCartAsync(), Times.Exactly(2)); // Initial load + after remove
         _mockJsRuntime.Verify(js => js.InvokeAsync<object>("cartHelper.refreshNavMenu", It.IsAny<object[]>()), Times.Once);
@@ -236,7 +243,7 @@ public class CartTests : TestContext
         await cut.InvokeAsync(() => clearButton.Click());
 
         // Assert
-        _mockJsRuntime.Verify(js => js.InvokeAsync<bool>("confirm", It.IsAny<object[]>()), Times.Once);
+        _mockConfirmService.Verify(cs => cs.ShowConfirmation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         _mockCartService.Verify(s => s.ClearCartAsync(), Times.Once);
         _mockCartService.Verify(s => s.GetCartAsync(), Times.Exactly(2)); // Initial load + after clear
         _mockJsRuntime.Verify(js => js.InvokeAsync<object>("cartHelper.refreshNavMenu", It.IsAny<object[]>()), Times.Once);

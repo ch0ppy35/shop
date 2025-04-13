@@ -27,6 +27,14 @@ public class NavMenuTests : TestContext
             .Setup(js => js.InvokeAsync<object>(It.IsAny<string>(), It.IsAny<object[]>()))
             .ReturnsAsync((object)null!);
         Services.AddSingleton(mockJsRuntime.Object);
+
+        // Register mock ToastService
+        var mockToastService = new Mock<ToastService>();
+        Services.AddSingleton(mockToastService.Object);
+
+        // Register mock ConfirmService
+        var mockConfirmService = new Mock<IConfirmService>();
+        Services.AddSingleton(mockConfirmService.Object);
     }
 
     [Fact]

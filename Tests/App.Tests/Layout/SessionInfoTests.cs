@@ -2,8 +2,6 @@ using Bunit;
 using Frontend.Layout;
 using Frontend.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
-using Moq;
 using App.Tests.TestHelpers;
 
 namespace App.Tests.Layout;
