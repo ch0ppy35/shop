@@ -1,4 +1,5 @@
 using Bunit;
+using FluentAssertions;
 using Frontend.Layout;
 using Frontend.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +9,12 @@ namespace App.Tests.Layout;
 
 public class SessionInfoTests : TestContext
 {
+    public SessionInfoTests()
+    {
+        // Add MudBlazor services
+        this.AddMudBlazorTestServices();
+    }
+    
     [Fact]
     public async Task SessionInfo_ShouldRender_WithSessionId()
     {
@@ -27,7 +34,9 @@ public class SessionInfoTests : TestContext
 
         // Assert
         cut.WaitForState(() => cut.Markup.Contains(sessionId));
-        cut.MarkupMatches($"<div class=\"session-info small text-muted\"><span title=\"Session ID\">Session ID: {sessionId}</span></div>");
+        
+        // MudBlazor uses different markup, so we check for the session ID text instead of exact markup
+        cut.Markup.Should().Contain(sessionId);
     }
 
     [Fact]
@@ -49,9 +58,9 @@ public class SessionInfoTests : TestContext
         await Task.Delay(50); // Small delay to ensure async operations complete
 
         // Assert
-        cut.WaitForState(() => !cut.Markup.Contains("Loading..."));
-        Assert.NotNull(mockJsInterop.CapturedSessionId);
-        Assert.NotEmpty(mockJsInterop.CapturedSessionId!);
-        Assert.True(Guid.TryParse(mockJsInterop.CapturedSessionId, out _), "Session ID should be a valid GUID");
+        mockJsInterop.CapturedSessionId.Should().NotBeNullOrEmpty();
+        
+        // The session ID should be a valid GUID
+        Guid.TryParse(mockJsInterop.CapturedSessionId, out _).Should().BeTrue();
     }
 }

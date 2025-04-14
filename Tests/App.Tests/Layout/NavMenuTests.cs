@@ -1,95 +1,77 @@
 using Bunit;
+using FluentAssertions;
 using Frontend.Layout;
 using Frontend.Models;
 using Frontend.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.JSInterop;
 using Moq;
+using App.Tests.TestHelpers;
 
 namespace App.Tests.Layout;
 
 public class NavMenuTests : TestContext
 {
+    private readonly Mock<ICartService> _mockCartService;
+
     public NavMenuTests()
     {
+        // Add MudBlazor services
+        this.AddMudBlazorTestServices();
+
         // Register mock CartService
-        var mockCartService = new Mock<ICartService>();
-        mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(new ShoppingCart
+        _mockCartService = new Mock<ICartService>();
+        _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(new ShoppingCart
         {
             Items = new List<CartItem>(),
             TotalPrice = 0,
             ItemCount = 0
         });
-        Services.AddSingleton(mockCartService.Object);
+        Services.AddSingleton(_mockCartService.Object);
 
         // Register mock IJSRuntime
-        var mockJsRuntime = new Mock<Microsoft.JSInterop.IJSRuntime>();
+        var mockJsRuntime = new Mock<IJSRuntime>();
         mockJsRuntime
             .Setup(js => js.InvokeAsync<object>(It.IsAny<string>(), It.IsAny<object[]>()))
             .ReturnsAsync((object)null!);
         Services.AddSingleton(mockJsRuntime.Object);
-
-        // Register mock ToastService
-        var mockToastService = new Mock<ToastService>();
-        Services.AddSingleton(mockToastService.Object);
-
-        // Register mock ConfirmService
-        var mockConfirmService = new Mock<IConfirmService>();
-        Services.AddSingleton(mockConfirmService.Object);
     }
 
     [Fact]
-    public void NavMenu_ShouldRender_WithCorrectLinks()
+    public void NavMenu_ShouldRender_WithLinks()
     {
-        // Arrange & Act
+        // Act
         var cut = RenderComponent<NavMenu>();
 
         // Assert
-        // Instead of checking the exact HTML, let's check for the presence of key elements
-        // This is more resilient to minor changes in the rendered HTML
-
-        // Check for the navbar brand
-        cut.Find("a.navbar-brand").MarkupMatches("<a class=\"navbar-brand\" href=\"\">NATS Shop</a>");
-
-        // Check for the navigation links
-        var navLinks = cut.FindAll("a.nav-link");
-        Assert.Equal(5, navLinks.Count);
-
-        // Check the Home link
-        Assert.Contains(navLinks, link => link.TextContent.Contains("Home"));
-
-        // Check the About link
-        Assert.Contains(navLinks, link => link.TextContent.Contains("About"));
-
-        // Check the Admin link
-        Assert.Contains(navLinks, link => link.TextContent.Contains("Admin"));
-
-        // Check the Products link
-        Assert.Contains(navLinks, link => link.TextContent.Contains("Products"));
-
-        // Check the Cart link
-        Assert.Contains(navLinks, link => link.TextContent.Contains("Cart"));
-
+        // Check for MudNavLink components with expected hrefs
+        cut.Markup.Should().Contain("href=\"\""); // Home link has empty href
+        cut.Markup.Should().Contain("href=\"products\""); // MudBlazor doesn't add leading slash
+        cut.Markup.Should().Contain("href=\"cart\""); // MudBlazor doesn't add leading slash
+        cut.Markup.Should().Contain("href=\"admin/products\""); // MudBlazor doesn't add leading slash
+        cut.Markup.Should().Contain("href=\"about\""); // MudBlazor doesn't add leading slash
     }
 
     [Fact]
-    public void NavMenu_ShouldToggle_WhenButtonClicked()
+    public void NavMenu_ShouldShowCartCount_WhenCartHasItems()
     {
         // Arrange
+        _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(new ShoppingCart
+        {
+            Items = new List<CartItem>
+            {
+                new() { ProductId = "1", Quantity = 2 },
+                new() { ProductId = "2", Quantity = 1 }
+            },
+            TotalPrice = 29.99m,
+            ItemCount = 3
+        });
+
+        // Act
         var cut = RenderComponent<NavMenu>();
 
-        // Initial state should be collapsed
-        Assert.Contains("collapse", cut.Find("div.nav-scrollable").ClassList);
-
-        // Act - click the toggle button
-        cut.Find("button.navbar-toggler").Click();
-
-        // Assert - menu should be expanded (no collapse class)
-        Assert.DoesNotContain("collapse", cut.Find("div.nav-scrollable").ClassList);
-
-        // Act - click the toggle button again
-        cut.Find("button.navbar-toggler").Click();
-
-        // Assert - menu should be collapsed again
-        Assert.Contains("collapse", cut.Find("div.nav-scrollable").ClassList);
+        // Assert
+        // MudBlazor uses MudBadge for cart count, so we check for the count value
+        cut.Markup.Should().Contain("3");
     }
 }

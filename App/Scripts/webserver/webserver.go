@@ -1,3 +1,4 @@
+// This is smaller than using nginx in Docker for testing
 package main
 
 import (
