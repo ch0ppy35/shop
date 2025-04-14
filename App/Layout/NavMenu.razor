@@ -1,17 +1,21 @@
-﻿<MudNavMenu>
-    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="ml-4 my-3">NAVIGATION</MudText>
+﻿@using MudBlazor
 
+<MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
 
     <MudNavLink Href="products" Icon="@Icons.Material.Filled.Inventory">Products</MudNavLink>
 
     <MudNavLink Href="cart" Icon="@Icons.Material.Filled.ShoppingCart">
-        Cart
         @if (cartItemCount > 0)
         {
-            <MudBadge Color="Color.Primary" Content="@cartItemCount" Overlap="true" Class="ml-2">
-                <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" />
+
+            <MudBadge Content="@cartItemCount" Color="Color.Primary" Origin="Origin.CenterRight" BadgeClass="mx-2">
+                Cart
             </MudBadge>
+        }
+        else
+        {
+            <span>Cart</span>
         }
     </MudNavLink>
 
@@ -70,6 +74,4 @@
         cartItemCount = cart.ItemCount;
         StateHasChanged();
     }
-
-
 }
