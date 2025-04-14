@@ -29,13 +29,15 @@ public static class ServiceExtensions
         });
 
         // Add NATS service
-        services.AddSingleton<NatsService>();
+        services.AddSingleton<INatsService, NatsService>();
+        services.AddSingleton<NatsService>(sp => (NatsService)sp.GetRequiredService<INatsService>());
 
         // Add health service
         services.AddSingleton<HealthService>();
 
         // Add database service
-        services.AddSingleton<DatabaseService>();
+        services.AddSingleton<IDatabaseService, DatabaseService>();
+        services.AddSingleton<DatabaseService>(sp => (DatabaseService)sp.GetRequiredService<IDatabaseService>());
 
         return services;
     }
@@ -58,4 +60,24 @@ public static class ServiceExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Adds NATS health check to the service collection
+    /// </summary>
+    public static IServiceCollection AddNatsHealthCheck(this IServiceCollection services)
+    {
+        services.AddSingleton<NatsHealthCheck>();
+        return services;
+    }
+
+    /// <summary>
+    /// Adds PostgreSQL health check to the service collection
+    /// </summary>
+    public static IServiceCollection AddPostgresHealthCheck(this IServiceCollection services)
+    {
+        services.AddSingleton<PostgresHealthCheck>();
+        return services;
+    }
+
+
 }

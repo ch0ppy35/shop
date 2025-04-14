@@ -11,7 +11,7 @@ namespace Cart.Services;
 public class CartConsumerService : BackgroundService
 {
     private readonly ILogger<CartConsumerService> _logger;
-    private readonly NatsService _natsService;
+    private readonly INatsService _natsService;
     private readonly CartService _cartService;
 
     /// <summary>
@@ -19,7 +19,7 @@ public class CartConsumerService : BackgroundService
     /// </summary>
     public CartConsumerService(
         ILogger<CartConsumerService> logger,
-        NatsService natsService,
+        INatsService natsService,
         CartService cartService)
     {
         _logger = logger;
@@ -33,6 +33,9 @@ public class CartConsumerService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Cart consumer service starting");
+
+        // Wait for NATS connection to be established before starting consumers
+        await WaitForNatsConnectionAsync(stoppingToken);
 
         // Start all message handlers
         var tasks = new List<Task>
@@ -48,6 +51,38 @@ public class CartConsumerService : BackgroundService
         await Task.WhenAny(tasks);
 
         _logger.LogWarning("One of the cart message handlers has stopped unexpectedly");
+    }
+
+    /// <summary>
+    /// Waits for the NATS connection to be established before proceeding
+    /// </summary>
+    private async Task WaitForNatsConnectionAsync(CancellationToken stoppingToken)
+    {
+        const int maxRetries = 60; // Maximum number of retries (10 minutes with 10-second delay)
+        const int retryDelaySeconds = 10; // Delay between retries
+        int retryCount = 0;
+
+        while (!_natsService.IsConnected && retryCount < maxRetries && !stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Waiting for NATS connection to be established (attempt {RetryCount}/{MaxRetries})...",
+                retryCount + 1, maxRetries);
+
+            await Task.Delay(TimeSpan.FromSeconds(retryDelaySeconds), stoppingToken);
+            retryCount++;
+        }
+
+        if (_natsService.IsConnected)
+        {
+            _logger.LogInformation("NATS connection established, starting message handlers");
+        }
+        else if (stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogWarning("Waiting for NATS connection was cancelled");
+        }
+        else
+        {
+            _logger.LogError("Failed to establish NATS connection after {MaxRetries} retries", maxRetries);
+        }
     }
 
     private async Task HandleGetCartRequests(CancellationToken stoppingToken)

@@ -9,7 +9,7 @@ namespace Common.Messaging;
 /// <summary>
 /// Service for interacting with NATS
 /// </summary>
-public class NatsService : IAsyncDisposable
+public class NatsService : INatsService, IAsyncDisposable
 {
     private readonly ILogger<NatsService> _logger;
     private readonly NatsOpts _natsOpts;

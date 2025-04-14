@@ -1,10 +1,12 @@
 ﻿using Common;
 using Common.Database;
+using Common.Health;
 using Common.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Products.Health;
 using Products.Repositories;
 using Products.Services;
 
@@ -21,6 +23,10 @@ var host = Host.CreateDefaultBuilder(args)
     {
         // Add common services
         services.AddCommonServices();
+
+        // Add health checks
+        services.AddNatsHealthCheck();
+        services.AddPostgresHealthCheck();
 
         // Add database services
         services.AddDatabaseServices(connectionString);
@@ -42,52 +48,68 @@ var host = Host.CreateDefaultBuilder(args)
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Products service starting");
 
-// Initialize database connection
-var dbService = host.Services.GetRequiredService<DatabaseService>();
-logger.LogInformation("Initializing database connection");
+// Configure health checks first
+var healthService = host.Services.GetRequiredService<HealthService>();
+var natsHealthCheck = host.Services.GetRequiredService<NatsHealthCheck>();
+var postgresHealthCheck = host.Services.GetRequiredService<PostgresHealthCheck>();
 
-try
+healthService.RegisterHealthCheck(natsHealthCheck);
+healthService.RegisterHealthCheck(postgresHealthCheck);
+
+// Start health endpoint before attempting to connect to dependencies
+// so it can report readiness status even when connections are being established
+var healthEndpoint = new HealthEndpoint(host.Services);
+logger.LogInformation("Starting health endpoint");
+await healthEndpoint.StartAsync();
+logger.LogInformation("Health endpoint started successfully");
+
+// Initialize database and NATS connections in the background
+var dbService = host.Services.GetRequiredService<IDatabaseService>();
+var natsService = host.Services.GetRequiredService<INatsService>();
+
+// Start a background task to initialize the database and then connect to NATS
+_ = Task.Run(async () =>
 {
-    await dbService.InitializeDatabaseWithRetryAsync();
-    logger.LogInformation("Database connection initialized successfully");
+    // Step 1: Initialize database connection
+    logger.LogInformation("Initializing database connection in background");
 
-    // Run migrations
-    logger.LogInformation("Running database migrations");
-    await dbService.MigrateAsync();
-    logger.LogInformation("Database migrations completed successfully");
+    try
+    {
+        await dbService.InitializeDatabaseWithRetryAsync();
+        logger.LogInformation("Database connection initialized successfully");
 
-    // Seed database
-    logger.LogInformation("Seeding database");
-    using var scope = host.Services.CreateScope();
-    var seeder = scope.ServiceProvider.GetRequiredService<ProductSeeder>();
-    await seeder.SeedAsync();
-    logger.LogInformation("Database seeding completed");
-}
-catch (Exception ex)
-{
-    logger.LogError(ex, "Database initialization or migration failed");
-    // Exit if database initialization fails
-    Environment.Exit(1);
-}
+        // Run migrations
+        logger.LogInformation("Running database migrations");
+        await dbService.MigrateAsync();
+        logger.LogInformation("Database migrations completed successfully");
 
-// Connect to NATS with retry
-var natsService = host.Services.GetRequiredService<NatsService>();
+        // Seed database
+        logger.LogInformation("Seeding database");
+        using var scope = host.Services.CreateScope();
+        var seeder = scope.ServiceProvider.GetRequiredService<ProductSeeder>();
+        await seeder.SeedAsync();
+        logger.LogInformation("Database seeding completed");
 
-// For the Products service, we'll use infinite retries and wait for the connection
-// before starting the service
-logger.LogInformation("Attempting to connect to NATS server with retry mechanism");
+        // Step 2: Only after database is ready, connect to NATS
+        logger.LogInformation("Database is ready, now connecting to NATS server");
+        try
+        {
+            // Use infinite retries (-1) to keep trying to connect
+            await natsService.ConnectWithRetryAsync(-1);
+            logger.LogInformation("Successfully connected to NATS server");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "NATS connection retry task failed");
+            // Don't exit the application, let the health check report the failure
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Database initialization or migration failed");
+        // Don't exit the application, let the health check report the failure
+    }
+});
 
-try
-{
-    // Use infinite retries (-1) to keep trying to connect
-    await natsService.ConnectWithRetryAsync(-1);
-    logger.LogInformation("Successfully connected to NATS server");
-}
-catch (Exception ex)
-{
-    logger.LogError(ex, "NATS connection retry task failed");
-    // Exit if NATS connection retry is cancelled or fails
-    Environment.Exit(1);
-}
-
+// Run the host
 await host.RunAsync();

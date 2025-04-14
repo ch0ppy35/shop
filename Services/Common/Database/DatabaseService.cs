@@ -9,7 +9,7 @@ namespace Common.Database;
 /// <summary>
 /// Service for database operations using Entity Framework Core
 /// </summary>
-public class DatabaseService
+public class DatabaseService : IDatabaseService
 {
     private readonly ILogger<DatabaseService> _logger;
     private readonly IServiceProvider _serviceProvider;
