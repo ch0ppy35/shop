@@ -1,5 +1,7 @@
-﻿using Cart.Services;
+﻿using Cart.Health;
+using Cart.Services;
 using Common;
+using Common.Health;
 using Common.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +19,10 @@ var host = Host.CreateDefaultBuilder(args)
         // Add common services
         services.AddCommonServices();
 
+        // Add health checks
+        services.AddNatsHealthCheck();
+        services.AddRedisHealthCheck();
+
         // Add Redis service
         services.AddSingleton<RedisService>();
 
@@ -31,6 +37,18 @@ var host = Host.CreateDefaultBuilder(args)
 // Get logger
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Starting Cart service");
+
+// Configure health checks
+var healthService = host.Services.GetRequiredService<HealthService>();
+var natsHealthCheck = host.Services.GetRequiredService<NatsHealthCheck>();
+var redisHealthCheck = host.Services.GetRequiredService<RedisHealthCheck>();
+
+healthService.RegisterHealthCheck(natsHealthCheck);
+healthService.RegisterHealthCheck(redisHealthCheck);
+
+// Start health endpoint first so it's available even when dependencies aren't ready
+var healthEndpoint = new HealthEndpoint(host.Services);
+await healthEndpoint.StartAsync();
 
 // Connect to NATS with retry
 var natsService = host.Services.GetRequiredService<NatsService>();

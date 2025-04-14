@@ -12,6 +12,9 @@ builder.Services.AddSwaggerGen();
 // Add common services
 builder.Services.AddCommonServices();
 
+// Add health checks
+builder.Services.AddNatsHealthCheck();
+
 // Add controllers
 builder.Services.AddControllers();
 
@@ -48,15 +51,24 @@ app.UseAuthorization();
 // Map controllers
 app.MapControllers();
 
-// Health check endpoints
-app.MapGet("/healthz", (HealthService healthService) =>
+// Configure health checks
+var healthService = app.Services.GetRequiredService<HealthService>();
+var natsHealthCheck = app.Services.GetRequiredService<NatsHealthCheck>();
+healthService.RegisterHealthCheck(natsHealthCheck);
+
+// Map health check endpoints
+app.MapGet("/healthz", () =>
 {
-    return healthService.IsHealthy() ? Results.Ok() : Results.StatusCode(500);
+    return healthService.IsHealthy()
+        ? Results.Ok(new { status = "healthy" })
+        : Results.StatusCode(500);
 });
 
-app.MapGet("/readinessz", (HealthService healthService) =>
+app.MapGet("/readinessz", () =>
 {
-    return healthService.IsReady() ? Results.Ok() : Results.StatusCode(503);
+    return healthService.IsReady()
+        ? Results.Ok(new { status = "ready" })
+        : Results.StatusCode(503);
 });
 
 // Connect to NATS with retry

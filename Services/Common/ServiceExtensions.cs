@@ -58,4 +58,24 @@ public static class ServiceExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Adds NATS health check to the service collection
+    /// </summary>
+    public static IServiceCollection AddNatsHealthCheck(this IServiceCollection services)
+    {
+        services.AddSingleton<NatsHealthCheck>();
+        return services;
+    }
+
+    /// <summary>
+    /// Adds PostgreSQL health check to the service collection
+    /// </summary>
+    public static IServiceCollection AddPostgresHealthCheck(this IServiceCollection services)
+    {
+        services.AddSingleton<PostgresHealthCheck>();
+        return services;
+    }
+
+
 }
