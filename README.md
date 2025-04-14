@@ -9,8 +9,8 @@ graph TD
     %% Main components
     Frontend["Frontend<br/>(Blazor WebAssembly)"] <--HTTP--> Gateway["API Gateway<br/>(ASP.NET Core)"];
     NATS["NATS<br/>(Messaging System)<br/><br/>Subjects:<br/>products.getall<br/>products.get<br/>products.create<br/>products.update<br/>products.delete<br/>products.inventory.get<br/>products.inventory.update<br/>cart.get<br/>cart.additem<br/>cart.updateitem<br/>cart.removeitem<br/>cart.clear"]
-    Products["Products Service<br/>(.NET Console)"];
-    Cart["Cart Service<br/>(.NET Console)"];
+    Products["Products Service<br/>(.NET)"];
+    Cart["Cart Service<br/>(.NET)"];
 
     %% Databases
     Products --EF Core--> PostgreSQL[("PostgreSQL<br/>Database")];
