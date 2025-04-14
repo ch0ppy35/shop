@@ -1,4 +1,9 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
+﻿<MudThemeProvider Theme="_theme" IsDarkMode="true" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />
+
+<Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
@@ -6,7 +11,50 @@
     <NotFound>
         <PageTitle>Not found</PageTitle>
         <LayoutView Layout="@typeof(MainLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
+            <MudText Typo="Typo.h4" Class="my-4" Align="Align.Center">Sorry, there's nothing at this address.</MudText>
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    private MudTheme _theme = new MudTheme()
+    {
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#6366F1",
+            Secondary = "#8B5CF6",
+            Tertiary = "#EC4899",
+            AppbarBackground = "#1E1E2D",
+            Background = "#121212",
+            Surface = "#1E1E2D",
+            DrawerBackground = "#1E1E2D",
+            DrawerText = "rgba(255,255,255, 0.8)",
+            DrawerIcon = "rgba(255,255,255, 0.8)",
+            Success = "#10B981",
+            Error = "#EF4444",
+            Warning = "#F59E0B",
+            Info = "#3B82F6",
+            TextPrimary = "rgba(255,255,255, 0.9)",
+            TextSecondary = "rgba(255,255,255, 0.7)",
+            ActionDefault = "#adadb1",
+            ActionDisabled = "rgba(255,255,255, 0.26)",
+            ActionDisabledBackground = "rgba(255,255,255, 0.12)",
+            Dark = "#111111"
+        },
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#6366F1",
+            Secondary = "#8B5CF6",
+            Tertiary = "#EC4899",
+            AppbarBackground = "#6366F1",
+            Background = "#F5F5F5",
+            Surface = "#FFFFFF",
+            DrawerBackground = "#FFFFFF",
+            DrawerText = "rgba(0,0,0, 0.7)",
+            Success = "#10B981",
+            Error = "#EF4444",
+            Warning = "#F59E0B",
+            Info = "#3B82F6"
+        }
+    };
+}

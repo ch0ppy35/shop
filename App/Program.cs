@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Frontend;
 using Frontend.Services;
+using MudBlazor;
+using MudBlazor.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -47,8 +49,23 @@ builder.Services.AddScoped(sp =>
     return client;
 });
 
+// Register MudBlazor services
+builder.Services.AddMudServices(config =>
+{
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
+    config.SnackbarConfiguration.PreventDuplicates = false;
+    config.SnackbarConfiguration.NewestOnTop = true;
+    config.SnackbarConfiguration.ShowCloseIcon = true;
+    config.SnackbarConfiguration.VisibleStateDuration = 3000;
+    config.SnackbarConfiguration.HideTransitionDuration = 500;
+    config.SnackbarConfiguration.ShowTransitionDuration = 500;
+});
+
 // Register services
 builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<ToastService>();
+builder.Services.AddScoped<IConfirmService, ConfirmService>();
 
 await builder.Build().RunAsync();

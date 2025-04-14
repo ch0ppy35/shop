@@ -1,108 +1,78 @@
-:root {
-    --font-family-sans-serif: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+/* MudBlazor Custom Styles */
+.mud-button {
+    text-transform: none;
 }
 
-html,
-body {
-    font-family: var(--font-family-sans-serif);
-    font-weight: 400;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* Heading styles */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    font-family: var(--font-family-sans-serif);
-    font-weight: 600;
-    line-height: 1.3;
-    margin-bottom: 1rem;
-}
-
-h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-}
-
-h2 {
-    font-size: 2rem;
+.mud-nav-link.active {
     font-weight: 600;
 }
 
-h3 {
-    font-size: 1.5rem;
+.mud-table {
+    width: 100%;
 }
 
-h4 {
-    font-size: 1.25rem;
+.mud-table-container {
+    overflow-x: auto;
 }
 
-h1:focus,
-h2:focus,
-h3:focus,
-h4:focus,
-h5:focus,
-h6:focus {
-    outline: none;
+/* Tooltip styles */
+.mud-tooltip {
+    z-index: 1500 !important;
+    max-width: 300px;
+    word-wrap: break-word;
 }
 
-/* Link styles */
-a,
-.btn-link {
-    color: #4361ee;
-    text-decoration: none;
-    transition: color 0.2s ease-in-out;
+.mud-tooltip-root {
+    display: inline-block;
 }
 
-a:hover,
-.btn-link:hover {
-    color: #3a56d4;
-    text-decoration: underline;
+/* Dark theme enhancements */
+.mud-theme-dark .mud-card {
+    background-color: #1E1E2D;
 }
 
-/* Button styles */
-.btn {
-    font-family: var(--font-family-sans-serif);
-    font-weight: 600;
-    border-radius: 0.5rem;
-    padding: 0.5rem 1.25rem;
-    transition: all 0.2s ease-in-out;
+.mud-theme-dark .mud-paper {
+    background-color: #1E1E2D;
 }
 
-.btn-primary {
-    color: #fff;
-    background-color: #4361ee;
-    border-color: #4361ee;
+.mud-theme-dark .mud-drawer {
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.btn-primary:hover {
-    background-color: #3a56d4;
-    border-color: #3a56d4;
+.mud-theme-dark .mud-table {
+    background-color: #1E1E2D;
 }
 
-.btn-outline-secondary {
-    color: #6c757d;
-    border-color: #6c757d;
+.mud-theme-dark .mud-table-container {
+    background-color: #1E1E2D;
 }
 
-.btn-outline-secondary:hover {
-    color: #fff;
-    background-color: #6c757d;
-    border-color: #6c757d;
+.mud-theme-dark .mud-table-head {
+    background-color: #1E1E2D;
 }
 
-.btn:focus,
-.btn:active:focus,
-.btn-link.nav-link:focus,
-.form-control:focus,
-.form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #4361ee;
+.mud-theme-dark .mud-table-cell {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.mud-theme-dark .mud-button-outlined.mud-button-color-primary {
+    border-color: rgba(99, 102, 241, 0.5);
+}
+
+.mud-theme-dark .mud-button-outlined.mud-button-color-info {
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+.mud-theme-dark .mud-button-outlined.mud-button-color-success {
+    border-color: rgba(16, 185, 129, 0.5);
+}
+
+.mud-theme-dark .mud-button-outlined.mud-button-color-error {
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+.mud-theme-dark .mud-button-outlined.mud-button-color-warning {
+    border-color: rgba(245, 158, 11, 0.5);
 }
 
 .content {
@@ -198,4 +168,31 @@ code {
 .form-floating>.form-control-plaintext:focus::placeholder,
 .form-floating>.form-control:focus::placeholder {
     text-align: start;
+}
+
+
+
+/* Hide number input arrows */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+/* Quantity input styles */
+.quantity-input {
+    font-size: 1.1rem !important;
+    font-weight: bold !important;
+    width: 50px !important;
+    padding: 0.25rem 0.1rem !important;
+    appearance: textfield !important;
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
 }

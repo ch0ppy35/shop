@@ -1,56 +1,77 @@
 using Bunit;
+using FluentAssertions;
 using Frontend.Layout;
+using Frontend.Models;
+using Frontend.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.JSInterop;
+using Moq;
+using App.Tests.TestHelpers;
 
 namespace App.Tests.Layout;
 
 public class NavMenuTests : TestContext
 {
-    [Fact]
-    public void NavMenu_ShouldRender_WithCorrectLinks()
+    private readonly Mock<ICartService> _mockCartService;
+
+    public NavMenuTests()
     {
-        // Arrange & Act
-        var cut = RenderComponent<NavMenu>();
+        // Add MudBlazor services
+        this.AddMudBlazorTestServices();
 
-        // Assert
-        // Instead of checking the exact HTML, let's check for the presence of key elements
-        // This is more resilient to minor changes in the rendered HTML
+        // Register mock CartService
+        _mockCartService = new Mock<ICartService>();
+        _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(new ShoppingCart
+        {
+            Items = new List<CartItem>(),
+            TotalPrice = 0,
+            ItemCount = 0
+        });
+        Services.AddSingleton(_mockCartService.Object);
 
-        // Check for the navbar brand
-        cut.Find("a.navbar-brand").MarkupMatches("<a class=\"navbar-brand\" href=\"\">NATS Shop</a>");
-
-        // Check for the navigation links
-        var navLinks = cut.FindAll("a.nav-link");
-        Assert.Equal(3, navLinks.Count);
-
-        // Check the Home link
-        Assert.Contains(navLinks, link => link.TextContent.Contains("Home"));
-
-        // Check the Products link
-        Assert.Contains(navLinks, link => link.TextContent.Contains("Products"));
-
-        // Check the About link
-        Assert.Contains(navLinks, link => link.TextContent.Contains("About"));
+        // Register mock IJSRuntime
+        var mockJsRuntime = new Mock<IJSRuntime>();
+        mockJsRuntime
+            .Setup(js => js.InvokeAsync<object>(It.IsAny<string>(), It.IsAny<object[]>()))
+            .ReturnsAsync((object)null!);
+        Services.AddSingleton(mockJsRuntime.Object);
     }
 
     [Fact]
-    public void NavMenu_ShouldToggle_WhenButtonClicked()
+    public void NavMenu_ShouldRender_WithLinks()
     {
-        // Arrange
+        // Act
         var cut = RenderComponent<NavMenu>();
 
-        // Initial state should be collapsed
-        Assert.Contains("collapse", cut.Find("div.nav-scrollable").ClassList);
+        // Assert
+        // Check for MudNavLink components with expected hrefs
+        cut.Markup.Should().Contain("href=\"\""); // Home link has empty href
+        cut.Markup.Should().Contain("href=\"products\""); // MudBlazor doesn't add leading slash
+        cut.Markup.Should().Contain("href=\"cart\""); // MudBlazor doesn't add leading slash
+        cut.Markup.Should().Contain("href=\"admin/products\""); // MudBlazor doesn't add leading slash
+        cut.Markup.Should().Contain("href=\"about\""); // MudBlazor doesn't add leading slash
+    }
 
-        // Act - click the toggle button
-        cut.Find("button.navbar-toggler").Click();
+    [Fact]
+    public void NavMenu_ShouldShowCartCount_WhenCartHasItems()
+    {
+        // Arrange
+        _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(new ShoppingCart
+        {
+            Items = new List<CartItem>
+            {
+                new() { ProductId = "1", Quantity = 2 },
+                new() { ProductId = "2", Quantity = 1 }
+            },
+            TotalPrice = 29.99m,
+            ItemCount = 3
+        });
 
-        // Assert - menu should be expanded (no collapse class)
-        Assert.DoesNotContain("collapse", cut.Find("div.nav-scrollable").ClassList);
+        // Act
+        var cut = RenderComponent<NavMenu>();
 
-        // Act - click the toggle button again
-        cut.Find("button.navbar-toggler").Click();
-
-        // Assert - menu should be collapsed again
-        Assert.Contains("collapse", cut.Find("div.nav-scrollable").ClassList);
+        // Assert
+        // MudBlazor uses MudBadge for cart count, so we check for the count value
+        cut.Markup.Should().Contain("3");
     }
 }

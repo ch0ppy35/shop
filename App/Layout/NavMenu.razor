@@ -1,44 +1,77 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">NATS Shop</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
+﻿@using MudBlazor
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="products">
-                <span class="bi bi-box-seam-fill" aria-hidden="true"></span> Products
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="admin/products">
-                <span class="bi bi-gear-fill" aria-hidden="true"></span> Admin
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="about">
-                <span class="bi bi-info-circle-fill" aria-hidden="true"></span> About
-            </NavLink>
-        </div>
-    </nav>
-</div>
+<MudNavMenu>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+
+    <MudNavLink Href="products" Icon="@Icons.Material.Filled.Inventory">Products</MudNavLink>
+
+    <MudNavLink Href="cart" Icon="@Icons.Material.Filled.ShoppingCart">
+        @if (cartItemCount > 0)
+        {
+
+            <MudBadge Content="@cartItemCount" Color="Color.Primary" Origin="Origin.CenterRight" BadgeClass="mx-2">
+                Cart
+            </MudBadge>
+        }
+        else
+        {
+            <span>Cart</span>
+        }
+    </MudNavLink>
+
+    <MudNavLink Href="admin/products" Icon="@Icons.Material.Filled.Settings">Admin</MudNavLink>
+
+    <MudNavLink Href="about" Icon="@Icons.Material.Filled.Info">About</MudNavLink>
+</MudNavMenu>
 
 @code {
-    private bool collapseNavMenu = true;
+    private int cartItemCount = 0;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    [Inject]
+    private ICartService CartService { get; set; } = default!;
 
-    private void ToggleNavMenu()
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
     {
-        collapseNavMenu = !collapseNavMenu;
+        await base.OnInitializedAsync();
+        await UpdateCartItemCount();
+
+#if !TEST
+        // Listen for cart updates - skip in test environment
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval",
+            "document.addEventListener('cartUpdated', function() { DotNet.invokeMethodAsync('Frontend', 'RefreshNavMenu'); });");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error setting up cart update listener: {ex.Message}");
+        }
+#endif
+    }
+
+    [JSInvokable]
+    public static async Task RefreshNavMenu()
+    {
+        if (NavMenuInstance != null)
+        {
+            await NavMenuInstance.UpdateCartItemCount();
+        }
+    }
+
+    private static NavMenu? NavMenuInstance;
+
+    protected override void OnInitialized()
+    {
+        NavMenuInstance = this;
+    }
+
+    private async Task UpdateCartItemCount()
+    {
+        var cart = await CartService.GetCartAsync();
+        cartItemCount = cart.ItemCount;
+        StateHasChanged();
     }
 }

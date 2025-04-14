@@ -139,3 +139,128 @@ public enum ProductOperationType
     /// </summary>
     UpdateInventory
 }
+
+/// <summary>
+/// Message for cart-related operations
+/// </summary>
+[Serializable]
+public class CartMessage : BaseMessage
+{
+    /// <summary>
+    /// Gets or sets the cart ID (same as session ID)
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? CartId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the product ID
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ProductId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the quantity
+    /// </summary>
+    public int Quantity { get; set; } = 1;
+
+    /// <summary>
+    /// Gets or sets the product name
+    /// </summary>
+    public string? Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the product price
+    /// </summary>
+    public decimal Price { get; set; }
+
+    /// <summary>
+    /// Gets or sets the operation type
+    /// </summary>
+    public CartOperationType OperationType { get; set; }
+}
+
+/// <summary>
+/// Operation types for cart messages
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum CartOperationType
+{
+    /// <summary>
+    /// Add an item to the cart
+    /// </summary>
+    AddItem,
+
+    /// <summary>
+    /// Update an item in the cart
+    /// </summary>
+    UpdateItem,
+
+    /// <summary>
+    /// Remove an item from the cart
+    /// </summary>
+    RemoveItem,
+
+    /// <summary>
+    /// Get the cart
+    /// </summary>
+    GetCart,
+
+    /// <summary>
+    /// Clear the cart
+    /// </summary>
+    ClearCart
+}
+
+/// <summary>
+/// Response for cart operations
+/// </summary>
+[Serializable]
+public class CartResponse : BaseResponse
+{
+    /// <summary>
+    /// Gets or sets the cart items
+    /// </summary>
+    public List<CartItem>? Items { get; set; }
+
+    /// <summary>
+    /// Gets or sets the total price of the cart
+    /// </summary>
+    public decimal TotalPrice { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of items in the cart
+    /// </summary>
+    public int ItemCount { get; set; }
+}
+
+/// <summary>
+/// Cart item model
+/// </summary>
+[Serializable]
+public class CartItem
+{
+    /// <summary>
+    /// Gets or sets the product ID
+    /// </summary>
+    public string? ProductId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the product name
+    /// </summary>
+    public string? Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the product price
+    /// </summary>
+    public decimal Price { get; set; }
+
+    /// <summary>
+    /// Gets or sets the quantity
+    /// </summary>
+    public int Quantity { get; set; }
+
+    /// <summary>
+    /// Gets the total price for this item
+    /// </summary>
+    public decimal TotalPrice => Price * Quantity;
+}

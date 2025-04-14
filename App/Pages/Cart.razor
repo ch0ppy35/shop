@@ -1,0 +1,195 @@
+@page "/cart"
+@inject ICartService CartService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject ToastService ToastService
+@inject IConfirmService ConfirmService
+
+<PageTitle>Shopping Cart</PageTitle>
+
+<MudText Typo="Typo.h3" Class="mb-4">Shopping Cart</MudText>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (cart.IsEmpty)
+{
+    <MudAlert Severity="Severity.Info" Class="my-4">
+        Your cart is empty. <MudLink Href="/products" Underline="Underline.Always">Browse products</MudLink> to add items to
+        your cart.
+    </MudAlert>
+}
+else
+{
+    <MudPaper Elevation="2" Class="pa-4 mb-4">
+        <MudTable Items="@cart.Items" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>Product</MudTh>
+                <MudTh>Price</MudTh>
+                <MudTh>Quantity</MudTh>
+                <MudTh>Total</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>
+                    <MudLink Href="@($"/products/{context.ProductId}")" Underline="Underline.Hover">@context.Name</MudLink>
+                </MudTd>
+                <MudTd>$@context.Price.ToString("F2")</MudTd>
+                <MudTd>
+                    <div class="d-flex align-center" style="width: 150px;">
+                        <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Primary"
+                            OnClick="() => UpdateQuantity(context.ProductId, Math.Max(1, context.Quantity - 1))" />
+                        <MudText Class="mx-3 text-center" Style="min-width: 30px;">@context.Quantity</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
+                            OnClick="() => UpdateQuantity(context.ProductId, context.Quantity + 1)" />
+                    </div>
+                </MudTd>
+                <MudTd>$@context.TotalPrice.ToString("F2")</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                        OnClick="() => RemoveItem(context.ProductId)" />
+                </MudTd>
+            </RowTemplate>
+            <FooterContent>
+                <MudTh Class="text-right" Style="width: 60%;">Total:</MudTh>
+                <MudTh>$@cart.TotalPrice.ToString("F2")</MudTh>
+                <MudTh></MudTh>
+            </FooterContent>
+        </MudTable>
+    </MudPaper>
+
+    <div class="d-flex justify-space-between mt-6">
+        <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.RemoveShoppingCart"
+            OnClick="ClearCart">Clear Cart</MudButton>
+        <div>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack"
+                OnClick="ContinueShopping" Class="mr-3">Continue Shopping</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Payment"
+                Disabled="true">Checkout</MudButton>
+        </div>
+    </div>
+}
+
+@code {
+    private ShoppingCart cart = new ShoppingCart();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCartAsync();
+    }
+
+    private async Task LoadCartAsync()
+    {
+        loading = true;
+        cart = await CartService.GetCartAsync();
+        loading = false;
+    }
+
+    private async Task UpdateQuantity(string? productId, int quantity)
+    {
+        if (string.IsNullOrEmpty(productId) || quantity < 1)
+        {
+            return;
+        }
+
+        var success = await CartService.UpdateItemAsync(productId, quantity);
+        if (success)
+        {
+            await LoadCartAsync();
+#if !TEST
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("cartHelper.refreshNavMenu");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error refreshing nav menu: {ex.Message}");
+            }
+#endif
+        }
+        else
+        {
+            ToastService.ShowError("Failed to update quantity. Please try again.");
+        }
+    }
+
+    private async Task RemoveItem(string? productId)
+    {
+        if (string.IsNullOrEmpty(productId))
+        {
+            return;
+        }
+
+        var confirmed = await ConfirmService.ShowConfirmation(
+        "Are you sure you want to remove this item from your cart?",
+        "Remove Item",
+        "Warning",
+        "Remove");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var success = await CartService.RemoveItemAsync(productId);
+        if (success)
+        {
+            await LoadCartAsync();
+#if !TEST
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("cartHelper.refreshNavMenu");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error refreshing nav menu: {ex.Message}");
+            }
+#endif
+        }
+        else
+        {
+            ToastService.ShowError("Failed to remove item. Please try again.");
+        }
+    }
+
+    private async Task ClearCart()
+    {
+        var confirmed = await ConfirmService.ShowConfirmation(
+        "Are you sure you want to clear your cart?",
+        "Clear Cart",
+        "Danger",
+        "Clear");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var success = await CartService.ClearCartAsync();
+        if (success)
+        {
+            await LoadCartAsync();
+#if !TEST
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("cartHelper.refreshNavMenu");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error refreshing nav menu: {ex.Message}");
+            }
+#endif
+        }
+        else
+        {
+            ToastService.ShowError("Failed to clear cart. Please try again.");
+        }
+    }
+
+    private void ContinueShopping()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+}
