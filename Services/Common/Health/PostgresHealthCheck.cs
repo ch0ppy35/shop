@@ -9,12 +9,12 @@ namespace Common.Health;
 public class PostgresHealthCheck : IHealthCheck
 {
     private readonly ILogger<PostgresHealthCheck> _logger;
-    private readonly DatabaseService _databaseService;
+    private readonly IDatabaseService _databaseService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PostgresHealthCheck"/> class.
     /// </summary>
-    public PostgresHealthCheck(ILogger<PostgresHealthCheck> logger, DatabaseService databaseService)
+    public PostgresHealthCheck(ILogger<PostgresHealthCheck> logger, IDatabaseService databaseService)
     {
         _logger = logger;
         _databaseService = databaseService;

@@ -25,8 +25,12 @@ public class ServiceExtensionsTests
 
         // Assert
         // Verify NatsService is registered
-        var natsService = serviceProvider.GetService<NatsService>();
+        var natsService = serviceProvider.GetService<INatsService>();
         natsService.Should().NotBeNull();
+
+        // Verify concrete NatsService is also registered for backward compatibility
+        var concreteNatsService = serviceProvider.GetService<NatsService>();
+        concreteNatsService.Should().NotBeNull();
 
         // Verify HealthService is registered
         var healthService = serviceProvider.GetService<HealthService>();
@@ -61,9 +65,17 @@ public class ServiceExtensionsTests
 
         // Assert
         // Get services twice and verify they are the same instance
-        var natsService1 = serviceProvider.GetRequiredService<NatsService>();
-        var natsService2 = serviceProvider.GetRequiredService<NatsService>();
+        var natsService1 = serviceProvider.GetRequiredService<INatsService>();
+        var natsService2 = serviceProvider.GetRequiredService<INatsService>();
         natsService1.Should().BeSameAs(natsService2);
+
+        // Verify concrete implementation is also singleton
+        var concreteNatsService1 = serviceProvider.GetRequiredService<NatsService>();
+        var concreteNatsService2 = serviceProvider.GetRequiredService<NatsService>();
+        concreteNatsService1.Should().BeSameAs(concreteNatsService2);
+
+        // Verify interface and concrete implementation point to the same instance
+        natsService1.Should().BeSameAs(concreteNatsService1);
 
         var healthService1 = serviceProvider.GetRequiredService<HealthService>();
         var healthService2 = serviceProvider.GetRequiredService<HealthService>();

@@ -63,13 +63,14 @@ logger.LogInformation("Starting health endpoint");
 await healthEndpoint.StartAsync();
 logger.LogInformation("Health endpoint started successfully");
 
-// Initialize database connection in the background
-var dbService = host.Services.GetRequiredService<DatabaseService>();
-var natsService = host.Services.GetRequiredService<NatsService>();
+// Initialize database and NATS connections in the background
+var dbService = host.Services.GetRequiredService<IDatabaseService>();
+var natsService = host.Services.GetRequiredService<INatsService>();
 
-// Start a background task to initialize the database
+// Start a background task to initialize the database and then connect to NATS
 _ = Task.Run(async () =>
 {
+    // Step 1: Initialize database connection
     logger.LogInformation("Initializing database connection in background");
 
     try
@@ -88,28 +89,24 @@ _ = Task.Run(async () =>
         var seeder = scope.ServiceProvider.GetRequiredService<ProductSeeder>();
         await seeder.SeedAsync();
         logger.LogInformation("Database seeding completed");
+
+        // Step 2: Only after database is ready, connect to NATS
+        logger.LogInformation("Database is ready, now connecting to NATS server");
+        try
+        {
+            // Use infinite retries (-1) to keep trying to connect
+            await natsService.ConnectWithRetryAsync(-1);
+            logger.LogInformation("Successfully connected to NATS server");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "NATS connection retry task failed");
+            // Don't exit the application, let the health check report the failure
+        }
     }
     catch (Exception ex)
     {
         logger.LogError(ex, "Database initialization or migration failed");
-        // Don't exit the application, let the health check report the failure
-    }
-});
-
-// Start a background task to connect to NATS with infinite retries
-_ = Task.Run(async () =>
-{
-    logger.LogInformation("Attempting to connect to NATS server with retry mechanism in background");
-
-    try
-    {
-        // Use infinite retries (-1) to keep trying to connect
-        await natsService.ConnectWithRetryAsync(-1);
-        logger.LogInformation("Successfully connected to NATS server");
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "NATS connection retry task failed");
         // Don't exit the application, let the health check report the failure
     }
 });

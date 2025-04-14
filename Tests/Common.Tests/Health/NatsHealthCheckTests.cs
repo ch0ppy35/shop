@@ -10,14 +10,12 @@ namespace Common.Tests.Health;
 public class NatsHealthCheckTests
 {
     private readonly Mock<ILogger<NatsHealthCheck>> _loggerMock;
-    private readonly Mock<NatsService> _natsServiceMock;
+    private readonly Mock<INatsService> _natsServiceMock;
 
     public NatsHealthCheckTests()
     {
         _loggerMock = new Mock<ILogger<NatsHealthCheck>>();
-        _natsServiceMock = new Mock<NatsService>(
-            new Mock<ILogger<NatsService>>().Object,
-            new Mock<Microsoft.Extensions.Configuration.IConfiguration>().Object);
+        _natsServiceMock = new Mock<INatsService>();
     }
 
     [Fact]
@@ -37,8 +35,6 @@ public class NatsHealthCheckTests
     public void IsReady_ShouldReturnTrue_WhenNatsIsConnected()
     {
         // Arrange
-        // Setup the IsConnected property to return true
-        var isConnectedProperty = typeof(NatsService).GetProperty("IsConnected");
         _natsServiceMock.Setup(x => x.IsConnected).Returns(true);
 
         var healthCheck = new NatsHealthCheck(_loggerMock.Object, _natsServiceMock.Object);

@@ -9,12 +9,12 @@ namespace Common.Health;
 public class NatsHealthCheck : IHealthCheck
 {
     private readonly ILogger<NatsHealthCheck> _logger;
-    private readonly NatsService _natsService;
+    private readonly INatsService _natsService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NatsHealthCheck"/> class.
     /// </summary>
-    public NatsHealthCheck(ILogger<NatsHealthCheck> logger, NatsService natsService)
+    public NatsHealthCheck(ILogger<NatsHealthCheck> logger, INatsService natsService)
     {
         _logger = logger;
         _natsService = natsService;

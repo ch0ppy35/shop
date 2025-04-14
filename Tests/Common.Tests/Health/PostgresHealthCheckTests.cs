@@ -9,15 +9,12 @@ namespace Common.Tests.Health;
 public class PostgresHealthCheckTests
 {
     private readonly Mock<ILogger<PostgresHealthCheck>> _loggerMock;
-    private readonly Mock<DatabaseService> _databaseServiceMock;
+    private readonly Mock<IDatabaseService> _databaseServiceMock;
 
     public PostgresHealthCheckTests()
     {
         _loggerMock = new Mock<ILogger<PostgresHealthCheck>>();
-        _databaseServiceMock = new Mock<DatabaseService>(
-            new Mock<ILogger<DatabaseService>>().Object,
-            new Mock<Microsoft.Extensions.Configuration.IConfiguration>().Object,
-            new Mock<IServiceProvider>().Object);
+        _databaseServiceMock = new Mock<IDatabaseService>();
     }
 
     [Fact]

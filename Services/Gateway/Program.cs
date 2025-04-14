@@ -72,7 +72,7 @@ app.MapGet("/readinessz", () =>
 });
 
 // Connect to NATS with retry
-var natsService = app.Services.GetRequiredService<NatsService>();
+var natsService = app.Services.GetRequiredService<INatsService>();
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
 // Start a background task to connect to NATS with infinite retries

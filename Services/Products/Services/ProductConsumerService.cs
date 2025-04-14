@@ -11,7 +11,7 @@ namespace Products.Services;
 public class ProductConsumerService : BackgroundService
 {
     private readonly ILogger<ProductConsumerService> _logger;
-    private readonly NatsService _natsService;
+    private readonly INatsService _natsService;
     private readonly IProductService _productService;
 
     /// <summary>
@@ -19,7 +19,7 @@ public class ProductConsumerService : BackgroundService
     /// </summary>
     public ProductConsumerService(
         ILogger<ProductConsumerService> logger,
-        NatsService natsService,
+        INatsService natsService,
         IProductService productService)
     {
         _logger = logger;
@@ -33,6 +33,9 @@ public class ProductConsumerService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Product consumer service starting");
+
+        // Wait for NATS connection to be established before starting consumers
+        await WaitForNatsConnectionAsync(stoppingToken);
 
         // Start multiple consumers for different subjects
         var tasks = new List<Task>
@@ -50,6 +53,38 @@ public class ProductConsumerService : BackgroundService
         await Task.WhenAny(tasks);
 
         _logger.LogWarning("One of the product consumer tasks has completed unexpectedly");
+    }
+
+    /// <summary>
+    /// Waits for the NATS connection to be established before proceeding
+    /// </summary>
+    private async Task WaitForNatsConnectionAsync(CancellationToken stoppingToken)
+    {
+        const int maxRetries = 60; // Maximum number of retries (10 minutes with 10-second delay)
+        const int retryDelaySeconds = 10; // Delay between retries
+        int retryCount = 0;
+
+        while (!_natsService.IsConnected && retryCount < maxRetries && !stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Waiting for NATS connection to be established (attempt {RetryCount}/{MaxRetries})...",
+                retryCount + 1, maxRetries);
+
+            await Task.Delay(TimeSpan.FromSeconds(retryDelaySeconds), stoppingToken);
+            retryCount++;
+        }
+
+        if (_natsService.IsConnected)
+        {
+            _logger.LogInformation("NATS connection established, starting message handlers");
+        }
+        else if (stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogWarning("Waiting for NATS connection was cancelled");
+        }
+        else
+        {
+            _logger.LogError("Failed to establish NATS connection after {MaxRetries} retries", maxRetries);
+        }
     }
 
     private async Task HandleCreateProductRequests(CancellationToken stoppingToken)
