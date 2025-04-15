@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 
-
 namespace Common.Models;
 
 /// <summary>

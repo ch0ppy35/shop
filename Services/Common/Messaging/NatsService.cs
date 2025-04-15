@@ -1,8 +1,9 @@
+using System.Runtime.CompilerServices;
+using Common.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NATS.Client.Core;
 using NATS.Client.Serializers.Json;
-using Common.Models;
 
 namespace Common.Messaging;
 
@@ -198,7 +199,7 @@ public class NatsService : INatsService, IAsyncDisposable
     /// <param name="queueGroup">Optional queue group name for load balancing across multiple subscribers</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>An async enumerable of messages</returns>
-    public async IAsyncEnumerable<T> SubscribeAsync<T>(string subject, string? queueGroup = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<T> SubscribeAsync<T>(string subject, string? queueGroup = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         where T : BaseMessage
     {
         if (_connection == null || !_isConnected)

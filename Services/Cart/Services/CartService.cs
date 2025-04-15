@@ -1,5 +1,4 @@
 using Common.Models;
-using Microsoft.Extensions.Logging;
 
 namespace Cart.Services;
 

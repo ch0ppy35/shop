@@ -2,7 +2,6 @@ using Common.Database;
 using Common.Database.Models;
 using Common.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace Products.Repositories;
 

@@ -1,6 +1,5 @@
 using Cart.Services;
 using Common.Health;
-using Microsoft.Extensions.Logging;
 
 namespace Cart.Health;
 

@@ -1,8 +1,8 @@
 using Common.Health;
 using Common.Logging;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace Recommendations.Health;
 

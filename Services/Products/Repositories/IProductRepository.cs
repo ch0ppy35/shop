@@ -1,5 +1,4 @@
 using Common.Database.Models;
-using Common.Models;
 
 namespace Products.Repositories;
 

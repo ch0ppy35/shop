@@ -1,7 +1,5 @@
 using Common.Messaging;
 using Common.Models;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Cart.Services;
 

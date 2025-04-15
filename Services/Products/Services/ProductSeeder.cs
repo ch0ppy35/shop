@@ -1,7 +1,6 @@
 using Common.Database;
 using Common.Database.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace Products.Services;
 

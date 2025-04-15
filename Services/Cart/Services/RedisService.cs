@@ -1,7 +1,5 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using System.Text.Json;
+using StackExchange.Redis;
 
 namespace Cart.Services;
 
