@@ -22,27 +22,21 @@ public class SessionMiddleware
     /// </summary>
     public async Task InvokeAsync(HttpContext context)
     {
-        // Check if there's a session ID in the request headers
         if (!context.Request.Headers.TryGetValue("X-Session-ID", out var sessionId) || string.IsNullOrEmpty(sessionId))
         {
-            // Generate a new session ID if none exists
             sessionId = Guid.NewGuid().ToString();
             context.Request.Headers["X-Session-ID"] = sessionId;
         }
 
-        // Store the session ID in the HttpContext.Items for use in controllers
         context.Items["SessionId"] = sessionId.ToString();
 
         _logger.LogInformation("Request associated with session ID: {SessionId}", sessionId.ToString());
 
-        // Add the session ID to the response headers before calling the next middleware
-        // This ensures we set the header before the response starts
         if (!context.Response.Headers.ContainsKey("X-Session-ID"))
         {
             context.Response.Headers["X-Session-ID"] = sessionId.ToString();
         }
 
-        // Call the next middleware in the pipeline
         await _next(context);
     }
 }

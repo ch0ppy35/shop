@@ -22,7 +22,6 @@ public class SessionService
     /// </summary>
     public async Task<string> GetSessionIdAsync()
     {
-        // If we already have a session ID in memory, return it
         if (!string.IsNullOrEmpty(_sessionId))
         {
             return _sessionId;
@@ -30,7 +29,6 @@ public class SessionService
 
         try
         {
-            // Try to get the session ID from local storage using our JavaScript helper
             var storedSessionId = await _jsInterop.GetSessionId();
 
             if (!string.IsNullOrEmpty(storedSessionId))
@@ -44,12 +42,10 @@ public class SessionService
             Console.WriteLine($"Error retrieving session ID from local storage: {ex.Message}");
         }
 
-        // Generate a new session ID if none exists
         _sessionId = Guid.NewGuid().ToString();
 
         try
         {
-            // Store the new session ID in local storage using our JavaScript helper
             await _jsInterop.SetSessionId(_sessionId);
         }
         catch (Exception ex)

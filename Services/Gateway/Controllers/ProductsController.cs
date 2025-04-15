@@ -24,11 +24,11 @@ public class ProductsController : ControllerBase
 
         try
         {
-            // Validate pagination parameters
+
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 10;
 
-            // Get the session ID from the HttpContext.Items
+
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -39,7 +39,7 @@ public class ProductsController : ControllerBase
                 PageSize = pageSize
             };
 
-            // Send request and wait for reply
+
             var response = await _natsService.RequestAsync<ProductMessage, ProductListResponse>(
                 "products.getall",
                 message,
@@ -71,7 +71,7 @@ public class ProductsController : ControllerBase
 
         try
         {
-            // Get the session ID from the HttpContext.Items
+
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -81,7 +81,7 @@ public class ProductsController : ControllerBase
                 SessionId = sessionId
             };
 
-            // Send request and wait for reply
+
             var response = await _natsService.RequestAsync<ProductMessage, ProductResponse>(
                 "products.get",
                 message,
@@ -113,7 +113,7 @@ public class ProductsController : ControllerBase
 
         try
         {
-            // Get the session ID from the HttpContext.Items
+
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -122,7 +122,7 @@ public class ProductsController : ControllerBase
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
-                // Quantity field removed - using QuantityInStock instead
+
                 Sku = product.Sku,
                 Location = product.Location,
                 QuantityInStock = product.QuantityInStock,
@@ -131,7 +131,7 @@ public class ProductsController : ControllerBase
                 SessionId = sessionId
             };
 
-            // Send request and wait for reply
+
             var response = await _natsService.RequestAsync<ProductMessage, ProductResponse>(
                 "products.create",
                 message,
@@ -163,7 +163,7 @@ public class ProductsController : ControllerBase
 
         try
         {
-            // Get the session ID from the HttpContext.Items
+
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -172,7 +172,7 @@ public class ProductsController : ControllerBase
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
-                // Quantity field removed - using QuantityInStock instead
+
                 Sku = product.Sku,
                 Location = product.Location,
                 QuantityInStock = product.QuantityInStock,
@@ -181,7 +181,7 @@ public class ProductsController : ControllerBase
                 SessionId = sessionId
             };
 
-            // Send request and wait for reply
+
             var response = await _natsService.RequestAsync<ProductMessage, ProductResponse>(
                 "products.update",
                 message,
@@ -213,7 +213,7 @@ public class ProductsController : ControllerBase
 
         try
         {
-            // Get the session ID from the HttpContext.Items
+
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -223,7 +223,7 @@ public class ProductsController : ControllerBase
                 SessionId = sessionId
             };
 
-            // Send request and wait for reply
+
             var response = await _natsService.RequestAsync<ProductMessage, BaseResponse>(
                 "products.delete",
                 message,
@@ -255,7 +255,7 @@ public class ProductsController : ControllerBase
 
         try
         {
-            // Get the session ID from the HttpContext.Items
+
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -265,7 +265,7 @@ public class ProductsController : ControllerBase
                 SessionId = sessionId
             };
 
-            // Send request and wait for reply
+
             var response = await _natsService.RequestAsync<ProductMessage, ProductResponse>(
                 "products.inventory.get",
                 message,
@@ -297,7 +297,7 @@ public class ProductsController : ControllerBase
 
         try
         {
-            // Get the session ID from the HttpContext.Items
+
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -311,7 +311,7 @@ public class ProductsController : ControllerBase
                 SessionId = sessionId
             };
 
-            // Send request and wait for reply
+
             var response = await _natsService.RequestAsync<ProductMessage, ProductResponse>(
                 "products.inventory.update",
                 message,
@@ -342,7 +342,7 @@ public class ProductDto
     public string? Name { get; set; }
     public string? Description { get; set; }
     public decimal Price { get; set; }
-    // Quantity field removed - using QuantityInStock instead
+
     public string? Sku { get; set; }
     public string? Location { get; set; }
     public int QuantityInStock { get; set; }

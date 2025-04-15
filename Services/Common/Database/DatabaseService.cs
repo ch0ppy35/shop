@@ -23,7 +23,6 @@ public class DatabaseService : IDatabaseService
         _logger = logger;
         _serviceProvider = serviceProvider;
 
-        // Get database connection string from environment variables or configuration
         _connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ??
                            configuration.GetConnectionString("DefaultConnection") ??
                            "Host=localhost;Database=products;Username=postgres;Password=postgres";
@@ -115,10 +114,8 @@ public class DatabaseService : IDatabaseService
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ProductDbContext>();
 
-            // Ensure the database exists
             await dbContext.Database.EnsureCreatedAsync();
 
-            // Apply migrations
             await dbContext.Database.MigrateAsync();
 
             _logger.LogInformation("Database migrations applied successfully");

@@ -58,7 +58,6 @@ public class ProductMessage : BaseMessage
     /// </summary>
     public decimal Price { get; set; }
 
-    // Quantity field removed - using QuantityInStock instead
 
     /// <summary>
     /// Gets or sets the SKU (Stock Keeping Unit)

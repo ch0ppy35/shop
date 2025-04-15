@@ -24,7 +24,6 @@ public class RecommendationServiceTests
     [Fact]
     public async Task GetRecommendationsAsync_WithEmptyCart_ShouldReturnPopularProducts()
     {
-        // Arrange
         var sessionId = "test-session";
         var cartItems = new List<CartItem>();
         var maxRecommendations = 5;
@@ -52,10 +51,8 @@ public class RecommendationServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(productListResponse);
 
-        // Act
         var result = await _service.GetRecommendationsAsync(sessionId, cartItems, maxRecommendations);
 
-        // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(5);
         result.Should().BeInAscendingOrder(p => p.Price);
@@ -64,7 +61,6 @@ public class RecommendationServiceTests
     [Fact]
     public async Task GetRecommendationsAsync_WithCartItems_ShouldReturnSimilarProducts()
     {
-        // Arrange
         var sessionId = "test-session";
         var cartItems = new List<CartItem>
         {
@@ -95,15 +91,12 @@ public class RecommendationServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(productListResponse);
 
-        // Act
         var result = await _service.GetRecommendationsAsync(sessionId, cartItems, maxRecommendations);
 
-        // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(3);
         result.Should().NotContain(p => p.ProductId == "1"); // Should not include items already in cart
 
-        // First recommendations should be the ones with similar prices
         result[0].ProductId.Should().Be("3");
         result[1].ProductId.Should().Be("2");
     }
@@ -111,7 +104,6 @@ public class RecommendationServiceTests
     [Fact]
     public async Task GetRecommendationsAsync_WhenProductServiceFails_ShouldReturnEmptyList()
     {
-        // Arrange
         var sessionId = "test-session";
         var cartItems = new List<CartItem>
         {
@@ -127,10 +119,8 @@ public class RecommendationServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((ProductListResponse)null!);
 
-        // Act
         var result = await _service.GetRecommendationsAsync(sessionId, cartItems, maxRecommendations);
 
-        // Assert
         result.Should().NotBeNull();
         result.Should().BeEmpty();
     }

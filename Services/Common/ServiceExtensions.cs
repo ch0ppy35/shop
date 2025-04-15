@@ -18,7 +18,6 @@ public static class ServiceExtensions
     /// </summary>
     public static IServiceCollection AddCommonServices(this IServiceCollection services)
     {
-        // Add JSON logger
         services.AddLogging(builder =>
         {
             builder.ClearProviders();
@@ -28,14 +27,11 @@ public static class ServiceExtensions
             });
         });
 
-        // Add NATS service
         services.AddSingleton<INatsService, NatsService>();
         services.AddSingleton<NatsService>(sp => (NatsService)sp.GetRequiredService<INatsService>());
 
-        // Add health service
         services.AddSingleton<HealthService>();
 
-        // Add database service
         services.AddSingleton<IDatabaseService, DatabaseService>();
         services.AddSingleton<DatabaseService>(sp => (DatabaseService)sp.GetRequiredService<IDatabaseService>());
 
@@ -47,15 +43,12 @@ public static class ServiceExtensions
     /// </summary>
     public static IServiceCollection AddDatabaseServices(this IServiceCollection services, string connectionString)
     {
-        // Configure Entity Framework Core
         services.AddDbContext<ProductDbContext>(options =>
             options.UseNpgsql(connectionString, npgsqlOptions =>
             {
-                // Specify the assembly where migrations are located
                 npgsqlOptions.MigrationsAssembly("Products");
             }));
 
-        // Register the DbContext as the interface implementation
         services.AddScoped<IProductDbContext>(provider => provider.GetRequiredService<ProductDbContext>());
 
         return services;

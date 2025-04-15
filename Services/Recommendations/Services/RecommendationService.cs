@@ -38,7 +38,6 @@ public class RecommendationService : IRecommendationService
             return await GetPopularProductsAsync(sessionId, maxRecommendations, cancellationToken);
         }
 
-        // Get all products to generate recommendations from
         var allProducts = await GetAllProductsAsync(sessionId, cancellationToken);
         if (allProducts.Count == 0)
         {
@@ -46,10 +45,8 @@ public class RecommendationService : IRecommendationService
             return new List<ProductMessage>();
         }
 
-        // Get product IDs from cart
         var cartProductIds = cartItems.Select(i => i.ProductId).ToHashSet();
 
-        // Filter out products already in cart
         var availableProducts = allProducts
             .Where(p => !cartProductIds.Contains(p.ProductId))
             .ToList();
@@ -60,27 +57,19 @@ public class RecommendationService : IRecommendationService
             return new List<ProductMessage>();
         }
 
-        // Simple recommendation algorithm:
-        // 1. For each product in cart, find products in similar price range
-        // 2. Sort by price similarity to cart items
-        // 3. Take top N recommendations
 
         var recommendations = new List<(ProductMessage Product, decimal Score)>();
 
-        // Calculate average price of cart items
         var avgCartPrice = cartItems.Average(i => i.Price);
 
-        // Score each available product based on price similarity to cart items
         foreach (var product in availableProducts)
         {
-            // Calculate price similarity score (lower difference = higher score)
             var priceDifference = Math.Abs(product.Price - avgCartPrice);
             var similarityScore = 1.0m / (1.0m + priceDifference);
 
             recommendations.Add((product, similarityScore));
         }
 
-        // Sort by score (descending) and take top N
         var topRecommendations = recommendations
             .OrderByDescending(r => r.Score)
             .Take(maxRecommendations)
@@ -101,11 +90,8 @@ public class RecommendationService : IRecommendationService
         int maxProducts,
         CancellationToken cancellationToken)
     {
-        // For now, just return some products
-        // In a real implementation, this would use analytics data to determine popular products
         var allProducts = await GetAllProductsAsync(sessionId, cancellationToken);
 
-        // Sort by price (as a simple proxy for popularity)
         return allProducts
             .OrderBy(p => p.Price)
             .Take(maxProducts)
@@ -121,7 +107,6 @@ public class RecommendationService : IRecommendationService
     {
         try
         {
-            // Create request message
             var message = new ProductMessage
             {
                 OperationType = ProductOperationType.GetAll,
@@ -130,7 +115,6 @@ public class RecommendationService : IRecommendationService
                 PageSize = 100 // Get a large number of products
             };
 
-            // Send request to products service
             var response = await _natsService.RequestAsync<ProductMessage, ProductListResponse>(
                 "products.getall",
                 message,

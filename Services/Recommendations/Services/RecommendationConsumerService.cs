@@ -32,16 +32,13 @@ public class RecommendationConsumerService : BackgroundService
     {
         _logger.LogInformation("Recommendation consumer service starting");
 
-        // Wait for NATS connection to be established before starting consumers
         await WaitForNatsConnectionAsync(stoppingToken);
 
-        // Start message handlers
         var tasks = new List<Task>
         {
             HandleGetRecommendationsRequests(stoppingToken)
         };
 
-        // Wait for all tasks to complete
         await Task.WhenAll(tasks);
     }
 
@@ -88,25 +85,21 @@ public class RecommendationConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<RecommendationMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received get recommendations request - SessionId: {SessionId}, CartItems: {CartItemCount}",
                     msg.SessionId ?? "Unknown", msg.CartItems?.Count ?? 0);
 
-                // Ensure we have a session ID
                 if (string.IsNullOrEmpty(msg.SessionId))
                 {
                     _logger.LogWarning("Get recommendations request missing session ID");
                     continue;
                 }
 
-                // Prepare the response
                 var response = new RecommendationResponse { Success = false, SessionId = msg.SessionId };
 
                 try
                 {
-                    // Get recommendations
                     var cartItems = msg.CartItems ?? new List<CartItem>();
                     var maxRecommendations = msg.MaxRecommendations > 0 ? msg.MaxRecommendations : 5;
 
@@ -116,7 +109,6 @@ public class RecommendationConsumerService : BackgroundService
                         maxRecommendations,
                         stoppingToken);
 
-                    // Set response
                     response.Success = true;
                     response.Message = "Recommendations generated successfully";
                     response.Recommendations = recommendations;
@@ -127,7 +119,6 @@ public class RecommendationConsumerService : BackgroundService
                     response.Error = $"Error generating recommendations: {ex.Message}";
                 }
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try

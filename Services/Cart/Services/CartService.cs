@@ -28,15 +28,12 @@ public class CartService
 
         try
         {
-            // Get the cart from Redis
             var cartKey = GetCartKey(sessionId);
             var cartItems = await _redisService.GetAsync<List<CartItem>>(cartKey, cancellationToken) ?? new List<CartItem>();
 
-            // Calculate totals
             var totalPrice = cartItems.Sum(item => item.TotalPrice);
             var itemCount = cartItems.Sum(item => item.Quantity);
 
-            // Create the response
             var response = new CartResponse
             {
                 Success = true,
@@ -77,33 +74,26 @@ public class CartService
 
         try
         {
-            // Get the cart from Redis
             var cartKey = GetCartKey(sessionId);
             var cartItems = await _redisService.GetAsync<List<CartItem>>(cartKey, cancellationToken) ?? new List<CartItem>();
 
-            // Check if the item already exists in the cart
             var existingItem = cartItems.FirstOrDefault(i => i.ProductId == item.ProductId);
             if (existingItem != null)
             {
-                // Update the quantity
                 existingItem.Quantity += item.Quantity;
                 _logger.LogInformation("Updated existing item in cart, new quantity: {Quantity}", existingItem.Quantity);
             }
             else
             {
-                // Add the new item
                 cartItems.Add(item);
                 _logger.LogInformation("Added new item to cart");
             }
 
-            // Save the cart to Redis with TTL
             await _redisService.SetAsync(cartKey, cartItems, _redisService.CartTtl, cancellationToken);
 
-            // Calculate totals
             var totalPrice = cartItems.Sum(i => i.TotalPrice);
             var itemCount = cartItems.Sum(i => i.Quantity);
 
-            // Create the response
             var response = new CartResponse
             {
                 Success = true,
@@ -141,11 +131,9 @@ public class CartService
 
         try
         {
-            // Get the cart from Redis
             var cartKey = GetCartKey(sessionId);
             var cartItems = await _redisService.GetAsync<List<CartItem>>(cartKey, cancellationToken) ?? new List<CartItem>();
 
-            // Find the item in the cart
             var existingItem = cartItems.FirstOrDefault(i => i.ProductId == productId);
             if (existingItem == null)
             {
@@ -161,28 +149,22 @@ public class CartService
                 };
             }
 
-            // Update the quantity
             if (quantity <= 0)
             {
-                // Remove the item if quantity is 0 or negative
                 cartItems.Remove(existingItem);
                 _logger.LogInformation("Removed item from cart: {ProductId}", productId);
             }
             else
             {
-                // Update the quantity
                 existingItem.Quantity = quantity;
                 _logger.LogInformation("Updated item quantity in cart: {ProductId}, Quantity: {Quantity}", productId, quantity);
             }
 
-            // Save the cart to Redis with TTL
             await _redisService.SetAsync(cartKey, cartItems, _redisService.CartTtl, cancellationToken);
 
-            // Calculate totals
             var totalPrice = cartItems.Sum(i => i.TotalPrice);
             var itemCount = cartItems.Sum(i => i.Quantity);
 
-            // Create the response
             var response = new CartResponse
             {
                 Success = true,
@@ -220,11 +202,9 @@ public class CartService
 
         try
         {
-            // Get the cart from Redis
             var cartKey = GetCartKey(sessionId);
             var cartItems = await _redisService.GetAsync<List<CartItem>>(cartKey, cancellationToken) ?? new List<CartItem>();
 
-            // Find the item in the cart
             var existingItem = cartItems.FirstOrDefault(i => i.ProductId == productId);
             if (existingItem == null)
             {
@@ -240,18 +220,14 @@ public class CartService
                 };
             }
 
-            // Remove the item
             cartItems.Remove(existingItem);
             _logger.LogInformation("Removed item from cart: {ProductId}", productId);
 
-            // Save the cart to Redis with TTL
             await _redisService.SetAsync(cartKey, cartItems, _redisService.CartTtl, cancellationToken);
 
-            // Calculate totals
             var totalPrice = cartItems.Sum(i => i.TotalPrice);
             var itemCount = cartItems.Sum(i => i.Quantity);
 
-            // Create the response
             var response = new CartResponse
             {
                 Success = true,
@@ -288,11 +264,9 @@ public class CartService
 
         try
         {
-            // Remove the cart from Redis
             var cartKey = GetCartKey(sessionId);
             await _redisService.RemoveAsync(cartKey, cancellationToken);
 
-            // Create the response
             var response = new CartResponse
             {
                 Success = true,

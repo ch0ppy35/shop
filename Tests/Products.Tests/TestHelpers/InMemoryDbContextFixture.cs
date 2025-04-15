@@ -39,17 +39,14 @@ public class InMemoryDbContextFixture : IDisposable
         _loggerMock = new Mock<ILogger<ProductDbContext>>();
         _configMock = new Mock<IConfiguration>();
 
-        // Setup configuration mock for connection string
         var connectionString = "Host=localhost;Database=test;Username=test;Password=test";
 
-        // Create mock configuration sections
         var connectionStringSection = new Mock<IConfigurationSection>();
         connectionStringSection.Setup(x => x.Value).Returns(connectionString);
 
         var connectionStringsSection = new Mock<IConfigurationSection>();
         connectionStringsSection.Setup(x => x.GetSection("DefaultConnection")).Returns(connectionStringSection.Object);
 
-        // Setup the configuration to return our mocked sections
         _configMock.Setup(x => x.GetSection("ConnectionStrings")).Returns(connectionStringsSection.Object);
 
         Context = new ProductDbContext(_options, _loggerMock.Object, _configMock.Object);

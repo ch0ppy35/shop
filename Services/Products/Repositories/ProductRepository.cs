@@ -31,7 +31,6 @@ public class ProductRepository : IProductRepository
 
         var products = await _dbContext.Products.ToListAsync();
 
-        // Log the first product to debug
         var firstProduct = products.FirstOrDefault();
         if (firstProduct != null)
         {
@@ -52,21 +51,17 @@ public class ProductRepository : IProductRepository
     {
         _logger.LogInformation("Getting paginated products from database: Page {PageNumber}, Size {PageSize}", pageNumber, pageSize);
 
-        // Ensure valid pagination parameters
         pageNumber = Math.Max(1, pageNumber);
         pageSize = Math.Clamp(pageSize, 1, 100); // Limit page size to reasonable values
 
-        // Get total count for pagination metadata
         var totalCount = await _dbContext.Products.CountAsync();
 
-        // Get paginated data
         var products = await _dbContext.Products
             .OrderBy(p => p.Id) // Ensure consistent ordering
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
 
-        // Log the first product to debug
         var firstProduct = products.FirstOrDefault();
         if (firstProduct != null)
         {
@@ -117,11 +112,9 @@ public class ProductRepository : IProductRepository
             return false;
         }
 
-        // Update properties
         existingProduct.Name = product.Name;
         existingProduct.Description = product.Description;
         existingProduct.Price = product.Price;
-        // Quantity field removed - using QuantityInStock instead
         existingProduct.Sku = product.Sku;
         existingProduct.Location = product.Location;
         existingProduct.QuantityInStock = product.QuantityInStock;
@@ -158,7 +151,6 @@ public class ProductRepository : IProductRepository
     /// </summary>
     public static ProductMessage ToProductMessage(ProductEntity entity, ProductOperationType operationType = ProductOperationType.Get)
     {
-        // Ensure the ProductId is not null or empty
         var productId = !string.IsNullOrEmpty(entity.ProductId) ? entity.ProductId : Guid.NewGuid().ToString();
 
         return new ProductMessage
@@ -167,7 +159,6 @@ public class ProductRepository : IProductRepository
             Name = entity.Name,
             Description = entity.Description,
             Price = entity.Price,
-            // Quantity field removed - using QuantityInStock instead
             Sku = entity.Sku,
             Location = entity.Location,
             QuantityInStock = entity.QuantityInStock,
@@ -187,7 +178,6 @@ public class ProductRepository : IProductRepository
             Name = message.Name ?? string.Empty,
             Description = message.Description,
             Price = message.Price,
-            // Quantity field removed - using QuantityInStock instead
             Sku = message.Sku ?? string.Empty,
             Location = message.Location ?? string.Empty,
             QuantityInStock = message.QuantityInStock,

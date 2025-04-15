@@ -25,7 +25,6 @@ public class RecommendationService : IRecommendationService
     {
         try
         {
-            // Use the injected HttpClient which already has the session ID header
             var response = await _httpClient.GetFromJsonAsync<RecommendationResponse>($"/api/recommendations/cart?maxRecommendations={maxRecommendations}");
 
             if (response == null || response.Recommendations == null)
@@ -51,7 +50,6 @@ public class RecommendationService : IRecommendationService
         }
     }
 
-    // Response classes to match the API
     private class RecommendationResponse
     {
         public bool Success { get; set; }

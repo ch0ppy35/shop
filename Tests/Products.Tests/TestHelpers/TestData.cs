@@ -24,7 +24,6 @@ public static class TestData
                 Name = $"Test Product {i}",
                 Description = $"Description for test product {i}",
                 Price = 10.99m + i,
-                // Quantity field removed - using QuantityInStock instead
                 Sku = $"SKU-{i}",
                 Location = $"Warehouse {(i % 3) + 1}",
                 QuantityInStock = 50 + i,
@@ -49,7 +48,6 @@ public static class TestData
             Name = "Test Product",
             Description = "Description for test product",
             Price = 19.99m,
-            // Quantity field removed - using QuantityInStock instead
             Sku = "SKU-TEST",
             Location = "Warehouse A",
             QuantityInStock = 50,
@@ -70,7 +68,6 @@ public static class TestData
             Name = "Test Product",
             Description = "Description for test product",
             Price = 19.99m,
-            // Quantity field removed - using QuantityInStock instead
             Sku = "SKU-TEST",
             Location = "Warehouse A",
             QuantityInStock = 50,

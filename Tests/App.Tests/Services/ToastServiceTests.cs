@@ -19,10 +19,8 @@ public class ToastServiceTests
     [Fact]
     public void ShowSuccess_ShouldCallSnackbar_WithSuccessSeverity()
     {
-        // Act
         _toastService.ShowSuccess("Success message");
 
-        // Assert
         _mockSnackbar.AddCallCount.Should().Be(1);
         _mockSnackbar.LastMessage.Should().Be("Success message");
         _mockSnackbar.LastSeverity.Should().Be(Severity.Success);
@@ -31,10 +29,8 @@ public class ToastServiceTests
     [Fact]
     public void ShowError_ShouldCallSnackbar_WithErrorSeverity()
     {
-        // Act
         _toastService.ShowError("Error message");
 
-        // Assert
         _mockSnackbar.AddCallCount.Should().Be(1);
         _mockSnackbar.LastMessage.Should().Be("Error message");
         _mockSnackbar.LastSeverity.Should().Be(Severity.Error);
@@ -43,10 +39,8 @@ public class ToastServiceTests
     [Fact]
     public void ShowInfo_ShouldCallSnackbar_WithInfoSeverity()
     {
-        // Act
         _toastService.ShowInfo("Info message");
 
-        // Assert
         _mockSnackbar.AddCallCount.Should().Be(1);
         _mockSnackbar.LastMessage.Should().Be("Info message");
         _mockSnackbar.LastSeverity.Should().Be(Severity.Info);
@@ -55,10 +49,8 @@ public class ToastServiceTests
     [Fact]
     public void ShowWarning_ShouldCallSnackbar_WithWarningSeverity()
     {
-        // Act
         _toastService.ShowWarning("Warning message");
 
-        // Assert
         _mockSnackbar.AddCallCount.Should().Be(1);
         _mockSnackbar.LastMessage.Should().Be("Warning message");
         _mockSnackbar.LastSeverity.Should().Be(Severity.Warning);

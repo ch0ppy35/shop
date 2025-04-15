@@ -28,7 +28,6 @@ public class ProductDbContext : DbContext, IProductDbContext
     {
         _logger = logger;
 
-        // Get database connection string from environment variables or configuration
         _connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ??
                            configuration.GetConnectionString("DefaultConnection") ??
                            "Host=localhost;Database=products;Username=postgres;Password=postgres";
@@ -44,7 +43,6 @@ public class ProductDbContext : DbContext, IProductDbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure ProductEntity
         modelBuilder.Entity<ProductEntity>(entity =>
         {
             entity.ToTable("products");
@@ -73,7 +71,6 @@ public class ProductDbContext : DbContext, IProductDbContext
                 .HasColumnName("price")
                 .HasPrecision(10, 2);
 
-            // Quantity field removed - using QuantityInStock instead
 
             entity.Property(e => e.Sku)
                 .HasColumnName("sku")
@@ -99,12 +96,10 @@ public class ProductDbContext : DbContext, IProductDbContext
                 .HasColumnName("updated_at")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-            // Add unique constraint on ProductId
             entity.HasIndex(e => e.ProductId)
                 .HasDatabaseName("ix_products_product_id")
                 .IsUnique();
 
-            // Add unique constraint on Sku
             entity.HasIndex(e => e.Sku)
                 .HasDatabaseName("ix_products_sku")
                 .IsUnique();

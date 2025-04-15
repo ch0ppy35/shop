@@ -6,7 +6,6 @@ using Common.Messaging;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Configure services
 builder.Services.AddCommonServices();
 builder.Services.AddNatsHealthCheck();
 builder.Services.AddRedisHealthCheck();
@@ -15,7 +14,6 @@ builder.Services.AddSingleton<CartService>();
 builder.Services.AddHostedService<CartConsumerService>();
 builder.Services.AddHostedService<CartInitializationService>();
 
-// Build and run the host
 var host = builder.Build();
 await host.RunAsync();
 
@@ -60,44 +58,35 @@ public class CartInitializationService : BackgroundService
     {
         _logger.LogInformation("Starting Cart service initialization");
 
-        // Configure health checks
         _healthService.RegisterHealthCheck(_natsHealthCheck);
         _healthService.RegisterHealthCheck(_redisHealthCheck);
 
-        // Start health endpoint first so it's available even when dependencies aren't ready
         var healthEndpoint = new HealthEndpoint(_serviceProvider);
         await healthEndpoint.StartAsync();
 
-        // Step 1: Connect to Redis first
         _logger.LogInformation("Attempting to connect to Redis server with retry mechanism");
 
         try
         {
-            // Use infinite retries (-1) to keep trying to connect
             await _redisService.ConnectWithRetryAsync(-1);
             _logger.LogInformation("Successfully connected to Redis server");
 
-            // Step 2: Only after Redis is ready, connect to NATS
             _logger.LogInformation("Redis is ready, now connecting to NATS server");
             try
             {
-                // Use infinite retries (-1) to keep trying to connect
                 await _natsService.ConnectWithRetryAsync(-1);
                 _logger.LogInformation("Successfully connected to NATS server");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "NATS connection retry task failed");
-                // Don't exit the application, let the health check report the failure
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Redis connection retry task failed");
-            // Don't exit the application, let the health check report the failure
         }
 
-        // Keep the service running
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);

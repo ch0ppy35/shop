@@ -27,7 +27,6 @@ public class RecommendationServiceTests
     [Fact]
     public async Task GetCartRecommendationsAsync_ShouldReturnRecommendations_WhenApiReturnsSuccess()
     {
-        // Arrange
         var recommendations = new List<object>
         {
             new { productId = "1", name = "Product 1", description = "Description 1", price = 10.99m, sku = "SKU1", location = "Location 1", quantityInStock = 10 },
@@ -56,10 +55,8 @@ public class RecommendationServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(httpResponse);
 
-        // Act
         var result = await _service.GetCartRecommendationsAsync(4);
 
-        // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
         Assert.Equal("1", result[0].Id);
@@ -73,7 +70,6 @@ public class RecommendationServiceTests
     [Fact]
     public async Task GetCartRecommendationsAsync_ShouldReturnEmptyList_WhenApiReturnsError()
     {
-        // Arrange
         _mockHttpMessageHandler
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -82,10 +78,8 @@ public class RecommendationServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ThrowsAsync(new HttpRequestException("Error"));
 
-        // Act
         var result = await _service.GetCartRecommendationsAsync(4);
 
-        // Assert
         Assert.NotNull(result);
         Assert.Empty(result);
     }
@@ -93,7 +87,6 @@ public class RecommendationServiceTests
     [Fact]
     public async Task GetCartRecommendationsAsync_ShouldReturnEmptyList_WhenApiReturnsNull()
     {
-        // Arrange
         var response = new
         {
             success = true,
@@ -116,10 +109,8 @@ public class RecommendationServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(httpResponse);
 
-        // Act
         var result = await _service.GetCartRecommendationsAsync(4);
 
-        // Assert
         Assert.NotNull(result);
         Assert.Empty(result);
     }

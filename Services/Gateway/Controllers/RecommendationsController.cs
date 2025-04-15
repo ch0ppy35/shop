@@ -33,14 +33,12 @@ public class RecommendationsController : ControllerBase
 
         try
         {
-            // Get the session ID from the HttpContext.Items
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
             if (string.IsNullOrEmpty(sessionId))
             {
                 return BadRequest(new { error = "Session ID is required" });
             }
 
-            // First, get the current cart
             var cartMessage = new CartMessage
             {
                 OperationType = CartOperationType.GetCart,
@@ -62,7 +60,6 @@ public class RecommendationsController : ControllerBase
                 return StatusCode(400, new { error = cartResponse.Error ?? "Failed to get cart" });
             }
 
-            // Now, get recommendations based on the cart
             var recommendationMessage = new RecommendationMessage
             {
                 OperationType = RecommendationOperationType.GetRecommendations,

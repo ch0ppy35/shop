@@ -10,68 +10,54 @@ public class JsonLoggerTests
     [Fact]
     public void IsEnabled_ShouldReturnTrue_WhenLogLevelIsEqualToMinimumLogLevel()
     {
-        // Arrange
         var config = new JsonLoggerConfiguration { MinimumLogLevel = LogLevel.Information };
         var logger = new JsonLogger("TestCategory", config);
 
-        // Act
         var result = logger.IsEnabled(LogLevel.Information);
 
-        // Assert
         result.Should().BeTrue();
     }
 
     [Fact]
     public void IsEnabled_ShouldReturnTrue_WhenLogLevelIsHigherThanMinimumLogLevel()
     {
-        // Arrange
         var config = new JsonLoggerConfiguration { MinimumLogLevel = LogLevel.Information };
         var logger = new JsonLogger("TestCategory", config);
 
-        // Act
         var result = logger.IsEnabled(LogLevel.Error);
 
-        // Assert
         result.Should().BeTrue();
     }
 
     [Fact]
     public void IsEnabled_ShouldReturnFalse_WhenLogLevelIsLowerThanMinimumLogLevel()
     {
-        // Arrange
         var config = new JsonLoggerConfiguration { MinimumLogLevel = LogLevel.Information };
         var logger = new JsonLogger("TestCategory", config);
 
-        // Act
         var result = logger.IsEnabled(LogLevel.Debug);
 
-        // Assert
         result.Should().BeFalse();
     }
 
     [Fact]
     public void Log_ShouldNotLog_WhenLogLevelIsLowerThanMinimumLogLevel()
     {
-        // Arrange
         var config = new JsonLoggerConfiguration { MinimumLogLevel = LogLevel.Information };
         var logger = new JsonLogger("TestCategory", config);
 
-        // Use StringWriter to capture console output
         var originalConsoleOut = Console.Out;
         using var stringWriter = new StringWriter();
         Console.SetOut(stringWriter);
 
         try
         {
-            // Act
             logger.Log(LogLevel.Debug, new EventId(1), "Test message", null, (state, ex) => state.ToString()!);
 
-            // Assert
             stringWriter.ToString().Should().BeEmpty();
         }
         finally
         {
-            // Restore console output
             Console.SetOut(originalConsoleOut);
         }
     }
@@ -79,43 +65,33 @@ public class JsonLoggerTests
     [Fact]
     public void Log_ShouldOutputJsonWithCorrectProperties_WhenLogLevelIsEnabled()
     {
-        // Arrange
         var config = new JsonLoggerConfiguration { MinimumLogLevel = LogLevel.Information };
         var logger = new JsonLogger("TestCategory", config);
 
-        // Use StringWriter to capture console output
         var originalConsoleOut = Console.Out;
         using var stringWriter = new StringWriter();
         Console.SetOut(stringWriter);
 
         try
         {
-            // Act
             logger.Log(LogLevel.Information, new EventId(1), "Test message", null, (state, ex) => state.ToString()!);
 
-            // Assert
             var output = stringWriter.ToString().Trim();
             output.Should().NotBeEmpty();
 
-            // Parse the JSON output
-            // Add options to handle potential issues
             var options = new JsonSerializerOptions
             {
                 AllowTrailingCommas = true,
                 ReadCommentHandling = JsonCommentHandling.Skip
             };
 
-            // Check if the output is valid JSON
             if (!output.StartsWith("{"))
             {
-                // Skip this test if the output is not valid JSON
-                // This can happen because Console.WriteLine might add extra characters
                 return;
             }
 
             var logEntry = JsonSerializer.Deserialize<JsonElement>(output, options);
 
-            // Verify properties
             logEntry.GetProperty("LogLevel").GetString().Should().Be("Information");
             logEntry.GetProperty("Category").GetString().Should().Be("TestCategory");
             logEntry.GetProperty("EventId").GetInt32().Should().Be(1);
@@ -125,7 +101,6 @@ public class JsonLoggerTests
         }
         finally
         {
-            // Restore console output
             Console.SetOut(originalConsoleOut);
         }
     }
@@ -133,44 +108,34 @@ public class JsonLoggerTests
     [Fact]
     public void Log_ShouldIncludeExceptionDetails_WhenExceptionIsProvided()
     {
-        // Arrange
         var config = new JsonLoggerConfiguration { MinimumLogLevel = LogLevel.Information };
         var logger = new JsonLogger("TestCategory", config);
         var exception = new InvalidOperationException("Test exception");
 
-        // Use StringWriter to capture console output
         var originalConsoleOut = Console.Out;
         using var stringWriter = new StringWriter();
         Console.SetOut(stringWriter);
 
         try
         {
-            // Act
             logger.Log(LogLevel.Error, new EventId(1), "Test message", exception, (state, ex) => state.ToString()!);
 
-            // Assert
             var output = stringWriter.ToString().Trim();
             output.Should().NotBeEmpty();
 
-            // Parse the JSON output
-            // Add options to handle potential issues
             var options = new JsonSerializerOptions
             {
                 AllowTrailingCommas = true,
                 ReadCommentHandling = JsonCommentHandling.Skip
             };
 
-            // Check if the output is valid JSON
             if (!output.StartsWith("{"))
             {
-                // Skip this test if the output is not valid JSON
-                // This can happen because Console.WriteLine might add extra characters
                 return;
             }
 
             var logEntry = JsonSerializer.Deserialize<JsonElement>(output, options);
 
-            // Verify exception property
             var exceptionValue = logEntry.GetProperty("Exception").GetString();
             exceptionValue.Should().NotBeNull();
             exceptionValue.Should().Contain("InvalidOperationException");
@@ -178,7 +143,6 @@ public class JsonLoggerTests
         }
         finally
         {
-            // Restore console output
             Console.SetOut(originalConsoleOut);
         }
     }
@@ -186,69 +150,53 @@ public class JsonLoggerTests
     [Fact]
     public void BeginScope_ShouldReturnScope_WhenStateIsDictionary()
     {
-        // Arrange
         var config = new JsonLoggerConfiguration { MinimumLogLevel = LogLevel.Information };
         var logger = new JsonLogger("TestCategory", config);
         var state = new Dictionary<string, object> { ["UserId"] = "123", ["RequestId"] = "abc" };
 
-        // Act
         var scope = logger.BeginScope(state);
 
-        // Assert
         scope.Should().NotBeNull();
     }
 
     [Fact]
     public void Log_ShouldIncludeScopeProperties_WhenScopeIsActive()
     {
-        // Arrange
         var config = new JsonLoggerConfiguration { MinimumLogLevel = LogLevel.Information };
         var logger = new JsonLogger("TestCategory", config);
         var state = new Dictionary<string, object> { ["UserId"] = "123", ["RequestId"] = "abc" };
 
-        // Use StringWriter to capture console output
         var originalConsoleOut = Console.Out;
         using var stringWriter = new StringWriter();
         Console.SetOut(stringWriter);
 
         try
         {
-            // Act
             using (logger.BeginScope(state))
             {
                 logger.Log(LogLevel.Information, new EventId(1), "Test message", null, (state, ex) => state.ToString()!);
             }
 
-            // Assert
             var output = stringWriter.ToString().Trim();
             output.Should().NotBeEmpty();
 
-            // Parse the JSON output
-            // Add options to handle potential issues
             var options = new JsonSerializerOptions
             {
                 AllowTrailingCommas = true,
                 ReadCommentHandling = JsonCommentHandling.Skip
             };
 
-            // Check if the output is valid JSON and clean it up if needed
             if (!output.StartsWith("{"))
             {
-                // Skip this test if the output is not valid JSON
-                // This can happen because Console.WriteLine might add extra characters
                 return;
             }
 
-            // There might be multiple JSON objects in the output
-            // Extract just the first complete JSON object
             var jsonStart = output.IndexOf('{');
             if (jsonStart < 0)
             {
-                // No JSON object found
                 return;
             }
 
-            // Find the matching closing brace by counting opening and closing braces
             int openBraces = 0;
             int jsonEnd = -1;
 
@@ -271,7 +219,6 @@ public class JsonLoggerTests
 
             if (jsonEnd < 0)
             {
-                // No complete JSON object found
                 return;
             }
 
@@ -279,10 +226,8 @@ public class JsonLoggerTests
 
             var logEntry = JsonSerializer.Deserialize<JsonElement>(jsonString, options);
 
-            // Verify scope properties
             if (logEntry.TryGetProperty("Properties", out var properties) && properties.ValueKind == JsonValueKind.Object)
             {
-                // Only verify properties if they exist
                 if (properties.TryGetProperty("UserId", out var userId))
                 {
                     userId.GetString().Should().Be("123");
@@ -295,13 +240,11 @@ public class JsonLoggerTests
             }
             else
             {
-                // Skip the test if Properties is not found or not an object
                 return;
             }
         }
         finally
         {
-            // Restore console output
             Console.SetOut(originalConsoleOut);
         }
     }

@@ -42,13 +42,10 @@ public class ProductService : IProductService
     {
         _logger.LogInformation("Getting paginated products: Page {PageNumber}, Size {PageSize}", pageNumber, pageSize);
 
-        // Get paginated products from repository
         var (products, totalCount) = await _productRepository.GetPaginatedProductsAsync(pageNumber, pageSize);
 
-        // Convert to ProductMessage objects
         var productMessages = products.Select(p => ProductRepository.ToProductMessage(p)).ToList();
 
-        // Calculate total pages
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
         return (productMessages, totalCount, totalPages);
@@ -128,7 +125,6 @@ public class ProductService : IProductService
 
         _logger.LogInformation("Updating inventory for product with ID: {ProductId}", product.ProductId);
 
-        // First check if the product exists
         var existingProduct = await _productRepository.GetProductByIdAsync(product.ProductId);
         if (existingProduct == null)
         {
@@ -136,7 +132,6 @@ public class ProductService : IProductService
             return false;
         }
 
-        // Update only the inventory fields
         existingProduct.Sku = product.Sku ?? existingProduct.Sku;
         existingProduct.Location = product.Location ?? existingProduct.Location;
         existingProduct.QuantityInStock = product.QuantityInStock;
@@ -184,11 +179,9 @@ public class ProductService : IProductService
             return false;
         }
 
-        // Update the inventory quantity
         product.QuantityInStock = quantity;
         product.UpdatedAt = DateTime.UtcNow;
 
-        // Save the changes
         return await _productRepository.UpdateProductAsync(product);
     }
 }

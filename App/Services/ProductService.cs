@@ -37,7 +37,6 @@ public class ProductService
     {
         try
         {
-            // Use the injected HttpClient which already has the session ID header
             var response = await _httpClient.GetFromJsonAsync<ProductListResponse>($"/api/products?page={page}&pageSize={pageSize}");
 
             if (response == null || response.Products == null)
@@ -60,7 +59,6 @@ public class ProductService
                     Name = p.Name,
                     Description = p.Description,
                     Price = p.Price,
-                    // Quantity field removed - using QuantityInStock instead
                     Sku = p.Sku,
                     Location = p.Location,
                     QuantityInStock = p.QuantityInStock,
@@ -74,7 +72,6 @@ public class ProductService
         }
         catch (Exception)
         {
-            // Return an empty list in case of error
             return new PaginatedList<Product>
             {
                 Items = new List<Product>(),
@@ -94,7 +91,6 @@ public class ProductService
     {
         try
         {
-            // Use the injected HttpClient which already has the session ID header
             var response = await _httpClient.GetFromJsonAsync<ProductResponse>($"/api/products/{id}");
 
             if (response == null || response.Product == null)
@@ -108,7 +104,6 @@ public class ProductService
                 Name = response.Product.Name,
                 Description = response.Product.Description,
                 Price = response.Product.Price,
-                // Quantity field removed - using QuantityInStock instead
                 Sku = response.Product.Sku,
                 Location = response.Product.Location,
                 QuantityInStock = response.Product.QuantityInStock,
@@ -165,7 +160,6 @@ public class ProductService
                 Name = responseContent.Product.Name,
                 Description = responseContent.Product.Description,
                 Price = responseContent.Product.Price,
-                // Quantity field removed - using QuantityInStock instead
                 Sku = responseContent.Product.Sku,
                 Location = responseContent.Product.Location,
                 QuantityInStock = responseContent.Product.QuantityInStock,
@@ -196,7 +190,6 @@ public class ProductService
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
-                // Quantity field removed - using QuantityInStock instead
                 Sku = product.Sku,
                 Location = product.Location,
                 QuantityInStock = product.QuantityInStock,
@@ -241,7 +234,6 @@ public class ProductService
         }
     }
 
-    // Response classes to match the API
     private class BaseResponse
     {
         public bool Success { get; set; }
@@ -269,7 +261,6 @@ public class ProductService
         public string? Name { get; set; }
         public string? Description { get; set; }
         public decimal Price { get; set; }
-        // Quantity field removed - using QuantityInStock instead
         public string? Sku { get; set; }
         public string? Location { get; set; }
         public int QuantityInStock { get; set; }

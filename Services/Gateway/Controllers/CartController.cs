@@ -24,7 +24,6 @@ public class CartController : ControllerBase
 
         try
         {
-            // Get the session ID from the HttpContext.Items
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
             if (string.IsNullOrEmpty(sessionId))
             {
@@ -37,7 +36,6 @@ public class CartController : ControllerBase
                 SessionId = sessionId
             };
 
-            // Send request and wait for reply
             var response = await _natsService.RequestAsync<CartMessage, CartResponse>(
                 "cart.get",
                 message,
@@ -69,7 +67,6 @@ public class CartController : ControllerBase
 
         try
         {
-            // Validate the request
             if (string.IsNullOrEmpty(item.ProductId))
             {
                 return BadRequest(new { error = "Product ID is required" });
@@ -80,14 +77,12 @@ public class CartController : ControllerBase
                 return BadRequest(new { error = "Quantity must be greater than 0" });
             }
 
-            // Get the session ID from the HttpContext.Items
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
             if (string.IsNullOrEmpty(sessionId))
             {
                 return BadRequest(new { error = "Session ID is required" });
             }
 
-            // First, get the product details
             var productMessage = new ProductMessage
             {
                 ProductId = item.ProductId,
@@ -105,7 +100,6 @@ public class CartController : ControllerBase
                 return StatusCode(404, new { error = "Product not found" });
             }
 
-            // Create the cart message
             var message = new CartMessage
             {
                 OperationType = CartOperationType.AddItem,
@@ -116,7 +110,6 @@ public class CartController : ControllerBase
                 Quantity = item.Quantity
             };
 
-            // Send request and wait for reply
             var response = await _natsService.RequestAsync<CartMessage, CartResponse>(
                 "cart.additem",
                 message,
@@ -148,7 +141,6 @@ public class CartController : ControllerBase
 
         try
         {
-            // Validate the request
             if (string.IsNullOrEmpty(productId))
             {
                 return BadRequest(new { error = "Product ID is required" });
@@ -159,7 +151,6 @@ public class CartController : ControllerBase
                 return BadRequest(new { error = "Quantity cannot be negative" });
             }
 
-            // Get the session ID from the HttpContext.Items
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
             if (string.IsNullOrEmpty(sessionId))
             {
@@ -174,7 +165,6 @@ public class CartController : ControllerBase
                 Quantity = update.Quantity
             };
 
-            // Send request and wait for reply
             var response = await _natsService.RequestAsync<CartMessage, CartResponse>(
                 "cart.updateitem",
                 message,
@@ -206,13 +196,11 @@ public class CartController : ControllerBase
 
         try
         {
-            // Validate the request
             if (string.IsNullOrEmpty(productId))
             {
                 return BadRequest(new { error = "Product ID is required" });
             }
 
-            // Get the session ID from the HttpContext.Items
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
             if (string.IsNullOrEmpty(sessionId))
             {
@@ -226,7 +214,6 @@ public class CartController : ControllerBase
                 ProductId = productId
             };
 
-            // Send request and wait for reply
             var response = await _natsService.RequestAsync<CartMessage, CartResponse>(
                 "cart.removeitem",
                 message,
@@ -258,7 +245,6 @@ public class CartController : ControllerBase
 
         try
         {
-            // Get the session ID from the HttpContext.Items
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
             if (string.IsNullOrEmpty(sessionId))
             {
@@ -271,7 +257,6 @@ public class CartController : ControllerBase
                 SessionId = sessionId
             };
 
-            // Send request and wait for reply
             var response = await _natsService.RequestAsync<CartMessage, CartResponse>(
                 "cart.clear",
                 message,
