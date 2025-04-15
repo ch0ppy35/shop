@@ -65,6 +65,7 @@ builder.Services.AddMudServices(config =>
 builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<IConfirmService, ConfirmService>();
 

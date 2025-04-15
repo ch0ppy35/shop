@@ -8,9 +8,10 @@ A modern microservice based webshop application built with .NET, Blazor WebAssem
 graph TD
     %% Main components
     Frontend["Frontend<br/>(Blazor WebAssembly)"] <--HTTP--> Gateway["API Gateway<br/>(ASP.NET Core)"];
-    NATS["NATS<br/>(Messaging System)<br/><br/>Subjects:<br/>products.getall<br/>products.get<br/>products.create<br/>products.update<br/>products.delete<br/>products.inventory.get<br/>products.inventory.update<br/>cart.get<br/>cart.additem<br/>cart.updateitem<br/>cart.removeitem<br/>cart.clear"]
+    NATS["NATS<br/>(Messaging System)<br/><br/>Subjects:<br/>products.getall<br/>products.get<br/>products.create<br/>products.update<br/>products.delete<br/>products.inventory.get<br/>products.inventory.update<br/>cart.get<br/>cart.additem<br/>cart.updateitem<br/>cart.removeitem<br/>cart.clear<br/>recommendations.get"]
     Products["Products Service<br/>(.NET)"];
     Cart["Cart Service<br/>(.NET)"];
+    Recommendation["Recommendation Service<br/>(.NET)"];
 
     %% Databases
     Products --EF Core--> PostgreSQL[("PostgreSQL<br/>Database")];
@@ -21,16 +22,17 @@ graph TD
     NATS <--Reply--> Gateway;
     NATS <--Subscribe--> Products;
     NATS <--Subscribe--> Cart;
+    NATS <--Subscribe--> Recommendation;
 
     %% Session ID flow
     Frontend --"X-Session-ID header"--> Gateway;
     Gateway --"Session ID in messages"--> NATS;
     NATS --"Session ID preserved"--> Products;
     NATS --"Session ID preserved"--> Cart;
+    NATS --"Session ID preserved"--> Recommendation;
 
     %% User flow
     User(("User")) <--Interacts with--> Frontend;
-
 ```
 
 The communication flow works as follows:
@@ -39,10 +41,11 @@ The communication flow works as follows:
 2. **API Request**: The frontend makes HTTP requests to the Gateway API
 3. **Session Tracking**: Each request includes a session ID (X-Session-ID header) for tracking
 4. **Message Publishing**: The Gateway publishes messages to NATS with appropriate subjects
-5. **Service Processing**: The Products and Cart services consume messages and process them
+5. **Service Processing**: The Products, Cart, and Recommendation services consume messages and process them
 6. **Database Operations**:
    - The Products service performs operations on PostgreSQL database
    - The Cart service stores session-based cart data in Valkey (Redis) with 15-minute TTL
+   - The Recommendation service provides product recommendations based on cart contents
 7. **Response**: Results are sent back through NATS to the Gateway and then to the frontend
 
 ## Running the Application
@@ -58,6 +61,7 @@ This will start:
 - The Gateway API on http://localhost:8080
 - The Products service
 - The Cart service
+- The Recommendation service
 - NATS messaging system
 - PostgreSQL database
 - Valkey (Redis) database
@@ -120,6 +124,9 @@ NATS is used for service-to-service communication:
 #### Cart Service
 - `NATS_URL`: The URL of the NATS server (default: `nats://localhost:4222`)
 - `REDIS_CONNECTION_STRING`: The Valkey/Redis connection string (default: `localhost:6379`)
+
+#### Recommendation Service
+- `NATS_URL`: The URL of the NATS server (default: `nats://localhost:4222`)
 
 #### Frontend
 - `ApiBaseUrl`: Configured in appsettings.json or can be overridden with JavaScript

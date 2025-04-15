@@ -81,3 +81,15 @@ public class ProductListResponse : BaseResponse
     public bool HasNextPage { get; set; }
 }
 
+/// <summary>
+/// Response for recommendation operations
+/// </summary>
+[Serializable]
+public class RecommendationResponse : BaseResponse
+{
+    /// <summary>
+    /// Gets or sets the recommended products
+    /// </summary>
+    public List<ProductMessage>? Recommendations { get; set; }
+}
+

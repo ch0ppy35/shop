@@ -8,12 +8,14 @@ using Microsoft.JSInterop;
 using Moq;
 using MudBlazor;
 using App.Tests.TestHelpers;
+using System.Collections.Generic;
 
 namespace App.Tests.Pages;
 
 public class CartTests : TestContext
 {
     private readonly Mock<ICartService> _mockCartService;
+    private readonly Mock<IRecommendationService> _mockRecommendationService;
     private readonly Mock<IJSRuntime> _mockJsRuntime;
     private readonly MockSnackbar _mockSnackbar;
     private readonly Mock<IDialogService> _mockDialogService;
@@ -25,12 +27,18 @@ public class CartTests : TestContext
         this.AddMudBlazorTestServices();
 
         _mockCartService = new Mock<ICartService>();
+        _mockRecommendationService = new Mock<IRecommendationService>();
         _mockJsRuntime = new Mock<IJSRuntime>();
         _mockSnackbar = new MockSnackbar();
         _mockDialogService = MudBlazorTestHelper.CreateMockDialogService(true);
 
+        // Set up default recommendation service behavior
+        _mockRecommendationService.Setup(s => s.GetCartRecommendationsAsync(It.IsAny<int>()))
+            .ReturnsAsync(new List<Product>());
+
         // Register the mocked services
         Services.AddSingleton(_mockCartService.Object);
+        Services.AddSingleton(_mockRecommendationService.Object);
         Services.AddSingleton(_mockJsRuntime.Object);
         Services.AddSingleton<ISnackbar>(_mockSnackbar);
         Services.AddSingleton(_mockDialogService.Object);
@@ -95,6 +103,7 @@ public class CartTests : TestContext
         cut.Markup.Should().Contain("Test Product 1");
         cut.Markup.Should().Contain("Test Product 2");
         cut.Markup.Should().Contain("30.97"); // Total price
+        cut.Markup.Should().Contain("Recommended Products"); // Recommendations section header
     }
 
     [Fact]
@@ -165,5 +174,39 @@ public class CartTests : TestContext
 
         // Assert
         _mockCartService.Verify(s => s.UpdateItemAsync("1", 3), Times.Once);
+    }
+
+    [Fact]
+    public void Cart_ShouldRender_WithRecommendations()
+    {
+        // Arrange
+        var cart = new ShoppingCart
+        {
+            Items = new List<CartItem>
+            {
+                new() { ProductId = "1", Name = "Test Product 1", Price = 10.99m, Quantity = 2 }
+            },
+            TotalPrice = 21.98m,
+            ItemCount = 2
+        };
+
+        var recommendations = new List<Product>
+        {
+            new() { Id = "2", Name = "Recommended Product 1", Price = 15.99m, Description = "Description 1" },
+            new() { Id = "3", Name = "Recommended Product 2", Price = 12.99m, Description = "Description 2" }
+        };
+
+        _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(cart);
+        _mockRecommendationService.Setup(s => s.GetCartRecommendationsAsync(It.IsAny<int>())).ReturnsAsync(recommendations);
+
+        // Act
+        var cut = RenderComponent<Cart>();
+
+        // Assert
+        cut.Markup.Should().Contain("Recommended Products");
+        cut.Markup.Should().Contain("Recommended Product 1");
+        cut.Markup.Should().Contain("Recommended Product 2");
+        cut.Markup.Should().Contain("15.99");
+        cut.Markup.Should().Contain("12.99");
     }
 }

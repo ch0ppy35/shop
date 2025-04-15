@@ -10,7 +10,7 @@ test:
 test-app:
 	dotnet test Tests/App.Tests/App.Tests.csproj
 
-build-app:	
+build-app:
 	dotnet publish -c Release -o ./App/publish App
 
 build-app-docker:
@@ -25,6 +25,9 @@ build-products-docker:
 build-cart-docker:
 	docker build -t nats-shop-cart:latest ./Services/Cart
 
+build-recommendations-docker:
+	docker build -t nats-shop-recommendations:latest ./Services/Recommendations
+
 start-gateway-service:
 	NATS_URL=nats://localhost:4222 dotnet run --project Services/Gateway/Gateway.csproj
 
@@ -33,3 +36,6 @@ start-cart-service:
 
 start-products-service:
 	NATS_URL=nats://localhost:4222 DB_CONNECTION_STRING="Host=localhost;Database=products;Username=postgres;Password=postgres" dotnet run --project Services/Products/Products.csproj
+
+start-recommendations-service:
+	NATS_URL=nats://localhost:4222 dotnet run --project Services/Recommendations/Recommendations.csproj
