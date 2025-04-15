@@ -26,12 +26,6 @@ public class NavMenuTests : TestContext
             ItemCount = 0
         });
         Services.AddSingleton(_mockCartService.Object);
-
-        var mockJsRuntime = new Mock<IJSRuntime>();
-        mockJsRuntime
-            .Setup(js => js.InvokeAsync<object>(It.IsAny<string>(), It.IsAny<object[]>()))
-            .ReturnsAsync((object)null!);
-        Services.AddSingleton(mockJsRuntime.Object);
     }
 
     [Fact]

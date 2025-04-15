@@ -8,12 +8,12 @@ namespace Cart.Services;
 public class CartService
 {
     private readonly ILogger<CartService> _logger;
-    private readonly RedisService _redisService;
+    private readonly IRedisService _redisService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CartService"/> class.
     /// </summary>
-    public CartService(ILogger<CartService> logger, RedisService redisService)
+    public CartService(ILogger<CartService> logger, IRedisService redisService)
     {
         _logger = logger;
         _redisService = redisService;

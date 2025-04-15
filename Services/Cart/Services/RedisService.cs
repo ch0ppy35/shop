@@ -6,7 +6,7 @@ namespace Cart.Services;
 /// <summary>
 /// Service for Redis operations
 /// </summary>
-public class RedisService : IAsyncDisposable
+public class RedisService : IRedisService, IAsyncDisposable
 {
     private readonly ILogger<RedisService> _logger;
     private readonly string _redisConnectionString;

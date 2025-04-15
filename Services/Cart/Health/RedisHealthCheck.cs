@@ -9,12 +9,12 @@ namespace Cart.Health;
 public class RedisHealthCheck : IHealthCheck
 {
     private readonly ILogger<RedisHealthCheck> _logger;
-    private readonly RedisService _redisService;
+    private readonly IRedisService _redisService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RedisHealthCheck"/> class.
     /// </summary>
-    public RedisHealthCheck(ILogger<RedisHealthCheck> logger, RedisService redisService)
+    public RedisHealthCheck(ILogger<RedisHealthCheck> logger, IRedisService redisService)
     {
         _logger = logger;
         _redisService = redisService;
