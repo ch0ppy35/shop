@@ -23,8 +23,8 @@ public class RedisService : IRedisService, IAsyncDisposable
         _logger = logger;
 
         _redisConnectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING") ??
-                               configuration.GetValue<string>("Redis:ConnectionString") ??
-                               "localhost:6379";
+                                 configuration.GetValue<string>("Redis:ConnectionString") ??
+                                 "localhost:6379";
 
         _logger.LogInformation("Redis configuration: ConnectionString={ConnectionString}", _redisConnectionString);
     }
@@ -89,7 +89,8 @@ public class RedisService : IRedisService, IAsyncDisposable
 
                 if (maxRetries == -1 || retryCount < maxRetries)
                 {
-                    _logger.LogWarning(ex, "Failed to connect to Redis server: {Message}. Retrying in {RetryDelay} seconds...",
+                    _logger.LogWarning(ex,
+                        "Failed to connect to Redis server: {Message}. Retrying in {RetryDelay} seconds...",
                         ex.Message, retryDelaySeconds);
 
                     try
@@ -148,7 +149,8 @@ public class RedisService : IRedisService, IAsyncDisposable
     /// <summary>
     /// Sets a value in Redis with TTL
     /// </summary>
-    public async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null, CancellationToken cancellationToken = default)
+    public async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null,
+        CancellationToken cancellationToken = default)
     {
         if (_database == null || !_isConnected)
         {

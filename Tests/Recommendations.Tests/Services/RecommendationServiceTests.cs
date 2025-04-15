@@ -74,7 +74,7 @@ public class RecommendationServiceTests
             new ProductMessage { ProductId = "2", Name = "Product 2", Price = 21.99m }, // Similar price
             new ProductMessage { ProductId = "3", Name = "Product 3", Price = 19.99m }, // Similar price
             new ProductMessage { ProductId = "4", Name = "Product 4", Price = 50.00m }, // Different price
-            new ProductMessage { ProductId = "5", Name = "Product 5", Price = 5.00m }   // Different price
+            new ProductMessage { ProductId = "5", Name = "Product 5", Price = 5.00m } // Different price
         };
 
         var productListResponse = new ProductListResponse
@@ -177,10 +177,10 @@ public class RecommendationServiceTests
         var products = new List<ProductMessage>
         {
             new ProductMessage { ProductId = "1", Name = "Product 1", Price = 100.00m }, // Already in cart
-            new ProductMessage { ProductId = "2", Name = "Product 2", Price = 95.00m },  // Close price
+            new ProductMessage { ProductId = "2", Name = "Product 2", Price = 95.00m }, // Close price
             new ProductMessage { ProductId = "3", Name = "Product 3", Price = 105.00m }, // Close price
-            new ProductMessage { ProductId = "4", Name = "Product 4", Price = 10.00m },  // Far price
-            new ProductMessage { ProductId = "5", Name = "Product 5", Price = 500.00m }  // Far price
+            new ProductMessage { ProductId = "4", Name = "Product 4", Price = 10.00m }, // Far price
+            new ProductMessage { ProductId = "5", Name = "Product 5", Price = 500.00m } // Far price
         };
 
         var productListResponse = new ProductListResponse

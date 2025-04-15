@@ -156,8 +156,8 @@ public class RedisServiceTests
         {
             // Store the connection string for testing
             RedisConnectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING") ??
-                               configuration.GetValue<string>("Redis:ConnectionString") ??
-                               "localhost:6379";
+                                    configuration.GetValue<string>("Redis:ConnectionString") ??
+                                    "localhost:6379";
         }
 
         public string RedisConnectionString { get; }
@@ -197,7 +197,8 @@ public class RedisServiceTests
             return Task.FromResult(JsonSerializer.Deserialize<T>(value.ToString()));
         }
 
-        public Task SetAsync<T>(string key, T value, TimeSpan? expiry = null, CancellationToken cancellationToken = default)
+        public Task SetAsync<T>(string key, T value, TimeSpan? expiry = null,
+            CancellationToken cancellationToken = default)
         {
             if (!_isConnected)
             {

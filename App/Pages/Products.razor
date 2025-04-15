@@ -13,7 +13,7 @@
 
 @if (products == null)
 {
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
 }
 else if (products.Items == null || !products.Items.Any())
 {
@@ -28,11 +28,11 @@ else
                 <MudCard Elevation="2" Class="h-100">
                     <MudCardContent>
                         <MudText Typo="Typo.h5"
-                            Style="height: 32px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@product.Name
+                                 Style="height: 32px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@product.Name
                         </MudText>
                         <MudText Typo="Typo.subtitle1" Color="Color.Primary">$@product.Price.ToString("F2")</MudText>
                         <MudText Typo="Typo.body2" Class="mt-3"
-                            Style="height: 80px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">
+                                 Style="height: 80px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">
                             @product.Description
                         </MudText>
                         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
@@ -41,7 +41,7 @@ else
                     </MudCardContent>
                     <MudCardActions Class="d-flex justify-space-between">
                         <MudButton Variant="Variant.Outlined" Color="Color.Primary"
-                            OnClick="() => NavigateToProductDetails(product.Id)">
+                                   OnClick="() => NavigateToProductDetails(product.Id)">
                             View Details
                         </MudButton>
                         <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="() => AddToCart(product.Id)">
@@ -54,7 +54,7 @@ else
     </MudGrid>
 
     <MudPagination Count="@products.TotalPages" SelectedChanged="NavigateToPage" Selected="@products.PageNumber"
-        Class="d-flex justify-center" />
+                   Class="d-flex justify-center"/>
 }
 
 @code {

@@ -1,6 +1,7 @@
 # NATS Shop Frontend
 
-This is the frontend web application for the NATS Shop microservices demo. It's built using Blazor WebAssembly and communicates with the backend services through the Gateway API.
+This is the frontend web application for the NATS Shop microservices demo. It's built using Blazor WebAssembly and
+communicates with the backend services through the Gateway API.
 
 ## Development
 
@@ -55,6 +56,7 @@ The main configuration settings are:
 
 ## Architecture
 
-The frontend is a Blazor WebAssembly application that runs entirely in the browser. It communicates with the backend services through the Gateway API, which acts as a facade for all the microservices.
+The frontend is a Blazor WebAssembly application that runs entirely in the browser. It communicates with the backend
+services through the Gateway API, which acts as a facade for all the microservices.
 
 When deployed with Docker, the application is built and then served using Nginx as a static file server.

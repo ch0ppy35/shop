@@ -152,7 +152,8 @@ public class CartTests : TestContext
         mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(cart);
 
         var mockRecommendationService = Mock.Get(_recommendationService);
-        mockRecommendationService.Setup(s => s.GetCartRecommendationsAsync(It.IsAny<int>())).ReturnsAsync(recommendations);
+        mockRecommendationService.Setup(s => s.GetCartRecommendationsAsync(It.IsAny<int>()))
+            .ReturnsAsync(recommendations);
 
         var cut = RenderComponent<Cart>();
 

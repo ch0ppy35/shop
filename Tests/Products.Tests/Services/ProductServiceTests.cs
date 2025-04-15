@@ -185,7 +185,8 @@ public class ProductServiceTests
         result.Should().NotBeNull();
         result.ProductId.Should().NotBeNullOrEmpty();
         result.Name.Should().Be(testMessage.Name);
-        _repositoryMock.Verify(r => r.CreateProductAsync(It.Is<ProductEntity>(e => !string.IsNullOrEmpty(e.ProductId))), Times.Once);
+        _repositoryMock.Verify(r => r.CreateProductAsync(It.Is<ProductEntity>(e => !string.IsNullOrEmpty(e.ProductId))),
+            Times.Once);
     }
 
     [Fact]
@@ -233,7 +234,8 @@ public class ProductServiceTests
         result.Should().NotBeNull();
         // In .NET, string properties are initialized to empty string when set to null
         result.Name.Should().BeEmpty();
-        _repositoryMock.Verify(r => r.CreateProductAsync(It.Is<ProductEntity>(e => e.Name == string.Empty)), Times.Once);
+        _repositoryMock.Verify(r => r.CreateProductAsync(It.Is<ProductEntity>(e => e.Name == string.Empty)),
+            Times.Once);
     }
 
     [Fact]
@@ -391,7 +393,8 @@ public class ProductServiceTests
 
         result.Should().BeTrue();
         _repositoryMock.Verify(r => r.GetProductByIdAsync(testMessage.ProductId!), Times.Once);
-        _repositoryMock.Verify(r => r.UpdateProductAsync(It.Is<ProductEntity>(e => e.QuantityInStock == 75)), Times.Once);
+        _repositoryMock.Verify(r => r.UpdateProductAsync(It.Is<ProductEntity>(e => e.QuantityInStock == 75)),
+            Times.Once);
     }
 
     [Fact]

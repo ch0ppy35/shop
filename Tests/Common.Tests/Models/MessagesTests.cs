@@ -41,7 +41,6 @@ public class MessagesTests
     }
 
 
-
     [Fact]
     public void ProductOperationType_ShouldSerializeAsString()
     {

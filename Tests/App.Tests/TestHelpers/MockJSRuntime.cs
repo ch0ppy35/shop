@@ -22,7 +22,8 @@ public class MockJSRuntime : IJSRuntime
     /// <summary>
     /// Invokes a JavaScript function and returns the result with cancellation token
     /// </summary>
-    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken,
+        object?[]? args)
     {
         // Return default value for any type
         return new ValueTask<TValue>(default(TValue)!);

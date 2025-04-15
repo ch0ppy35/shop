@@ -13,7 +13,7 @@ public class SessionInfoTests : TestContext
     {
         this.AddMudBlazorTestServices();
     }
-    
+
     [Fact]
     public async Task SessionInfo_ShouldRender_WithSessionId()
     {
@@ -28,7 +28,7 @@ public class SessionInfoTests : TestContext
         var cut = RenderComponent<SessionInfo>();
 
         cut.WaitForState(() => cut.Markup.Contains(sessionId));
-        
+
         cut.Markup.Should().Contain(sessionId);
     }
 
@@ -45,7 +45,7 @@ public class SessionInfoTests : TestContext
         await Task.Delay(50); // Small delay to ensure async operations complete
 
         mockJsInterop.CapturedSessionId.Should().NotBeNullOrEmpty();
-        
+
         Guid.TryParse(mockJsInterop.CapturedSessionId, out _).Should().BeTrue();
     }
 }

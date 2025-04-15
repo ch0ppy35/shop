@@ -25,16 +25,10 @@ public class HealthEndpoint : IDisposable
         _healthService = serviceProvider.GetRequiredService<HealthService>();
 
         var builder = WebApplication.CreateBuilder();
-        builder.WebHost.ConfigureKestrel(options =>
-        {
-            options.ListenAnyIP(8081);
-        });
+        builder.WebHost.ConfigureKestrel(options => { options.ListenAnyIP(8081); });
 
         builder.Logging.ClearProviders();
-        builder.Logging.AddJsonLogger(config =>
-        {
-            config.MinimumLogLevel = LogLevel.Information;
-        });
+        builder.Logging.AddJsonLogger(config => { config.MinimumLogLevel = LogLevel.Information; });
 
         _app = builder.Build();
 

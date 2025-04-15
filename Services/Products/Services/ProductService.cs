@@ -38,7 +38,8 @@ public class ProductService : IProductService
     /// <param name="pageNumber">The page number (1-based)</param>
     /// <param name="pageSize">The page size</param>
     /// <returns>A tuple containing the paginated products and pagination metadata</returns>
-    public async Task<(IEnumerable<ProductMessage> Products, int TotalCount, int TotalPages)> GetPaginatedProductsAsync(int pageNumber, int pageSize)
+    public async Task<(IEnumerable<ProductMessage> Products, int TotalCount, int TotalPages)> GetPaginatedProductsAsync(
+        int pageNumber, int pageSize)
     {
         _logger.LogInformation("Getting paginated products: Page {PageNumber}, Size {PageSize}", pageNumber, pageSize);
 
@@ -164,7 +165,8 @@ public class ProductService : IProductService
     /// </summary>
     public async Task<bool> UpdateInventoryAsync(string id, int quantity)
     {
-        _logger.LogInformation("Updating inventory for product with ID: {ProductId} to quantity: {Quantity}", id, quantity);
+        _logger.LogInformation("Updating inventory for product with ID: {ProductId} to quantity: {Quantity}", id,
+            quantity);
 
         if (string.IsNullOrEmpty(id))
         {

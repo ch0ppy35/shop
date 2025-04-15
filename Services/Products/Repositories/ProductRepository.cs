@@ -47,9 +47,11 @@ public class ProductRepository : IProductRepository
     /// <param name="pageNumber">The page number (1-based)</param>
     /// <param name="pageSize">The page size</param>
     /// <returns>A tuple containing the paginated products and the total count</returns>
-    public async Task<(IEnumerable<ProductEntity> Products, int TotalCount)> GetPaginatedProductsAsync(int pageNumber, int pageSize)
+    public async Task<(IEnumerable<ProductEntity> Products, int TotalCount)> GetPaginatedProductsAsync(int pageNumber,
+        int pageSize)
     {
-        _logger.LogInformation("Getting paginated products from database: Page {PageNumber}, Size {PageSize}", pageNumber, pageSize);
+        _logger.LogInformation("Getting paginated products from database: Page {PageNumber}, Size {PageSize}",
+            pageNumber, pageSize);
 
         pageNumber = Math.Max(1, pageNumber);
         pageSize = Math.Clamp(pageSize, 1, 100); // Limit page size to reasonable values
@@ -149,7 +151,8 @@ public class ProductRepository : IProductRepository
     /// <summary>
     /// Converts a ProductEntity to a ProductMessage
     /// </summary>
-    public static ProductMessage ToProductMessage(ProductEntity entity, ProductOperationType operationType = ProductOperationType.Get)
+    public static ProductMessage ToProductMessage(ProductEntity entity,
+        ProductOperationType operationType = ProductOperationType.Get)
     {
         var productId = !string.IsNullOrEmpty(entity.ProductId) ? entity.ProductId : Guid.NewGuid().ToString();
 

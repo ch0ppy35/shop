@@ -26,8 +26,8 @@ public class NatsService : INatsService, IAsyncDisposable
 
 
         var natsUrl = Environment.GetEnvironmentVariable("NATS_URL") ??
-                     configuration.GetValue<string>("Nats:Url") ??
-                     "nats://localhost:4222";
+                      configuration.GetValue<string>("Nats:Url") ??
+                      "nats://localhost:4222";
 
         _natsOpts = new NatsOpts
         {
@@ -91,6 +91,7 @@ public class NatsService : INatsService, IAsyncDisposable
                 {
                     throw new InvalidOperationException("Failed to create NATS connection");
                 }
+
                 await _connection.ConnectAsync();
 
                 _isConnected = true;
@@ -103,7 +104,8 @@ public class NatsService : INatsService, IAsyncDisposable
 
                 if (maxRetries == -1 || retryCount < maxRetries)
                 {
-                    _logger.LogWarning(ex, "Failed to connect to NATS server: {Message}. Retrying in {RetryDelay} seconds...",
+                    _logger.LogWarning(ex,
+                        "Failed to connect to NATS server: {Message}. Retrying in {RetryDelay} seconds...",
                         ex.Message, retryDelaySeconds);
 
                     try
@@ -154,7 +156,8 @@ public class NatsService : INatsService, IAsyncDisposable
     /// <summary>
     /// Sends a request message and waits for a reply
     /// </summary>
-    public async Task<TResponse?> RequestAsync<TRequest, TResponse>(string subject, TRequest message, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+    public async Task<TResponse?> RequestAsync<TRequest, TResponse>(string subject, TRequest message,
+        TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         where TRequest : class
         where TResponse : class
     {
@@ -175,7 +178,8 @@ public class NatsService : INatsService, IAsyncDisposable
             cts.CancelAfter(timeout.Value);
 
 
-            var reply = await GetConnection().RequestAsync<TRequest, TResponse>(subject, message, cancellationToken: cts.Token);
+            var reply = await GetConnection()
+                .RequestAsync<TRequest, TResponse>(subject, message, cancellationToken: cts.Token);
 
             _logger.LogDebug("Received reply from subject: {Subject}", subject);
             return reply.Data;
@@ -205,7 +209,8 @@ public class NatsService : INatsService, IAsyncDisposable
     /// <param name="queueGroup">Optional queue group name for load balancing across multiple subscribers</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>An async enumerable of messages</returns>
-    public async IAsyncEnumerable<T> SubscribeAsync<T>(string subject, string? queueGroup = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<T> SubscribeAsync<T>(string subject, string? queueGroup = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
         where T : BaseMessage
     {
         if (!_isConnected)
@@ -222,12 +227,10 @@ public class NatsService : INatsService, IAsyncDisposable
 
         if (string.IsNullOrEmpty(queueGroup))
         {
-
             asyncEnumerable = connection.SubscribeAsync<T>(subject, cancellationToken: cancellationToken);
         }
         else
         {
-
             asyncEnumerable = connection.SubscribeAsync<T>(subject, queueGroup, cancellationToken: cancellationToken);
         }
 
@@ -289,6 +292,7 @@ public class NatsService : INatsService, IAsyncDisposable
         {
             throw new InvalidOperationException("NATS connection is not initialized");
         }
+
         return _connection;
     }
 }

@@ -59,7 +59,8 @@ public class CartConsumerService : BackgroundService
 
         while (!_natsService.IsConnected && retryCount < maxRetries && !stoppingToken.IsCancellationRequested)
         {
-            _logger.LogInformation("Waiting for NATS connection to be established (attempt {RetryCount}/{MaxRetries})...",
+            _logger.LogInformation(
+                "Waiting for NATS connection to be established (attempt {RetryCount}/{MaxRetries})...",
                 retryCount + 1, maxRetries);
 
             await Task.Delay(TimeSpan.FromSeconds(retryDelaySeconds), stoppingToken);
@@ -84,13 +85,15 @@ public class CartConsumerService : BackgroundService
     {
         const string subject = "cart.get";
         const string queueGroup = "cart-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
 
         try
         {
             await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
             {
-                _logger.LogInformation("Received get cart request - SessionId: {SessionId}", msg.SessionId ?? "Unknown");
+                _logger.LogInformation("Received get cart request - SessionId: {SessionId}",
+                    msg.SessionId ?? "Unknown");
 
                 if (string.IsNullOrEmpty(msg.SessionId))
                 {
@@ -128,13 +131,15 @@ public class CartConsumerService : BackgroundService
     {
         const string subject = "cart.additem";
         const string queueGroup = "cart-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
 
         try
         {
             await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
             {
-                _logger.LogInformation("Received add item request - SessionId: {SessionId}, ProductId: {ProductId}, Quantity: {Quantity}",
+                _logger.LogInformation(
+                    "Received add item request - SessionId: {SessionId}, ProductId: {ProductId}, Quantity: {Quantity}",
                     msg.SessionId ?? "Unknown", msg.ProductId ?? "Unknown", msg.Quantity);
 
                 if (string.IsNullOrEmpty(msg.SessionId) || string.IsNullOrEmpty(msg.ProductId))
@@ -181,13 +186,15 @@ public class CartConsumerService : BackgroundService
     {
         const string subject = "cart.updateitem";
         const string queueGroup = "cart-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
 
         try
         {
             await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
             {
-                _logger.LogInformation("Received update item request - SessionId: {SessionId}, ProductId: {ProductId}, Quantity: {Quantity}",
+                _logger.LogInformation(
+                    "Received update item request - SessionId: {SessionId}, ProductId: {ProductId}, Quantity: {Quantity}",
                     msg.SessionId ?? "Unknown", msg.ProductId ?? "Unknown", msg.Quantity);
 
                 if (string.IsNullOrEmpty(msg.SessionId) || string.IsNullOrEmpty(msg.ProductId))
@@ -196,7 +203,8 @@ public class CartConsumerService : BackgroundService
                     continue;
                 }
 
-                var response = await _cartService.UpdateItemAsync(msg.SessionId, msg.ProductId, msg.Quantity, stoppingToken);
+                var response =
+                    await _cartService.UpdateItemAsync(msg.SessionId, msg.ProductId, msg.Quantity, stoppingToken);
 
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
@@ -226,7 +234,8 @@ public class CartConsumerService : BackgroundService
     {
         const string subject = "cart.removeitem";
         const string queueGroup = "cart-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
 
         try
         {
@@ -271,13 +280,15 @@ public class CartConsumerService : BackgroundService
     {
         const string subject = "cart.clear";
         const string queueGroup = "cart-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
 
         try
         {
             await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
             {
-                _logger.LogInformation("Received clear cart request - SessionId: {SessionId}", msg.SessionId ?? "Unknown");
+                _logger.LogInformation("Received clear cart request - SessionId: {SessionId}",
+                    msg.SessionId ?? "Unknown");
 
                 if (string.IsNullOrEmpty(msg.SessionId))
                 {

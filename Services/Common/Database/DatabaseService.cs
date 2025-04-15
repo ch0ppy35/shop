@@ -18,14 +18,15 @@ public class DatabaseService : IDatabaseService
     /// <summary>
     /// Initializes a new instance of the <see cref="DatabaseService"/> class.
     /// </summary>
-    public DatabaseService(ILogger<DatabaseService> logger, IConfiguration configuration, IServiceProvider serviceProvider)
+    public DatabaseService(ILogger<DatabaseService> logger, IConfiguration configuration,
+        IServiceProvider serviceProvider)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
 
         _connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ??
-                           configuration.GetConnectionString("DefaultConnection") ??
-                           "Host=localhost;Database=products;Username=postgres;Password=postgres";
+                            configuration.GetConnectionString("DefaultConnection") ??
+                            "Host=localhost;Database=products;Username=postgres;Password=postgres";
 
         _logger.LogInformation("Database configuration: ConnectionString={ConnectionString}",
             _connectionString.Replace("Password=", "Password=***"));

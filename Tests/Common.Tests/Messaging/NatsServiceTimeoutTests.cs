@@ -68,10 +68,7 @@ public class NatsServiceTimeoutTests
         var service = new TestableNatsService(_loggerMock.Object, _configMock.Object);
 
         // Setup to always fail
-        service.SetupConnectBehavior(() =>
-        {
-            throw new NatsException("Connection failed");
-        });
+        service.SetupConnectBehavior(() => { throw new NatsException("Connection failed"); });
 
         // Act & Assert
         await Assert.ThrowsAsync<NatsException>(() =>

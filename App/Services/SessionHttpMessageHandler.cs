@@ -18,7 +18,8 @@ public class SessionHttpMessageHandler : DelegatingHandler
     /// <summary>
     /// Sends the HTTP request with the session ID header
     /// </summary>
-    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+        CancellationToken cancellationToken)
     {
         var sessionId = await _sessionService.GetSessionIdAsync();
 

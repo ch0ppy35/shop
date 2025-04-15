@@ -61,7 +61,8 @@ public class ProductConsumerService : BackgroundService
 
         while (!_natsService.IsConnected && retryCount < maxRetries && !stoppingToken.IsCancellationRequested)
         {
-            _logger.LogInformation("Waiting for NATS connection to be established (attempt {RetryCount}/{MaxRetries})...",
+            _logger.LogInformation(
+                "Waiting for NATS connection to be established (attempt {RetryCount}/{MaxRetries})...",
                 retryCount + 1, maxRetries);
 
             await Task.Delay(TimeSpan.FromSeconds(retryDelaySeconds), stoppingToken);
@@ -86,13 +87,16 @@ public class ProductConsumerService : BackgroundService
     {
         const string subject = "products.create";
         const string queueGroup = "products-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
 
         try
         {
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
-                _logger.LogInformation("Received create product request for product: {ProductName} - SessionId: {SessionId}", msg.Name, msg.SessionId ?? "Unknown");
+                _logger.LogInformation(
+                    "Received create product request for product: {ProductName} - SessionId: {SessionId}", msg.Name,
+                    msg.SessionId ?? "Unknown");
 
                 var response = new ProductResponse { Success = false };
 
@@ -145,13 +149,16 @@ public class ProductConsumerService : BackgroundService
     {
         const string subject = "products.update";
         const string queueGroup = "products-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
 
         try
         {
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
-                _logger.LogInformation("Received update product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId, msg.SessionId ?? "Unknown");
+                _logger.LogInformation(
+                    "Received update product request for product ID: {ProductId} - SessionId: {SessionId}",
+                    msg.ProductId, msg.SessionId ?? "Unknown");
 
                 var response = new ProductResponse { Success = false };
 
@@ -214,13 +221,16 @@ public class ProductConsumerService : BackgroundService
     {
         const string subject = "products.delete";
         const string queueGroup = "products-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
 
         try
         {
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
-                _logger.LogInformation("Received delete product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId, msg.SessionId ?? "Unknown");
+                _logger.LogInformation(
+                    "Received delete product request for product ID: {ProductId} - SessionId: {SessionId}",
+                    msg.ProductId, msg.SessionId ?? "Unknown");
 
                 var response = new BaseResponse { Success = false };
 
@@ -280,13 +290,16 @@ public class ProductConsumerService : BackgroundService
     {
         const string subject = "products.get";
         const string queueGroup = "products-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
 
         try
         {
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
-                _logger.LogInformation("Received get product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId, msg.SessionId ?? "Unknown");
+                _logger.LogInformation(
+                    "Received get product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId,
+                    msg.SessionId ?? "Unknown");
 
                 var response = new ProductResponse { Success = false };
 
@@ -347,13 +360,15 @@ public class ProductConsumerService : BackgroundService
     {
         const string subject = "products.getall";
         const string queueGroup = "products-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
 
         try
         {
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
-                _logger.LogInformation("Received get all products request - SessionId: {SessionId}", msg.SessionId ?? "Unknown");
+                _logger.LogInformation("Received get all products request - SessionId: {SessionId}",
+                    msg.SessionId ?? "Unknown");
 
                 var response = new ProductListResponse { Success = false };
 
@@ -362,10 +377,12 @@ public class ProductConsumerService : BackgroundService
                     int pageNumber = Math.Max(1, msg.PageNumber);
                     int pageSize = Math.Clamp(msg.PageSize, 1, 100);
 
-                    _logger.LogInformation("Processing get all products request with pagination: Page {PageNumber}, Size {PageSize}",
+                    _logger.LogInformation(
+                        "Processing get all products request with pagination: Page {PageNumber}, Size {PageSize}",
                         pageNumber, pageSize);
 
-                    var (products, totalCount, totalPages) = await _productService.GetPaginatedProductsAsync(pageNumber, pageSize);
+                    var (products, totalCount, totalPages) =
+                        await _productService.GetPaginatedProductsAsync(pageNumber, pageSize);
                     var productsList = products.ToList();
 
                     response.Success = true;
@@ -383,7 +400,8 @@ public class ProductConsumerService : BackgroundService
                         response.SessionId = msg.SessionId;
                     }
 
-                    _logger.LogInformation("Retrieved {Count} products (page {PageNumber} of {TotalPages}, total: {TotalCount})",
+                    _logger.LogInformation(
+                        "Retrieved {Count} products (page {PageNumber} of {TotalPages}, total: {TotalCount})",
                         productsList.Count, pageNumber, totalPages, totalCount);
                 }
                 catch (Exception ex)
@@ -420,13 +438,15 @@ public class ProductConsumerService : BackgroundService
     {
         const string subject = "products.inventory.get";
         const string queueGroup = "products-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
 
         try
         {
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
-                _logger.LogInformation("Received get inventory request for product ID: {ProductId} - SessionId: {SessionId}",
+                _logger.LogInformation(
+                    "Received get inventory request for product ID: {ProductId} - SessionId: {SessionId}",
                     msg.ProductId, msg.SessionId ?? "Unknown");
 
                 var response = new ProductResponse { Success = false };
@@ -488,20 +508,23 @@ public class ProductConsumerService : BackgroundService
     {
         const string subject = "products.inventory.update";
         const string queueGroup = "products-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}", subject, queueGroup);
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, queueGroup);
 
         try
         {
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
-                _logger.LogInformation("Received update inventory request for product ID: {ProductId} - SessionId: {SessionId}",
+                _logger.LogInformation(
+                    "Received update inventory request for product ID: {ProductId} - SessionId: {SessionId}",
                     msg.ProductId, msg.SessionId ?? "Unknown");
 
                 var response = new ProductResponse { Success = false };
 
                 try
                 {
-                    var success = await _productService.UpdateInventoryAsync(msg.ProductId ?? string.Empty, msg.QuantityInStock);
+                    var success =
+                        await _productService.UpdateInventoryAsync(msg.ProductId ?? string.Empty, msg.QuantityInStock);
 
                     if (success)
                     {
@@ -521,7 +544,8 @@ public class ProductConsumerService : BackgroundService
                     else
                     {
                         response.Error = $"Failed to update inventory for product with ID {msg.ProductId}";
-                        _logger.LogWarning("Failed to update inventory for product with ID: {ProductId}", msg.ProductId);
+                        _logger.LogWarning("Failed to update inventory for product with ID: {ProductId}",
+                            msg.ProductId);
                     }
                 }
                 catch (Exception ex)

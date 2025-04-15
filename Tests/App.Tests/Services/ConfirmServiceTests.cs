@@ -37,12 +37,12 @@ public class ConfirmServiceTests
 
         result.Should().BeTrue();
         _mockDialogService.Verify(d => d.ShowMessageBox(
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<DialogOptions>()),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<DialogOptions>()),
             Times.Once);
     }
 
@@ -67,12 +67,12 @@ public class ConfirmServiceTests
 
         result.Should().BeTrue();
         _mockDialogService.Verify(d => d.ShowMessageBox(
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<DialogOptions>()),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<DialogOptions>()),
             Times.Once);
     }
 
@@ -96,12 +96,12 @@ public class ConfirmServiceTests
         result.Should().BeTrue();
 
         _mockDialogService.Verify(d => d.ShowMessageBox(
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<DialogOptions>()),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<DialogOptions>()),
             Times.Never);
     }
 }

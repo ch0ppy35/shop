@@ -11,7 +11,8 @@ public static class JsonLoggerExtensions
     /// <summary>
     /// Adds the JSON logger to the logging builder
     /// </summary>
-    public static ILoggingBuilder AddJsonLogger(this ILoggingBuilder builder, Action<JsonLoggerConfiguration>? configure = null)
+    public static ILoggingBuilder AddJsonLogger(this ILoggingBuilder builder,
+        Action<JsonLoggerConfiguration>? configure = null)
     {
         var config = new JsonLoggerConfiguration();
         configure?.Invoke(config);

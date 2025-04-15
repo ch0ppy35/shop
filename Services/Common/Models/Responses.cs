@@ -92,4 +92,3 @@ public class RecommendationResponse : BaseResponse
     /// </summary>
     public List<ProductMessage>? Recommendations { get; set; }
 }
-

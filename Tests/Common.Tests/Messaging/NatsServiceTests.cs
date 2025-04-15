@@ -140,5 +140,4 @@ public class NatsServiceTests
                 Environment.SetEnvironmentVariable("NATS_URL", null);
         }
     }
-
 }

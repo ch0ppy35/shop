@@ -36,12 +36,17 @@ public class MockSnackbar : ISnackbar
     /// <summary>
     /// Event that is fired when snackbars are updated
     /// </summary>
-    public event Action? OnSnackbarsUpdated { add { } remove { } }
+    public event Action? OnSnackbarsUpdated
+    {
+        add { }
+        remove { }
+    }
 
     /// <summary>
     /// Adds a snackbar message
     /// </summary>
-    public Snackbar Add(string message, Severity severity = Severity.Normal, Action<SnackbarOptions>? options = null, string? key = null)
+    public Snackbar Add(string message, Severity severity = Severity.Normal, Action<SnackbarOptions>? options = null,
+        string? key = null)
     {
         AddCallCount++;
         LastMessage = message;
@@ -53,7 +58,8 @@ public class MockSnackbar : ISnackbar
     /// <summary>
     /// Adds a snackbar message with markup
     /// </summary>
-    public Snackbar Add(MarkupString message, Severity severity = Severity.Normal, Action<SnackbarOptions>? options = null, string? key = null)
+    public Snackbar Add(MarkupString message, Severity severity = Severity.Normal,
+        Action<SnackbarOptions>? options = null, string? key = null)
     {
         AddCallCount++;
         LastMessage = message.Value;
@@ -65,7 +71,8 @@ public class MockSnackbar : ISnackbar
     /// <summary>
     /// Adds a snackbar message with a render fragment
     /// </summary>
-    public Snackbar Add(RenderFragment message, Severity severity = Severity.Normal, Action<SnackbarOptions>? options = null, string? key = null)
+    public Snackbar Add(RenderFragment message, Severity severity = Severity.Normal,
+        Action<SnackbarOptions>? options = null, string? key = null)
     {
         AddCallCount++;
         LastSeverity = severity;
@@ -76,7 +83,8 @@ public class MockSnackbar : ISnackbar
     /// <summary>
     /// Adds a snackbar message with a component
     /// </summary>
-    public Snackbar Add<T>(Dictionary<string, object>? parameters = null, Severity severity = Severity.Normal, Action<SnackbarOptions>? options = null, string? key = null) where T : IComponent
+    public Snackbar Add<T>(Dictionary<string, object>? parameters = null, Severity severity = Severity.Normal,
+        Action<SnackbarOptions>? options = null, string? key = null) where T : IComponent
     {
         AddCallCount++;
         LastSeverity = severity;

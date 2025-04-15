@@ -29,7 +29,8 @@ public class CartService
         try
         {
             var cartKey = GetCartKey(sessionId);
-            var cartItems = await _redisService.GetAsync<List<CartItem>>(cartKey, cancellationToken) ?? new List<CartItem>();
+            var cartItems = await _redisService.GetAsync<List<CartItem>>(cartKey, cancellationToken) ??
+                            new List<CartItem>();
 
             var totalPrice = cartItems.Sum(item => item.TotalPrice);
             var itemCount = cartItems.Sum(item => item.Quantity);
@@ -44,7 +45,8 @@ public class CartService
                 ItemCount = itemCount
             };
 
-            _logger.LogInformation("Cart retrieved for session ID: {SessionId}, Items: {ItemCount}, Total: {TotalPrice}",
+            _logger.LogInformation(
+                "Cart retrieved for session ID: {SessionId}, Items: {ItemCount}, Total: {TotalPrice}",
                 sessionId, itemCount, totalPrice);
 
             return response;
@@ -67,21 +69,25 @@ public class CartService
     /// <summary>
     /// Adds an item to the cart
     /// </summary>
-    public async Task<CartResponse> AddItemAsync(string sessionId, CartItem item, CancellationToken cancellationToken = default)
+    public async Task<CartResponse> AddItemAsync(string sessionId, CartItem item,
+        CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Adding item to cart for session ID: {SessionId}, Product ID: {ProductId}, Quantity: {Quantity}",
+        _logger.LogInformation(
+            "Adding item to cart for session ID: {SessionId}, Product ID: {ProductId}, Quantity: {Quantity}",
             sessionId, item.ProductId, item.Quantity);
 
         try
         {
             var cartKey = GetCartKey(sessionId);
-            var cartItems = await _redisService.GetAsync<List<CartItem>>(cartKey, cancellationToken) ?? new List<CartItem>();
+            var cartItems = await _redisService.GetAsync<List<CartItem>>(cartKey, cancellationToken) ??
+                            new List<CartItem>();
 
             var existingItem = cartItems.FirstOrDefault(i => i.ProductId == item.ProductId);
             if (existingItem != null)
             {
                 existingItem.Quantity += item.Quantity;
-                _logger.LogInformation("Updated existing item in cart, new quantity: {Quantity}", existingItem.Quantity);
+                _logger.LogInformation("Updated existing item in cart, new quantity: {Quantity}",
+                    existingItem.Quantity);
             }
             else
             {
@@ -104,7 +110,8 @@ public class CartService
                 ItemCount = itemCount
             };
 
-            _logger.LogInformation("Item added to cart for session ID: {SessionId}, Items: {ItemCount}, Total: {TotalPrice}",
+            _logger.LogInformation(
+                "Item added to cart for session ID: {SessionId}, Items: {ItemCount}, Total: {TotalPrice}",
                 sessionId, itemCount, totalPrice);
 
             return response;
@@ -124,15 +131,18 @@ public class CartService
     /// <summary>
     /// Updates an item in the cart
     /// </summary>
-    public async Task<CartResponse> UpdateItemAsync(string sessionId, string productId, int quantity, CancellationToken cancellationToken = default)
+    public async Task<CartResponse> UpdateItemAsync(string sessionId, string productId, int quantity,
+        CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Updating item in cart for session ID: {SessionId}, Product ID: {ProductId}, Quantity: {Quantity}",
+        _logger.LogInformation(
+            "Updating item in cart for session ID: {SessionId}, Product ID: {ProductId}, Quantity: {Quantity}",
             sessionId, productId, quantity);
 
         try
         {
             var cartKey = GetCartKey(sessionId);
-            var cartItems = await _redisService.GetAsync<List<CartItem>>(cartKey, cancellationToken) ?? new List<CartItem>();
+            var cartItems = await _redisService.GetAsync<List<CartItem>>(cartKey, cancellationToken) ??
+                            new List<CartItem>();
 
             var existingItem = cartItems.FirstOrDefault(i => i.ProductId == productId);
             if (existingItem == null)
@@ -157,7 +167,8 @@ public class CartService
             else
             {
                 existingItem.Quantity = quantity;
-                _logger.LogInformation("Updated item quantity in cart: {ProductId}, Quantity: {Quantity}", productId, quantity);
+                _logger.LogInformation("Updated item quantity in cart: {ProductId}, Quantity: {Quantity}", productId,
+                    quantity);
             }
 
             await _redisService.SetAsync(cartKey, cartItems, _redisService.CartTtl, cancellationToken);
@@ -175,7 +186,8 @@ public class CartService
                 ItemCount = itemCount
             };
 
-            _logger.LogInformation("Item updated in cart for session ID: {SessionId}, Items: {ItemCount}, Total: {TotalPrice}",
+            _logger.LogInformation(
+                "Item updated in cart for session ID: {SessionId}, Items: {ItemCount}, Total: {TotalPrice}",
                 sessionId, itemCount, totalPrice);
 
             return response;
@@ -195,7 +207,8 @@ public class CartService
     /// <summary>
     /// Removes an item from the cart
     /// </summary>
-    public async Task<CartResponse> RemoveItemAsync(string sessionId, string productId, CancellationToken cancellationToken = default)
+    public async Task<CartResponse> RemoveItemAsync(string sessionId, string productId,
+        CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Removing item from cart for session ID: {SessionId}, Product ID: {ProductId}",
             sessionId, productId);
@@ -203,7 +216,8 @@ public class CartService
         try
         {
             var cartKey = GetCartKey(sessionId);
-            var cartItems = await _redisService.GetAsync<List<CartItem>>(cartKey, cancellationToken) ?? new List<CartItem>();
+            var cartItems = await _redisService.GetAsync<List<CartItem>>(cartKey, cancellationToken) ??
+                            new List<CartItem>();
 
             var existingItem = cartItems.FirstOrDefault(i => i.ProductId == productId);
             if (existingItem == null)
@@ -238,7 +252,8 @@ public class CartService
                 ItemCount = itemCount
             };
 
-            _logger.LogInformation("Item removed from cart for session ID: {SessionId}, Items: {ItemCount}, Total: {TotalPrice}",
+            _logger.LogInformation(
+                "Item removed from cart for session ID: {SessionId}, Items: {ItemCount}, Total: {TotalPrice}",
                 sessionId, itemCount, totalPrice);
 
             return response;

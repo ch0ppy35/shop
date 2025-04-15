@@ -24,7 +24,6 @@ public class ProductsController : ControllerBase
 
         try
         {
-
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 10;
 
@@ -71,7 +70,6 @@ public class ProductsController : ControllerBase
 
         try
         {
-
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -113,7 +111,6 @@ public class ProductsController : ControllerBase
 
         try
         {
-
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -163,7 +160,6 @@ public class ProductsController : ControllerBase
 
         try
         {
-
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -213,7 +209,6 @@ public class ProductsController : ControllerBase
 
         try
         {
-
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -239,7 +234,8 @@ public class ProductsController : ControllerBase
                 return StatusCode(404, new { error = response.Error ?? $"Product with ID {id} not found" });
             }
 
-            return Ok(new { success = true, message = response.Message ?? $"Product with ID {id} deleted successfully" });
+            return Ok(new
+                { success = true, message = response.Message ?? $"Product with ID {id} deleted successfully" });
         }
         catch (Exception ex)
         {
@@ -255,7 +251,6 @@ public class ProductsController : ControllerBase
 
         try
         {
-
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -278,7 +273,8 @@ public class ProductsController : ControllerBase
 
             if (!response.Success)
             {
-                return StatusCode(404, new { error = response.Error ?? $"Inventory for product with ID {id} not found" });
+                return StatusCode(404,
+                    new { error = response.Error ?? $"Inventory for product with ID {id} not found" });
             }
 
             return Ok(response);
@@ -297,7 +293,6 @@ public class ProductsController : ControllerBase
 
         try
         {
-
             var sessionId = HttpContext.Items["SessionId"]?.ToString();
 
             var message = new ProductMessage
@@ -324,7 +319,8 @@ public class ProductsController : ControllerBase
 
             if (!response.Success)
             {
-                return StatusCode(404, new { error = response.Error ?? $"Failed to update inventory for product with ID {id}" });
+                return StatusCode(404,
+                    new { error = response.Error ?? $"Failed to update inventory for product with ID {id}" });
             }
 
             return Ok(response);
