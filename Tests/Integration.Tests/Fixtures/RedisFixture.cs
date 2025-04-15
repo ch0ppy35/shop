@@ -23,8 +23,7 @@ public class RedisFixture : IAsyncLifetime
     /// <summary>
     /// Gets the Redis service
     /// </summary>
-    public RedisService RedisService => _serviceProvider?.GetRequiredService<RedisService>()
-                                        ?? throw new InvalidOperationException("Redis service not initialized");
+    public FakeRedisService RedisService { get; private set; } = null!;
 
     /// <summary>
     /// Gets the Redis connection string
@@ -46,7 +45,7 @@ public class RedisFixture : IAsyncLifetime
     /// <summary>
     /// Initializes the Redis container and services
     /// </summary>
-    public Task InitializeAsync()
+    public async Task InitializeAsync()
     {
         // Skip container startup for faster tests
         // Use a mock Redis service instead
@@ -64,51 +63,23 @@ public class RedisFixture : IAsyncLifetime
         _services.AddLogging(builder => builder.AddConsole());
 
         // Create a fake Redis service
-        var redisService = new FakeRedisService();
+        RedisService = new FakeRedisService();
+        await RedisService.ConnectAsync();
 
-        // Setup the GetAsync method to return test data
-        redisServiceMock.Setup(x => x.GetAsync<List<CartItem>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string key, CancellationToken token) =>
-            {
-                if (key.StartsWith("cart:"))
-                {
-                    return new List<CartItem>
-                    {
-                        new CartItem
-                        {
-                            ProductId = "test-product-id",
-                            Name = "Test Product",
-                            Price = 19.99m,
-                            Quantity = 1
-                        }
-                    };
-                }
-
-                return null;
-            });
-
-        // Setup the SetAsync method
-        redisServiceMock.Setup(x => x.SetAsync(It.IsAny<string>(), It.IsAny<List<CartItem>>(), It.IsAny<TimeSpan?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Setup the RemoveAsync method
-        redisServiceMock.Setup(x => x.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _services.AddSingleton(redisServiceMock.Object);
+        _services.AddSingleton<IRedisService>(RedisService);
 
         _serviceProvider = _services.BuildServiceProvider();
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
     /// Disposes the Redis container and services
     /// </summary>
-    public Task DisposeAsync()
+    public async Task DisposeAsync()
     {
-        // Nothing to dispose since we're using mocks
-        return Task.CompletedTask;
+        // Dispose the fake Redis service
+        if (RedisService != null)
+        {
+            await RedisService.DisposeAsync();
+        }
     }
 }

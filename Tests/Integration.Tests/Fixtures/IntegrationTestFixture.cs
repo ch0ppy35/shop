@@ -84,12 +84,12 @@ public class IntegrationTestFixture : IAsyncLifetime
         _services.AddSingleton<INatsService>(_natsFixture.NatsService);
 
         // Add Product services
+        _services.AddSingleton<IProductDbContext>(_postgresFixture.DbContext);
         _services.AddScoped<IProductRepository, ProductRepository>();
         _services.AddScoped<IProductService, ProductService>();
-        _services.AddSingleton(_postgresFixture.DbContext);
 
         // Add Cart services
-        _services.AddSingleton(_redisFixture.RedisService);
+        _services.AddSingleton<IRedisService>(_redisFixture.RedisService);
         _services.AddScoped<CartService>();
 
         // Add Recommendation services

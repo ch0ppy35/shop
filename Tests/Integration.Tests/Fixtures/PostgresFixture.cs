@@ -26,8 +26,7 @@ public class PostgresFixture : IAsyncLifetime
     /// <summary>
     /// Gets the database context
     /// </summary>
-    public ProductDbContext DbContext => _serviceProvider?.GetRequiredService<ProductDbContext>()
-                                         ?? throw new InvalidOperationException("Database context not initialized");
+    public ProductDbContext DbContext { get; private set; } = null!;
 
     /// <summary>
     /// Gets the connection string
@@ -75,12 +74,12 @@ public class PostgresFixture : IAsyncLifetime
             .Options;
 
         var logger = _services.BuildServiceProvider().GetRequiredService<ILogger<ProductDbContext>>();
-        var dbContext = new ProductDbContext(options, logger, configuration);
+        DbContext = new ProductDbContext(options, logger, configuration);
 
         // Seed the database with test data
-        await SeedTestDataAsync(dbContext);
+        await SeedTestDataAsync(DbContext);
 
-        _services.AddSingleton(dbContext);
+        _services.AddSingleton(DbContext);
 
         _serviceProvider = _services.BuildServiceProvider();
     }

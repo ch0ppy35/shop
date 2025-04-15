@@ -32,7 +32,7 @@ public class RedisService : IRedisService, IAsyncDisposable
     /// <summary>
     /// Gets a value indicating whether the service is connected to Redis
     /// </summary>
-    public bool IsConnected => _isConnected;
+    public virtual bool IsConnected => _isConnected;
 
     /// <summary>
     /// Gets the cart TTL
@@ -42,7 +42,7 @@ public class RedisService : IRedisService, IAsyncDisposable
     /// <summary>
     /// Connects to the Redis server
     /// </summary>
-    public async Task ConnectAsync(CancellationToken cancellationToken = default)
+    public virtual async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
         await ConnectWithRetryAsync(1, cancellationToken);
     }
@@ -52,7 +52,7 @@ public class RedisService : IRedisService, IAsyncDisposable
     /// </summary>
     /// <param name="maxRetries">Maximum number of retries, use -1 for infinite retries</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    public async Task ConnectWithRetryAsync(int maxRetries = -1, CancellationToken cancellationToken = default)
+    public virtual async Task ConnectWithRetryAsync(int maxRetries = -1, CancellationToken cancellationToken = default)
     {
         int retryCount = 0;
         const int retryDelaySeconds = 10;
@@ -118,7 +118,7 @@ public class RedisService : IRedisService, IAsyncDisposable
     /// <summary>
     /// Gets a value from Redis
     /// </summary>
-    public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+    public virtual async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
     {
         if (_database == null || !_isConnected)
         {
@@ -149,7 +149,7 @@ public class RedisService : IRedisService, IAsyncDisposable
     /// <summary>
     /// Sets a value in Redis with TTL
     /// </summary>
-    public async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null,
+    public virtual async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null,
         CancellationToken cancellationToken = default)
     {
         if (_database == null || !_isConnected)
@@ -174,7 +174,7 @@ public class RedisService : IRedisService, IAsyncDisposable
     /// <summary>
     /// Removes a value from Redis
     /// </summary>
-    public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+    public virtual async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {
         if (_database == null || !_isConnected)
         {
@@ -197,7 +197,7 @@ public class RedisService : IRedisService, IAsyncDisposable
     /// <summary>
     /// Disposes the Redis connection
     /// </summary>
-    public async ValueTask DisposeAsync()
+    public virtual async ValueTask DisposeAsync()
     {
         if (_redis != null)
         {
