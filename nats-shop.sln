@@ -14,7 +14,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Tests", "Tests\Commo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Products.Tests", "Tests\Products.Tests\Products.Tests.csproj", "{339BCC63-998F-487A-8CA9-5B1CD19E61D0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frontend", "App\Frontend.csproj", "{425B6FC7-5F92-43CE-A0B3-9ACCD78E79E3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App", "App\App.csproj", "{425B6FC7-5F92-43CE-A0B3-9ACCD78E79E3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cart", "Services\Cart\Cart.csproj", "{E6BD1C98-6792-4EEF-B51E-2E5C269AA2A2}"
 EndProject

@@ -43,7 +43,7 @@
         try
         {
             await JSRuntime.InvokeVoidAsync("eval",
-            "document.addEventListener('cartUpdated', function() { DotNet.invokeMethodAsync('Frontend', 'RefreshNavMenu'); });");
+            "document.addEventListener('cartUpdated', function() { DotNet.invokeMethodAsync('App', 'RefreshNavMenu'); });");
         }
         catch (Exception ex)
         {
