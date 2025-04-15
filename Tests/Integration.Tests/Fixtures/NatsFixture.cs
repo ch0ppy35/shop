@@ -20,7 +20,7 @@ public class NatsFixture : IAsyncLifetime
     /// <summary>
     /// Gets the NATS service
     /// </summary>
-    public FakeNatsService NatsService { get; private set; } = null!;
+    public TestableNatsService NatsService { get; private set; } = null!;
 
     /// <summary>
     /// Gets the NATS URL
@@ -33,20 +33,22 @@ public class NatsFixture : IAsyncLifetime
     public NatsFixture()
     {
         _natsContainer = new NatsBuilder()
-            .WithImage("nats:latest")
+            .WithImage("nats:2.11-scratch")
             .WithPortBinding(4222, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(4222))
+            // .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(4222))
             .Build();
     }
 
     /// <summary>
     /// Initializes the NATS container and services
     /// </summary>
-    public Task InitializeAsync()
+    public async Task InitializeAsync()
     {
-        // Skip container startup for faster tests
-        // Use a mock NATS service instead
-        NatsUrl = "nats://localhost:4222";
+        Console.WriteLine("Starting NATS container...");
+        // Start the NATS container
+        await _natsContainer.StartAsync();
+        NatsUrl = _natsContainer.GetConnectionString();
+        Console.WriteLine($"NATS container started at {NatsUrl}");
 
         // Configure services
         var configuration = new ConfigurationBuilder()
@@ -59,24 +61,41 @@ public class NatsFixture : IAsyncLifetime
         _services.AddSingleton<IConfiguration>(configuration);
         _services.AddLogging(builder => builder.AddConsole());
 
-        // Use a fake NATS service
-        NatsService = new FakeNatsService();
-        await NatsService.ConnectWithRetryAsync();
+        // Create and register the testable NATS service
+        var logger = _services.BuildServiceProvider().GetRequiredService<ILogger<NatsService>>();
+        Console.WriteLine("Creating TestableNatsService...");
+        var natsService = new TestableNatsService(logger, configuration);
+        Console.WriteLine("Connecting to NATS...");
+        try
+        {
+            await natsService.ConnectWithRetryAsync(5);
+            Console.WriteLine("Successfully connected to NATS");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error connecting to NATS: {ex.Message}");
+            throw;
+        }
 
-        // Register the fake NATS service
+        // Store the service for test access
+        NatsService = natsService;
+
+        // Register the NATS service
         _services.AddSingleton<INatsService>(NatsService);
 
         _serviceProvider = _services.BuildServiceProvider();
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
     /// Disposes the NATS container and services
     /// </summary>
-    public Task DisposeAsync()
+    public async Task DisposeAsync()
     {
-        // Nothing to dispose since we're using mocks
-        return Task.CompletedTask;
+        if (NatsService != null)
+        {
+            await NatsService.DisposeAsync();
+        }
+
+        await _natsContainer.DisposeAsync();
     }
 }

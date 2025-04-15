@@ -27,17 +27,22 @@ public class FullWorkflowTests : IClassFixture<IntegrationTestFixture>
     [Fact]
     public async Task FullWorkflow_CreateProduct_AddToCart_GetRecommendations_ShouldSucceed()
     {
+        Console.WriteLine("\n=== Starting FullWorkflow_CreateProduct_AddToCart_GetRecommendations_ShouldSucceed test ===");
         // Arrange
         var sessionId = _fixture.CreateTestSessionId();
+        Console.WriteLine($"Created test session ID: {sessionId}");
 
         // Step 1: Create a product
+        Console.WriteLine("Step 1: Creating test product...");
         var product = await _fixture.CreateTestProductAsync("Test Product Workflow", 29.99m);
         product.Should().NotBeNull();
         product.ProductId.Should().NotBeNullOrEmpty();
         product.Name.Should().Be("Test Product Workflow");
         product.Price.Should().Be(29.99m);
+        Console.WriteLine($"Created product with ID: {product.ProductId}");
 
         // Step 2: Add the product to the cart
+        Console.WriteLine("Step 2: Adding product to cart...");
         var cartResponse = await _fixture.AddProductToCartAsync(sessionId, product.ProductId!, 2);
         cartResponse.Should().NotBeNull();
         cartResponse.Success.Should().BeTrue();
@@ -47,8 +52,10 @@ public class FullWorkflowTests : IClassFixture<IntegrationTestFixture>
         cartResponse.Items![0].Quantity.Should().Be(2);
         cartResponse.Items![0].Price.Should().Be(29.99m);
         cartResponse.TotalPrice.Should().Be(59.98m);
+        Console.WriteLine("Successfully added product to cart");
 
         // Step 3: Get recommendations based on the cart
+        Console.WriteLine("Step 3: Getting recommendations based on cart...");
         var recommendationResponse = await _fixture.GetRecommendationsAsync(sessionId, cartResponse.Items);
         recommendationResponse.Should().NotBeNull();
         recommendationResponse.Success.Should().BeTrue();
@@ -57,6 +64,8 @@ public class FullWorkflowTests : IClassFixture<IntegrationTestFixture>
 
         // Verify that the original product is not in the recommendations
         recommendationResponse.Recommendations!.Should().NotContain(p => p.ProductId == product.ProductId);
+        Console.WriteLine($"Successfully got {recommendationResponse.Recommendations!.Count} recommendations");
+        Console.WriteLine("=== Test completed successfully ===");
     }
 
     /// <summary>

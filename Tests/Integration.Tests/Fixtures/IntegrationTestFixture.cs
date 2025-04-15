@@ -1,6 +1,8 @@
 using Cart.Services;
+using Common.Database;
 using Common.Messaging;
 using Common.Models;
+using CartItem = Common.Models.CartItem;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -62,10 +64,15 @@ public class IntegrationTestFixture : IAsyncLifetime
     /// </summary>
     public async Task InitializeAsync()
     {
+        Console.WriteLine("IntegrationTestFixture: Initializing services...");
         // Initialize containers
+        Console.WriteLine("IntegrationTestFixture: Initializing NATS fixture...");
         await _natsFixture.InitializeAsync();
+        Console.WriteLine("IntegrationTestFixture: Initializing PostgreSQL fixture...");
         await _postgresFixture.InitializeAsync();
+        Console.WriteLine("IntegrationTestFixture: Initializing Redis fixture...");
         await _redisFixture.InitializeAsync();
+        Console.WriteLine("IntegrationTestFixture: All fixtures initialized.");
 
         // Configure services
         var configuration = new ConfigurationBuilder()
@@ -97,8 +104,10 @@ public class IntegrationTestFixture : IAsyncLifetime
 
         _serviceProvider = _services.BuildServiceProvider();
 
+        Console.WriteLine("IntegrationTestFixture: Starting consumer services...");
         // Start the consumer services
         await StartConsumerServicesAsync();
+        Console.WriteLine("IntegrationTestFixture: Consumer services started.");
     }
 
     /// <summary>
@@ -116,8 +125,151 @@ public class IntegrationTestFixture : IAsyncLifetime
     /// </summary>
     private async Task StartConsumerServicesAsync()
     {
-        // We're using mocks, so we don't need to start any consumer services
-        await Task.CompletedTask;
+        // Register handlers for the services
+        var cartService = _serviceProvider!.GetRequiredService<CartService>();
+        var productService = _serviceProvider!.GetRequiredService<IProductService>();
+        var recommendationService = _serviceProvider!.GetRequiredService<IRecommendationService>();
+
+        // Register cart handlers
+        await RegisterCartHandlers(cartService);
+
+        // Register product handlers
+        await RegisterProductHandlers(productService);
+
+        // Register recommendation handlers
+        await RegisterRecommendationHandlers(recommendationService);
+
+        // Wait a moment for handlers to be registered
+        await Task.Delay(500);
+    }
+
+    private async Task RegisterCartHandlers(CartService cartService)
+    {
+        var natsService = _natsFixture.NatsService;
+
+        // Register handlers for cart operations
+        natsService.RegisterHandler("cart.additem", async (message) =>
+        {
+            var cartMessage = System.Text.Json.JsonSerializer.Deserialize<CartMessage>(message);
+            var cartItem = new CartItem
+            {
+                ProductId = cartMessage!.ProductId,
+                Name = cartMessage.Name,
+                Price = cartMessage.Price,
+                Quantity = cartMessage.Quantity
+            };
+            var result = await cartService.AddItemAsync(cartMessage.SessionId!, cartItem);
+            return System.Text.Json.JsonSerializer.Serialize(result);
+        });
+
+        natsService.RegisterHandler("cart.updateitem", async (message) =>
+        {
+            var cartMessage = System.Text.Json.JsonSerializer.Deserialize<CartMessage>(message);
+            var result = await cartService.UpdateItemAsync(cartMessage!.SessionId!, cartMessage.ProductId!, cartMessage.Quantity);
+            return System.Text.Json.JsonSerializer.Serialize(result);
+        });
+
+        natsService.RegisterHandler("cart.removeitem", async (message) =>
+        {
+            var cartMessage = System.Text.Json.JsonSerializer.Deserialize<CartMessage>(message);
+            var result = await cartService.RemoveItemAsync(cartMessage!.SessionId!, cartMessage.ProductId!);
+            return System.Text.Json.JsonSerializer.Serialize(result);
+        });
+
+        natsService.RegisterHandler("cart.get", async (message) =>
+        {
+            var cartMessage = System.Text.Json.JsonSerializer.Deserialize<CartMessage>(message);
+            var result = await cartService.GetCartAsync(cartMessage!.SessionId!);
+            return System.Text.Json.JsonSerializer.Serialize(result);
+        });
+
+        natsService.RegisterHandler("cart.clear", async (message) =>
+        {
+            var cartMessage = System.Text.Json.JsonSerializer.Deserialize<CartMessage>(message);
+            var result = await cartService.ClearCartAsync(cartMessage!.SessionId!);
+            return System.Text.Json.JsonSerializer.Serialize(result);
+        });
+    }
+
+    private async Task RegisterProductHandlers(IProductService productService)
+    {
+        var natsService = _natsFixture.NatsService;
+
+        // Register handlers for product operations
+        natsService.RegisterHandler("products.get", async (message) =>
+        {
+            var productMessage = System.Text.Json.JsonSerializer.Deserialize<ProductMessage>(message);
+            var product = await productService.GetProductAsync(productMessage!.ProductId!);
+            var response = new ProductResponse
+            {
+                Success = product != null,
+                Product = product,
+                Error = product == null ? "Product not found" : null
+            };
+            return System.Text.Json.JsonSerializer.Serialize(response);
+        });
+
+        natsService.RegisterHandler("products.create", async (message) =>
+        {
+            var productMessage = System.Text.Json.JsonSerializer.Deserialize<ProductMessage>(message);
+            var product = await productService.CreateProductAsync(productMessage!);
+            var response = new ProductResponse
+            {
+                Success = true,
+                Product = product
+            };
+            return System.Text.Json.JsonSerializer.Serialize(response);
+        });
+
+        natsService.RegisterHandler("products.update", async (message) =>
+        {
+            var productMessage = System.Text.Json.JsonSerializer.Deserialize<ProductMessage>(message);
+            var success = await productService.UpdateProductAsync(productMessage!);
+            var response = new ProductResponse
+            {
+                Success = success,
+                Error = success ? null : "Failed to update product"
+            };
+            return System.Text.Json.JsonSerializer.Serialize(response);
+        });
+
+        natsService.RegisterHandler("products.inventory.update", async (message) =>
+        {
+            var productMessage = System.Text.Json.JsonSerializer.Deserialize<ProductMessage>(message);
+            var success = await productService.UpdateInventoryAsync(productMessage!.ProductId!, productMessage.QuantityInStock);
+            var product = success ? await productService.GetProductAsync(productMessage.ProductId!) : null;
+            var response = new ProductResponse
+            {
+                Success = success,
+                Product = product,
+                Error = success ? null : "Failed to update inventory"
+            };
+            return System.Text.Json.JsonSerializer.Serialize(response);
+        });
+    }
+
+    private async Task RegisterRecommendationHandlers(IRecommendationService recommendationService)
+    {
+        var natsService = _natsFixture.NatsService;
+
+        // Register handlers for recommendation operations
+        natsService.RegisterHandler("recommendations.get", async (message) =>
+        {
+            var recommendationMessage = System.Text.Json.JsonSerializer.Deserialize<RecommendationMessage>(message);
+            var recommendations = await recommendationService.GetRecommendationsAsync(
+                recommendationMessage!.SessionId!,
+                recommendationMessage.CartItems,
+                recommendationMessage.MaxRecommendations);
+
+            var response = new RecommendationResponse
+            {
+                Success = true,
+                Recommendations = recommendations.ToList(),
+                SessionId = recommendationMessage.SessionId
+            };
+
+            return System.Text.Json.JsonSerializer.Serialize(response);
+        });
     }
 
     /// <summary>
@@ -155,6 +307,7 @@ public class IntegrationTestFixture : IAsyncLifetime
     /// </summary>
     public async Task<CartResponse> AddProductToCartAsync(string sessionId, string productId, int quantity = 1)
     {
+        Console.WriteLine($"IntegrationTestFixture: Adding product {productId} to cart for session {sessionId}");
         var response = await NatsService.RequestAsync<CartMessage, CartResponse>(
             "cart.additem",
             new CartMessage
@@ -165,7 +318,14 @@ public class IntegrationTestFixture : IAsyncLifetime
                 OperationType = CartOperationType.AddItem
             });
 
-        return response ?? throw new InvalidOperationException("Failed to add product to cart");
+        if (response == null)
+        {
+            Console.WriteLine("IntegrationTestFixture: Failed to add product to cart - response was null");
+            throw new InvalidOperationException("Failed to add product to cart");
+        }
+
+        Console.WriteLine($"IntegrationTestFixture: Successfully added product to cart. Cart now has {response.Items?.Count ?? 0} items");
+        return response;
     }
 
     /// <summary>
@@ -190,6 +350,7 @@ public class IntegrationTestFixture : IAsyncLifetime
     public async Task<RecommendationResponse> GetRecommendationsAsync(string sessionId,
         List<CartItem>? cartItems = null, int maxRecommendations = 5)
     {
+        Console.WriteLine($"IntegrationTestFixture: Getting recommendations for session {sessionId} with {cartItems?.Count ?? 0} cart items");
         var response = await NatsService.RequestAsync<RecommendationMessage, RecommendationResponse>(
             "recommendations.get",
             new RecommendationMessage
@@ -200,6 +361,13 @@ public class IntegrationTestFixture : IAsyncLifetime
                 OperationType = RecommendationOperationType.GetRecommendations
             });
 
-        return response ?? throw new InvalidOperationException("Failed to get recommendations");
+        if (response == null)
+        {
+            Console.WriteLine("IntegrationTestFixture: Failed to get recommendations - response was null");
+            throw new InvalidOperationException("Failed to get recommendations");
+        }
+
+        Console.WriteLine($"IntegrationTestFixture: Successfully got {response.Recommendations?.Count ?? 0} recommendations");
+        return response;
     }
 }
