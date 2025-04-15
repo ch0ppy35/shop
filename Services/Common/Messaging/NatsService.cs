@@ -84,7 +84,13 @@ public class NatsService : INatsService, IAsyncDisposable
                     await _connection.DisposeAsync();
                 }
 
-                _connection = new NatsConnection(_natsOpts);
+                var connection = await CreateConnectionAsync();
+                _connection = connection as NatsConnection;
+
+                if (_connection == null)
+                {
+                    throw new InvalidOperationException("Failed to create NATS connection");
+                }
                 await _connection.ConnectAsync();
 
                 _isConnected = true;
@@ -127,7 +133,7 @@ public class NatsService : INatsService, IAsyncDisposable
     /// </summary>
     public async Task PublishAsync<T>(string subject, T message, CancellationToken cancellationToken = default)
     {
-        if (_connection == null || !_isConnected)
+        if (!_isConnected)
         {
             throw new InvalidOperationException("Not connected to NATS server");
         }
@@ -135,7 +141,7 @@ public class NatsService : INatsService, IAsyncDisposable
         try
         {
             _logger.LogDebug("Publishing message to subject: {Subject}", subject);
-            await _connection.PublishAsync(subject, message, cancellationToken: cancellationToken);
+            await GetConnection().PublishAsync(subject, message, cancellationToken: cancellationToken);
             _logger.LogDebug("Message published to subject: {Subject}", subject);
         }
         catch (Exception ex)
@@ -152,7 +158,7 @@ public class NatsService : INatsService, IAsyncDisposable
         where TRequest : class
         where TResponse : class
     {
-        if (_connection == null || !_isConnected)
+        if (!_isConnected)
         {
             throw new InvalidOperationException("Not connected to NATS server");
         }
@@ -169,7 +175,7 @@ public class NatsService : INatsService, IAsyncDisposable
             cts.CancelAfter(timeout.Value);
 
 
-            var reply = await _connection.RequestAsync<TRequest, TResponse>(subject, message, cancellationToken: cts.Token);
+            var reply = await GetConnection().RequestAsync<TRequest, TResponse>(subject, message, cancellationToken: cts.Token);
 
             _logger.LogDebug("Received reply from subject: {Subject}", subject);
             return reply.Data;
@@ -202,7 +208,7 @@ public class NatsService : INatsService, IAsyncDisposable
     public async IAsyncEnumerable<T> SubscribeAsync<T>(string subject, string? queueGroup = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         where T : BaseMessage
     {
-        if (_connection == null || !_isConnected)
+        if (!_isConnected)
         {
             throw new InvalidOperationException("Not connected to NATS server");
         }
@@ -212,16 +218,17 @@ public class NatsService : INatsService, IAsyncDisposable
 
 
         IAsyncEnumerable<NatsMsg<T>> asyncEnumerable;
+        var connection = GetConnection();
 
         if (string.IsNullOrEmpty(queueGroup))
         {
 
-            asyncEnumerable = _connection.SubscribeAsync<T>(subject, cancellationToken: cancellationToken);
+            asyncEnumerable = connection.SubscribeAsync<T>(subject, cancellationToken: cancellationToken);
         }
         else
         {
 
-            asyncEnumerable = _connection.SubscribeAsync<T>(subject, queueGroup, cancellationToken: cancellationToken);
+            asyncEnumerable = connection.SubscribeAsync<T>(subject, queueGroup, cancellationToken: cancellationToken);
         }
 
         await foreach (var msg in asyncEnumerable)
@@ -260,5 +267,28 @@ public class NatsService : INatsService, IAsyncDisposable
 
 
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Creates a new NATS connection
+    /// </summary>
+    /// <returns>A new NATS connection</returns>
+    protected virtual Task<INatsConnection> CreateConnectionAsync()
+    {
+        NatsConnection connection = new NatsConnection(_natsOpts);
+        return Task.FromResult<INatsConnection>(connection);
+    }
+
+    /// <summary>
+    /// Gets the current NATS connection
+    /// </summary>
+    /// <returns>The current NATS connection</returns>
+    protected virtual INatsConnection GetConnection()
+    {
+        if (_connection == null)
+        {
+            throw new InvalidOperationException("NATS connection is not initialized");
+        }
+        return _connection;
     }
 }
