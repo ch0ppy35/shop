@@ -43,7 +43,7 @@ public class FullWorkflowTests : IClassFixture<IntegrationTestFixture>
 
         // Step 2: Add the product to the cart
         Console.WriteLine("Step 2: Adding product to cart...");
-        var cartResponse = await _fixture.AddProductToCartAsync(sessionId, product.ProductId!, 2);
+        var cartResponse = await _fixture.AddProductToCartAsync(sessionId, product.ProductId!, 2, product.Price);
         cartResponse.Should().NotBeNull();
         cartResponse.Success.Should().BeTrue();
         cartResponse.Items.Should().NotBeNull();
