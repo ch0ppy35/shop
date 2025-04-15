@@ -98,11 +98,14 @@ else
                 {
                     <MudItem xs="12" sm="6" md="4" lg="3">
                         <MudCard Elevation="2" Class="h-100">
-                            <MudCardHeader>
-                                <MudText Typo="Typo.h6" Align="Align.Center" Class="w-100">@product.Name</MudText>
+                            <MudCardHeader Style="height: 64px; overflow: hidden;">
+                                <MudText Typo="Typo.h6" Align="Align.Center" Class="w-100"
+                                    Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@product.Name</MudText>
                             </MudCardHeader>
                             <MudCardContent>
-                                <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@product.Description</MudText>
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2"
+                                    Style="height: 80px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">
+                                    @product.Description</MudText>
                                 <MudText Typo="Typo.h6" Color="Color.Primary" Class="mt-2">$@product.Price.ToString("F2")</MudText>
                             </MudCardContent>
                             <MudCardActions Class="d-flex justify-center">
