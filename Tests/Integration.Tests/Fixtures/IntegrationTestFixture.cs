@@ -1,3 +1,4 @@
+using Cart.Services;
 using Common.Messaging;
 using Common.Models;
 using Microsoft.Extensions.Configuration;
@@ -5,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Products.Repositories;
 using Products.Services;
-using Cart.Services;
 using Recommendations.Services;
 using Xunit;
 
@@ -36,9 +36,9 @@ public class IntegrationTestFixture : IAsyncLifetime
     /// <summary>
     /// Gets the cart service
     /// </summary>
-    public Cart.Services.CartService CartService => _serviceProvider?.GetRequiredService<Cart.Services.CartService>()
-                                                    ?? throw new InvalidOperationException(
-                                                        "Cart service not initialized");
+    public CartService CartService => _serviceProvider?.GetRequiredService<CartService>()
+                                      ?? throw new InvalidOperationException(
+                                          "Cart service not initialized");
 
     /// <summary>
     /// Gets the recommendation service

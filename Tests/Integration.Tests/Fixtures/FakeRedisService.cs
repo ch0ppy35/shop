@@ -1,7 +1,5 @@
 using Cart.Services;
 using Common.Models;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace Integration.Tests.Fixtures;
 

@@ -1,9 +1,6 @@
-using System.Text;
 using System.Text.Json;
-using Common.Models;
 using Common.Messaging;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using Common.Models;
 
 namespace Integration.Tests.Fixtures;
 

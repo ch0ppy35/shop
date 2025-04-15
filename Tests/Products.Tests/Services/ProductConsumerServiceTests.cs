@@ -1,6 +1,7 @@
 using Common.Messaging;
 using Common.Models;
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Products.Services;
@@ -18,9 +19,9 @@ public class ProductConsumerServiceTests
     {
         _loggerMock = new Mock<ILogger<ProductConsumerService>>();
 
-        var configMock = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+        var configMock = new Mock<IConfiguration>();
 
-        var natsUrlSection = new Mock<Microsoft.Extensions.Configuration.IConfigurationSection>();
+        var natsUrlSection = new Mock<IConfigurationSection>();
         natsUrlSection.Setup(x => x.Value).Returns("nats://localhost:4222");
         configMock.Setup(x => x.GetSection("Nats:Url")).Returns(natsUrlSection.Object);
 

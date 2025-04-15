@@ -1,11 +1,8 @@
-using Common.Database.Models;
 using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Products.Repositories;
 using Products.Tests.TestHelpers;
-using System.Data.Common;
 
 namespace Products.Tests.Repositories;
 

@@ -1,11 +1,8 @@
+using Common.Messaging;
 using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Common.Messaging;
-using Common.Models;
-using Moq;
 using Testcontainers.Nats;
 using Xunit;
 

@@ -1,16 +1,12 @@
+using Common.Database;
+using Common.Database.Models;
 using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Products.Repositories;
 using Testcontainers.PostgreSql;
 using Xunit;
-using Common.Database;
-using Common.Database.Models;
-using Common.Models;
-using Moq;
 
 namespace Integration.Tests.Fixtures;
 

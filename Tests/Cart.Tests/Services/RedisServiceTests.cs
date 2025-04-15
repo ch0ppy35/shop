@@ -1,10 +1,10 @@
+using System.Text.Json;
 using Cart.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using StackExchange.Redis;
-using System.Text.Json;
 
 namespace Cart.Tests.Services;
 

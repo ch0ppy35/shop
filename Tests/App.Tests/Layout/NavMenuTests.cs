@@ -1,12 +1,11 @@
+using App.Tests.TestHelpers;
 using Bunit;
 using FluentAssertions;
 using Frontend.Layout;
 using Frontend.Models;
 using Frontend.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using Moq;
-using App.Tests.TestHelpers;
 
 namespace App.Tests.Layout;
 

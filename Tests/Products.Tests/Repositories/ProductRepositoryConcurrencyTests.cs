@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Products.Repositories;
 using Products.Tests.TestHelpers;
-using Xunit;
 
 namespace Products.Tests.Repositories;
 

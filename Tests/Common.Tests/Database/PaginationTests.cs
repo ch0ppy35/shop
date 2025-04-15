@@ -1,6 +1,7 @@
 using Common.Database;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -10,13 +11,13 @@ public class PaginationTests
 {
     private readonly Mock<ILogger<ProductDbContext>> _loggerMock;
     private readonly Mock<DbContextOptions<ProductDbContext>> _optionsMock;
-    private readonly Mock<Microsoft.Extensions.Configuration.IConfiguration> _configMock;
+    private readonly Mock<IConfiguration> _configMock;
 
     public PaginationTests()
     {
         _loggerMock = new Mock<ILogger<ProductDbContext>>();
         _optionsMock = new Mock<DbContextOptions<ProductDbContext>>();
-        _configMock = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+        _configMock = new Mock<IConfiguration>();
     }
 
     [Fact]

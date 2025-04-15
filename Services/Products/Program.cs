@@ -6,7 +6,6 @@ using Products.Health;
 using Products.Repositories;
 using Products.Services;
 
-
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ??
                        "Host=localhost;Database=products;Username=postgres;Password=postgres";
 

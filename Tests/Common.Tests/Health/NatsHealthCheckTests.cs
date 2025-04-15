@@ -3,7 +3,6 @@ using Common.Messaging;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Reflection;
 
 namespace Common.Tests.Health;
 

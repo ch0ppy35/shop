@@ -1,7 +1,4 @@
 using Microsoft.JSInterop;
-using Microsoft.JSInterop.Infrastructure;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace App.Tests.TestHelpers;
 

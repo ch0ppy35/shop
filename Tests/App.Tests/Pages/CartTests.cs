@@ -1,3 +1,4 @@
+using App.Tests.TestHelpers;
 using Bunit;
 using FluentAssertions;
 using Frontend.Models;
@@ -6,8 +7,6 @@ using Frontend.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MudBlazor;
-using App.Tests.TestHelpers;
-using System.Collections.Generic;
 
 namespace App.Tests.Pages;
 

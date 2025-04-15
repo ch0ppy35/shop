@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using Common.Database.Models;
 using Common.Models;
 using FluentAssertions;
@@ -7,8 +8,6 @@ using Moq;
 using Products.Repositories;
 using Products.Services;
 using Products.Tests.TestHelpers;
-using System.Data.Common;
-using System.Net.Sockets;
 
 namespace Products.Tests.Services;
 

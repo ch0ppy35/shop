@@ -1,11 +1,11 @@
 using Bunit;
+using Frontend.Models;
 using Frontend.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Moq;
 using MudBlazor;
 using MudBlazor.Services;
-using System.Collections.Generic;
 
 namespace App.Tests.TestHelpers;
 
@@ -51,7 +51,7 @@ public static class MudBlazorTestHelper
 
         // Setup default behavior
         mockRecommendationService.Setup(s => s.GetCartRecommendationsAsync(It.IsAny<int>()))
-            .ReturnsAsync(new List<Frontend.Models.Product>());
+            .ReturnsAsync(new List<Product>());
 
         // Create services
         var toastService = new ToastService(mockSnackbar);

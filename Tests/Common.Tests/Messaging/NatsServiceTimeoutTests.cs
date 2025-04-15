@@ -1,3 +1,4 @@
+using System.Reflection;
 using Common.Messaging;
 using Common.Models;
 using FluentAssertions;
@@ -5,8 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NATS.Client.Core;
-using NATS.Client.Core.Internal;
-using System.Net.Sockets;
 
 namespace Common.Tests.Messaging;
 
@@ -150,7 +149,7 @@ public class NatsServiceTimeoutTests
         {
             // Use reflection to set the private _isConnected field
             var field = typeof(NatsService).GetField("_isConnected",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             field?.SetValue(this, isConnected);
         }
 

@@ -1,11 +1,8 @@
+using Cart.Services;
 using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Cart.Services;
-using Common.Models;
-using Moq;
 using Testcontainers.Redis;
 using Xunit;
 
