@@ -7,11 +7,11 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o webserver webserver.go
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 WORKDIR /src
-COPY  Frontend.csproj .
+COPY  App.csproj .
 RUN dotnet restore
 COPY . .
-RUN dotnet build "Frontend.csproj" -c Release -o /app/build
-RUN dotnet publish "Frontend.csproj" -c Release -o /app/publish
+RUN dotnet build "App.csproj" -c Release -o /app/build
+RUN dotnet publish "App.csproj" -c Release -o /app/publish
 
 FROM scratch AS dist
 
