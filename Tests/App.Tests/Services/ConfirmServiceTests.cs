@@ -19,7 +19,6 @@ public class ConfirmServiceTests
     [Fact]
     public async Task ShowConfirmation_ShouldCallDialogService_AndReturnResult()
     {
-        // Arrange
         _mockDialogService
             .Setup(d => d.ShowMessageBox(
                 It.IsAny<string>(),
@@ -30,16 +29,13 @@ public class ConfirmServiceTests
                 It.IsAny<DialogOptions>()))
             .ReturnsAsync(true);
 
-        // Act
         var result = await _confirmService.ShowConfirmation(
             "Are you sure?",
             "Confirm",
             "Warning",
             "Yes");
 
-        // Assert
         result.Should().BeTrue();
-        // Verify the dialog service was called
         _mockDialogService.Verify(d => d.ShowMessageBox(
             It.IsAny<string>(),
             It.IsAny<string>(),
@@ -53,7 +49,6 @@ public class ConfirmServiceTests
     [Fact]
     public async Task ShowConfirmation_ShouldUseCorrectColor_ForDangerType()
     {
-        // Arrange
         _mockDialogService
             .Setup(d => d.ShowMessageBox(
                 It.IsAny<string>(),
@@ -64,16 +59,13 @@ public class ConfirmServiceTests
                 It.IsAny<DialogOptions>()))
             .ReturnsAsync(true);
 
-        // Act
         var result = await _confirmService.ShowConfirmation(
             "Are you sure?",
             "Confirm",
             "Danger",
             "Delete");
 
-        // Assert
         result.Should().BeTrue();
-        // Verify the dialog service was called
         _mockDialogService.Verify(d => d.ShowMessageBox(
             It.IsAny<string>(),
             It.IsAny<string>(),
@@ -87,7 +79,6 @@ public class ConfirmServiceTests
     [Fact]
     public async Task ShowConfirmation_ShouldUseEventHandler_WhenRegistered()
     {
-        // Arrange
         bool eventHandlerCalled = false;
         string? capturedMessage = null;
 
@@ -98,15 +89,12 @@ public class ConfirmServiceTests
             return Task.FromResult(true);
         };
 
-        // Act
         var result = await _confirmService.ShowConfirmation("Test message");
 
-        // Assert
         eventHandlerCalled.Should().BeTrue();
         capturedMessage.Should().Be("Test message");
         result.Should().BeTrue();
 
-        // Dialog service should not be called when event handler is registered
         _mockDialogService.Verify(d => d.ShowMessageBox(
             It.IsAny<string>(),
             It.IsAny<string>(),

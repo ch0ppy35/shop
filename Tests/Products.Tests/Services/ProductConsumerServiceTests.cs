@@ -18,10 +18,8 @@ public class ProductConsumerServiceTests
     {
         _loggerMock = new Mock<ILogger<ProductConsumerService>>();
 
-        // Create a properly configured IConfiguration mock for NatsService
         var configMock = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
 
-        // Mock the Nats:Url configuration
         var natsUrlSection = new Mock<Microsoft.Extensions.Configuration.IConfigurationSection>();
         natsUrlSection.Setup(x => x.Value).Returns("nats://localhost:4222");
         configMock.Setup(x => x.GetSection("Nats:Url")).Returns(natsUrlSection.Object);
@@ -36,7 +34,6 @@ public class ProductConsumerServiceTests
     [Fact]
     public async Task HandleGetProductRequest_ShouldReturnProduct_WhenProductExists()
     {
-        // Arrange
         var testMessage = TestData.GetTestProductMessage();
         testMessage.OperationType = ProductOperationType.Get;
         testMessage.SessionId = "test-session";
@@ -45,7 +42,6 @@ public class ProductConsumerServiceTests
         _productServiceMock.Setup(s => s.GetProductAsync(testMessage.ProductId!))
             .ReturnsAsync(testMessage);
 
-        // Create a mock reply handler
         var replyHandled = false;
         ProductResponse? capturedResponse = null;
 
@@ -55,16 +51,13 @@ public class ProductConsumerServiceTests
             capturedResponse = response;
         };
 
-        // Set up the consumer service with our mocks
         var consumerService = new ProductConsumerServiceTestWrapper(
             _loggerMock.Object,
             _natsServiceMock.Object,
             _productServiceMock.Object);
 
-        // Act
         await consumerService.TestHandleGetProductRequest(testMessage, replyHandler);
 
-        // Assert
         replyHandled.Should().BeTrue();
         capturedResponse.Should().NotBeNull();
         capturedResponse!.Success.Should().BeTrue();
@@ -78,7 +71,6 @@ public class ProductConsumerServiceTests
     [Fact]
     public async Task HandleGetProductRequest_ShouldReturnError_WhenProductDoesNotExist()
     {
-        // Arrange
         var testMessage = TestData.GetTestProductMessage();
         testMessage.OperationType = ProductOperationType.Get;
         testMessage.SessionId = "test-session";
@@ -87,7 +79,6 @@ public class ProductConsumerServiceTests
         _productServiceMock.Setup(s => s.GetProductAsync(testMessage.ProductId!))
             .ReturnsAsync((ProductMessage?)null);
 
-        // Create a mock reply handler
         var replyHandled = false;
         ProductResponse? capturedResponse = null;
 
@@ -97,16 +88,13 @@ public class ProductConsumerServiceTests
             capturedResponse = response;
         };
 
-        // Set up the consumer service with our mocks
         var consumerService = new ProductConsumerServiceTestWrapper(
             _loggerMock.Object,
             _natsServiceMock.Object,
             _productServiceMock.Object);
 
-        // Act
         await consumerService.TestHandleGetProductRequest(testMessage, replyHandler);
 
-        // Assert
         replyHandled.Should().BeTrue();
         capturedResponse.Should().NotBeNull();
         capturedResponse!.Success.Should().BeFalse();
@@ -120,7 +108,6 @@ public class ProductConsumerServiceTests
     [Fact]
     public async Task HandleGetAllProductsRequest_ShouldReturnPaginatedProducts()
     {
-        // Arrange
         var testMessage = new ProductMessage
         {
             OperationType = ProductOperationType.GetAll,
@@ -137,7 +124,6 @@ public class ProductConsumerServiceTests
         _productServiceMock.Setup(s => s.GetPaginatedProductsAsync(2, 5))
             .ReturnsAsync((testProducts, 20, 4));
 
-        // Create a mock reply handler
         var replyHandled = false;
         ProductListResponse? capturedResponse = null;
 
@@ -147,16 +133,13 @@ public class ProductConsumerServiceTests
             capturedResponse = response;
         };
 
-        // Set up the consumer service with our mocks
         var consumerService = new ProductConsumerServiceTestWrapper(
             _loggerMock.Object,
             _natsServiceMock.Object,
             _productServiceMock.Object);
 
-        // Act
         await consumerService.TestHandleGetAllProductsRequest(testMessage, replyHandler);
 
-        // Assert
         replyHandled.Should().BeTrue();
         capturedResponse.Should().NotBeNull();
         capturedResponse!.Success.Should().BeTrue();
@@ -176,7 +159,6 @@ public class ProductConsumerServiceTests
     [Fact]
     public async Task HandleCreateProductRequest_ShouldCreateProduct()
     {
-        // Arrange
         var testMessage = TestData.GetTestProductMessage();
         testMessage.OperationType = ProductOperationType.Create;
         testMessage.SessionId = "test-session";
@@ -185,7 +167,6 @@ public class ProductConsumerServiceTests
         _productServiceMock.Setup(s => s.CreateProductAsync(It.IsAny<ProductMessage>()))
             .ReturnsAsync(testMessage);
 
-        // Create a mock reply handler
         var replyHandled = false;
         ProductResponse? capturedResponse = null;
 
@@ -195,16 +176,13 @@ public class ProductConsumerServiceTests
             capturedResponse = response;
         };
 
-        // Set up the consumer service with our mocks
         var consumerService = new ProductConsumerServiceTestWrapper(
             _loggerMock.Object,
             _natsServiceMock.Object,
             _productServiceMock.Object);
 
-        // Act
         await consumerService.TestHandleCreateProductRequest(testMessage, replyHandler);
 
-        // Assert
         replyHandled.Should().BeTrue();
         capturedResponse.Should().NotBeNull();
         capturedResponse!.Success.Should().BeTrue();
@@ -218,7 +196,6 @@ public class ProductConsumerServiceTests
     [Fact]
     public async Task HandleUpdateProductRequest_ShouldUpdateProduct_WhenProductExists()
     {
-        // Arrange
         var testMessage = TestData.GetTestProductMessage();
         testMessage.OperationType = ProductOperationType.Update;
         testMessage.SessionId = "test-session";
@@ -229,7 +206,6 @@ public class ProductConsumerServiceTests
         _productServiceMock.Setup(s => s.GetProductAsync(testMessage.ProductId!))
             .ReturnsAsync(testMessage);
 
-        // Create a mock reply handler
         var replyHandled = false;
         ProductResponse? capturedResponse = null;
 
@@ -239,16 +215,13 @@ public class ProductConsumerServiceTests
             capturedResponse = response;
         };
 
-        // Set up the consumer service with our mocks
         var consumerService = new ProductConsumerServiceTestWrapper(
             _loggerMock.Object,
             _natsServiceMock.Object,
             _productServiceMock.Object);
 
-        // Act
         await consumerService.TestHandleUpdateProductRequest(testMessage, replyHandler);
 
-        // Assert
         replyHandled.Should().BeTrue();
         capturedResponse.Should().NotBeNull();
         capturedResponse!.Success.Should().BeTrue();
@@ -263,7 +236,6 @@ public class ProductConsumerServiceTests
     [Fact]
     public async Task HandleUpdateProductRequest_ShouldReturnError_WhenProductDoesNotExist()
     {
-        // Arrange
         var testMessage = TestData.GetTestProductMessage();
         testMessage.OperationType = ProductOperationType.Update;
         testMessage.SessionId = "test-session";
@@ -272,7 +244,6 @@ public class ProductConsumerServiceTests
         _productServiceMock.Setup(s => s.UpdateProductAsync(It.IsAny<ProductMessage>()))
             .ReturnsAsync(false);
 
-        // Create a mock reply handler
         var replyHandled = false;
         ProductResponse? capturedResponse = null;
 
@@ -282,16 +253,13 @@ public class ProductConsumerServiceTests
             capturedResponse = response;
         };
 
-        // Set up the consumer service with our mocks
         var consumerService = new ProductConsumerServiceTestWrapper(
             _loggerMock.Object,
             _natsServiceMock.Object,
             _productServiceMock.Object);
 
-        // Act
         await consumerService.TestHandleUpdateProductRequest(testMessage, replyHandler);
 
-        // Assert
         replyHandled.Should().BeTrue();
         capturedResponse.Should().NotBeNull();
         capturedResponse!.Success.Should().BeFalse();
@@ -328,17 +296,14 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
 
         try
         {
-            // Get the product
             var product = await _productService.GetProductAsync(message.ProductId!);
 
             if (product != null)
             {
-                // Set the response
                 response.Success = true;
                 response.Message = $"Product with ID {message.ProductId} found";
                 response.Product = product;
 
-                // Preserve the session ID in the response
                 if (!string.IsNullOrEmpty(message.SessionId))
                 {
                     response.SessionId = message.SessionId;
@@ -348,7 +313,6 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
             {
                 response.Error = $"Product with ID {message.ProductId} not found";
 
-                // Preserve the session ID in the response even in error case
                 if (!string.IsNullOrEmpty(message.SessionId))
                 {
                     response.SessionId = message.SessionId;
@@ -359,14 +323,12 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
         {
             response.Error = $"Error getting product: {ex.Message}";
 
-            // Preserve the session ID in the response even in exception case
             if (!string.IsNullOrEmpty(message.SessionId))
             {
                 response.SessionId = message.SessionId;
             }
         }
 
-        // Call the reply handler
         if (!string.IsNullOrEmpty(message.ReplyTo))
         {
             replyHandler(message.ReplyTo, response);
@@ -381,18 +343,15 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
 
         try
         {
-            // Validate pagination parameters
             int pageNumber = Math.Max(1, message.PageNumber);
             int pageSize = Math.Clamp(message.PageSize, 1, 100);
 
-            // Get paginated products
             var result = await _productService.GetPaginatedProductsAsync(pageNumber, pageSize);
             var products = result.Products;
             var totalCount = result.TotalCount;
             var totalPages = result.TotalPages;
             var productsList = products.ToList();
 
-            // Set the response with pagination metadata
             response.Success = true;
             response.Message = $"Retrieved {productsList.Count} products (page {pageNumber} of {totalPages})";
             response.Products = productsList;
@@ -403,7 +362,6 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
             response.HasPreviousPage = pageNumber > 1;
             response.HasNextPage = pageNumber < totalPages;
 
-            // Preserve the session ID in the response
             if (!string.IsNullOrEmpty(message.SessionId))
             {
                 response.SessionId = message.SessionId;
@@ -414,7 +372,6 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
             response.Error = $"Error getting products: {ex.Message}";
         }
 
-        // Call the reply handler
         if (!string.IsNullOrEmpty(message.ReplyTo))
         {
             replyHandler(message.ReplyTo, response);
@@ -429,15 +386,12 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
 
         try
         {
-            // Create the product
             var product = await _productService.CreateProductAsync(message);
 
-            // Set the response
             response.Success = true;
             response.Message = $"Product with ID {product.ProductId} created";
             response.Product = product;
 
-            // Preserve the session ID in the response
             if (!string.IsNullOrEmpty(message.SessionId))
             {
                 response.SessionId = message.SessionId;
@@ -448,7 +402,6 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
             response.Error = $"Error creating product: {ex.Message}";
         }
 
-        // Call the reply handler
         if (!string.IsNullOrEmpty(message.ReplyTo))
         {
             replyHandler(message.ReplyTo, response);
@@ -463,20 +416,16 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
 
         try
         {
-            // Update the product
             var success = await _productService.UpdateProductAsync(message);
 
             if (success)
             {
-                // Get the updated product
                 var product = await _productService.GetProductAsync(message.ProductId!);
 
-                // Set the response
                 response.Success = true;
                 response.Message = $"Product with ID {message.ProductId} updated";
                 response.Product = product;
 
-                // Preserve the session ID in the response
                 if (!string.IsNullOrEmpty(message.SessionId))
                 {
                     response.SessionId = message.SessionId;
@@ -486,7 +435,6 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
             {
                 response.Error = $"Product with ID {message.ProductId} not found";
 
-                // Preserve the session ID in the response even in error case
                 if (!string.IsNullOrEmpty(message.SessionId))
                 {
                     response.SessionId = message.SessionId;
@@ -497,14 +445,12 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
         {
             response.Error = $"Error updating product: {ex.Message}";
 
-            // Preserve the session ID in the response even in exception case
             if (!string.IsNullOrEmpty(message.SessionId))
             {
                 response.SessionId = message.SessionId;
             }
         }
 
-        // Call the reply handler
         if (!string.IsNullOrEmpty(message.ReplyTo))
         {
             replyHandler(message.ReplyTo, response);

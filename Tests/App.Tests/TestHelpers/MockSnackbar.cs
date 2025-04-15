@@ -47,7 +47,6 @@ public class MockSnackbar : ISnackbar
         LastMessage = message;
         LastSeverity = severity;
 
-        // Create a mock Snackbar - we don't need the actual instance for testing
         return null!;
     }
 
@@ -60,7 +59,6 @@ public class MockSnackbar : ISnackbar
         LastMessage = message.Value;
         LastSeverity = severity;
 
-        // Create a mock Snackbar - we don't need the actual instance for testing
         return null!;
     }
 
@@ -72,7 +70,6 @@ public class MockSnackbar : ISnackbar
         AddCallCount++;
         LastSeverity = severity;
 
-        // Create a mock Snackbar - we don't need the actual instance for testing
         return null!;
     }
 
@@ -84,7 +81,6 @@ public class MockSnackbar : ISnackbar
         AddCallCount++;
         LastSeverity = severity;
 
-        // Create a mock Snackbar - we don't need the actual instance for testing
         return null!;
     }
 
@@ -93,7 +89,6 @@ public class MockSnackbar : ISnackbar
     /// </summary>
     public void Clear()
     {
-        // Not implemented for tests
     }
 
     /// <summary>
@@ -101,7 +96,6 @@ public class MockSnackbar : ISnackbar
     /// </summary>
     public void Remove(Snackbar snackbar)
     {
-        // Not implemented for tests
     }
 
     /// <summary>
@@ -109,7 +103,6 @@ public class MockSnackbar : ISnackbar
     /// </summary>
     public void RemoveByKey(string key)
     {
-        // Not implemented for tests
     }
 
     /// <summary>
@@ -117,6 +110,5 @@ public class MockSnackbar : ISnackbar
     /// </summary>
     public void Dispose()
     {
-        // Not implemented for tests
     }
 }

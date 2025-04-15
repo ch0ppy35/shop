@@ -1,8 +1,9 @@
+using System.Runtime.CompilerServices;
+using Common.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NATS.Client.Core;
 using NATS.Client.Serializers.Json;
-using Common.Models;
 
 namespace Common.Messaging;
 
@@ -23,7 +24,7 @@ public class NatsService : INatsService, IAsyncDisposable
     {
         _logger = logger;
 
-        // Get NATS configuration from environment variables or configuration
+
         var natsUrl = Environment.GetEnvironmentVariable("NATS_URL") ??
                      configuration.GetValue<string>("Nats:Url") ??
                      "nats://localhost:4222";
@@ -77,7 +78,7 @@ public class NatsService : INatsService, IAsyncDisposable
                     _logger.LogInformation("Connecting to NATS server at {Url}", _natsOpts.Url);
                 }
 
-                // Dispose previous connection if it exists
+
                 if (_connection != null)
                 {
                     await _connection.DisposeAsync();
@@ -160,14 +161,14 @@ public class NatsService : INatsService, IAsyncDisposable
         {
             _logger.LogDebug("Sending request to subject: {Subject}", subject);
 
-            // Use default timeout of 10 seconds if not specified
+
             timeout ??= TimeSpan.FromSeconds(10);
 
-            // Create a cancellation token source with the timeout
+
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(timeout.Value);
 
-            // Use the built-in request-reply functionality
+
             var reply = await _connection.RequestAsync<TRequest, TResponse>(subject, message, cancellationToken: cts.Token);
 
             _logger.LogDebug("Received reply from subject: {Subject}", subject);
@@ -198,7 +199,7 @@ public class NatsService : INatsService, IAsyncDisposable
     /// <param name="queueGroup">Optional queue group name for load balancing across multiple subscribers</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>An async enumerable of messages</returns>
-    public async IAsyncEnumerable<T> SubscribeAsync<T>(string subject, string? queueGroup = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<T> SubscribeAsync<T>(string subject, string? queueGroup = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         where T : BaseMessage
     {
         if (_connection == null || !_isConnected)
@@ -209,18 +210,17 @@ public class NatsService : INatsService, IAsyncDisposable
         _logger.LogInformation("Subscribing to subject: {Subject} with queue group: {QueueGroup}",
             subject, queueGroup ?? "none");
 
-        // Create subscription with or without queue group
+
         IAsyncEnumerable<NatsMsg<T>> asyncEnumerable;
 
         if (string.IsNullOrEmpty(queueGroup))
         {
-            // Standard subscription without queue group
+
             asyncEnumerable = _connection.SubscribeAsync<T>(subject, cancellationToken: cancellationToken);
         }
         else
         {
-            // Queue subscription for load balancing
-            // For NATS.Net client, the queue group is passed as the second parameter
+
             asyncEnumerable = _connection.SubscribeAsync<T>(subject, queueGroup, cancellationToken: cancellationToken);
         }
 
@@ -230,7 +230,7 @@ public class NatsService : INatsService, IAsyncDisposable
             {
                 _logger.LogDebug("Received message from subject: {Subject}", subject);
 
-                // Set the reply-to subject if available
+
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     msg.Data.ReplyTo = msg.ReplyTo;
@@ -258,7 +258,7 @@ public class NatsService : INatsService, IAsyncDisposable
             _logger.LogInformation("NATS connection disposed");
         }
 
-        // Call GC.SuppressFinalize to prevent derived types from needing to re-implement IDisposable
+
         GC.SuppressFinalize(this);
     }
 }

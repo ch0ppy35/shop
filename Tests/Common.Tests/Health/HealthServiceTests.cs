@@ -17,33 +17,26 @@ public class HealthServiceTests
     [Fact]
     public void IsHealthy_ShouldAlwaysReturnTrue()
     {
-        // Arrange
         var service = new HealthService(_loggerMock.Object);
 
-        // Act
         var result = service.IsHealthy();
 
-        // Assert
         result.Should().BeTrue();
     }
 
     [Fact]
     public void IsReady_ShouldReturnTrue_WhenNoHealthChecksRegistered()
     {
-        // Arrange
         var service = new HealthService(_loggerMock.Object);
 
-        // Act
         var result = service.IsReady();
 
-        // Assert
         result.Should().BeTrue();
     }
 
     [Fact]
     public void IsReady_ShouldReturnTrue_WhenAllHealthChecksAreReady()
     {
-        // Arrange
         var service = new HealthService(_loggerMock.Object);
 
         var healthCheck1Mock = new Mock<IHealthCheck>();
@@ -57,17 +50,14 @@ public class HealthServiceTests
         service.RegisterHealthCheck(healthCheck1Mock.Object);
         service.RegisterHealthCheck(healthCheck2Mock.Object);
 
-        // Act
         var result = service.IsReady();
 
-        // Assert
         result.Should().BeTrue();
     }
 
     [Fact]
     public void IsReady_ShouldReturnFalse_WhenAnyHealthCheckIsNotReady()
     {
-        // Arrange
         var service = new HealthService(_loggerMock.Object);
 
         var healthCheck1Mock = new Mock<IHealthCheck>();
@@ -81,10 +71,8 @@ public class HealthServiceTests
         service.RegisterHealthCheck(healthCheck1Mock.Object);
         service.RegisterHealthCheck(healthCheck2Mock.Object);
 
-        // Act
         var result = service.IsReady();
 
-        // Assert
         result.Should().BeFalse();
     }
 }

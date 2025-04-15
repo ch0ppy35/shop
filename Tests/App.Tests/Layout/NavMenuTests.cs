@@ -16,10 +16,8 @@ public class NavMenuTests : TestContext
 
     public NavMenuTests()
     {
-        // Add MudBlazor services
         this.AddMudBlazorTestServices();
 
-        // Register mock CartService
         _mockCartService = new Mock<ICartService>();
         _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(new ShoppingCart
         {
@@ -29,7 +27,6 @@ public class NavMenuTests : TestContext
         });
         Services.AddSingleton(_mockCartService.Object);
 
-        // Register mock IJSRuntime
         var mockJsRuntime = new Mock<IJSRuntime>();
         mockJsRuntime
             .Setup(js => js.InvokeAsync<object>(It.IsAny<string>(), It.IsAny<object[]>()))
@@ -40,11 +37,8 @@ public class NavMenuTests : TestContext
     [Fact]
     public void NavMenu_ShouldRender_WithLinks()
     {
-        // Act
         var cut = RenderComponent<NavMenu>();
 
-        // Assert
-        // Check for MudNavLink components with expected hrefs
         cut.Markup.Should().Contain("href=\"\""); // Home link has empty href
         cut.Markup.Should().Contain("href=\"products\""); // MudBlazor doesn't add leading slash
         cut.Markup.Should().Contain("href=\"cart\""); // MudBlazor doesn't add leading slash
@@ -55,7 +49,6 @@ public class NavMenuTests : TestContext
     [Fact]
     public void NavMenu_ShouldShowCartCount_WhenCartHasItems()
     {
-        // Arrange
         _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(new ShoppingCart
         {
             Items = new List<CartItem>
@@ -67,11 +60,8 @@ public class NavMenuTests : TestContext
             ItemCount = 3
         });
 
-        // Act
         var cut = RenderComponent<NavMenu>();
 
-        // Assert
-        // MudBlazor uses MudBadge for cart count, so we check for the count value
         cut.Markup.Should().Contain("3");
     }
 }

@@ -32,7 +32,6 @@ public class PostgresHealthCheck : IHealthCheck
     {
         try
         {
-            // Use the TestConnectionAsync method but make it synchronous for the health check
             var isReady = _databaseService.TestConnectionAsync().GetAwaiter().GetResult();
             _logger.LogDebug("PostgreSQL readiness check, result: {IsReady}", isReady);
             return isReady;

@@ -1,7 +1,6 @@
 using Common.Database;
 using Common.Database.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace Products.Services;
 
@@ -29,7 +28,6 @@ public class ProductSeeder
     {
         try
         {
-            // Check if there's already data
             if (await _dbContext.Products.AnyAsync())
             {
                 _logger.LogInformation("Products table already has data, skipping seed");
@@ -38,7 +36,6 @@ public class ProductSeeder
 
             _logger.LogInformation("Seeding products table with initial data");
 
-            // Create sample products
             var products = new List<ProductEntity>
             {
                 new ProductEntity
@@ -47,7 +44,6 @@ public class ProductSeeder
                     Name = "Ergonomic Keyboard",
                     Description = "Comfortable keyboard for long typing sessions",
                     Price = 89.99m,
-                    // Quantity field removed - using QuantityInStock instead
                     Sku = "KB-ERG-001",
                     Location = "Warehouse A",
                     QuantityInStock = 50,
@@ -61,7 +57,6 @@ public class ProductSeeder
                     Name = "Wireless Mouse",
                     Description = "High-precision wireless mouse",
                     Price = 49.99m,
-                    // Quantity field removed - using QuantityInStock instead
                     Sku = "MS-WRL-002",
                     Location = "Warehouse A",
                     QuantityInStock = 75,
@@ -75,7 +70,6 @@ public class ProductSeeder
                     Name = "Ultra-wide Monitor",
                     Description = "34-inch curved ultra-wide monitor",
                     Price = 399.99m,
-                    // Quantity field removed - using QuantityInStock instead
                     Sku = "MN-UW-003",
                     Location = "Warehouse B",
                     QuantityInStock = 15,
@@ -89,7 +83,6 @@ public class ProductSeeder
                     Name = "Mechanical Keyboard",
                     Description = "Tactile mechanical keyboard with RGB lighting",
                     Price = 129.99m,
-                    // Quantity field removed - using QuantityInStock instead
                     Sku = "KB-MCH-004",
                     Location = "Warehouse A",
                     QuantityInStock = 40,
@@ -103,7 +96,6 @@ public class ProductSeeder
                     Name = "Laptop Stand",
                     Description = "Adjustable aluminum laptop stand",
                     Price = 39.99m,
-                    // Quantity field removed - using QuantityInStock instead
                     Sku = "ACC-STD-005",
                     Location = "Warehouse C",
                     QuantityInStock = 100,
@@ -117,7 +109,6 @@ public class ProductSeeder
                     Name = "USB-C Hub",
                     Description = "7-in-1 USB-C hub with HDMI and card readers",
                     Price = 59.99m,
-                    // Quantity field removed - using QuantityInStock instead
                     Sku = "ACC-HUB-006",
                     Location = "Warehouse C",
                     QuantityInStock = 60,
@@ -131,7 +122,6 @@ public class ProductSeeder
                     Name = "Wireless Headphones",
                     Description = "Noise-cancelling wireless headphones",
                     Price = 199.99m,
-                    // Quantity field removed - using QuantityInStock instead
                     Sku = "AUD-WH-007",
                     Location = "Warehouse B",
                     QuantityInStock = 25,
@@ -145,7 +135,6 @@ public class ProductSeeder
                     Name = "Webcam",
                     Description = "4K webcam with microphone",
                     Price = 79.99m,
-                    // Quantity field removed - using QuantityInStock instead
                     Sku = "CAM-WEB-008",
                     Location = "Warehouse B",
                     QuantityInStock = 45,
@@ -159,7 +148,6 @@ public class ProductSeeder
                     Name = "External SSD",
                     Description = "1TB portable SSD drive",
                     Price = 149.99m,
-                    // Quantity field removed - using QuantityInStock instead
                     Sku = "STR-SSD-009",
                     Location = "Warehouse D",
                     QuantityInStock = 30,
@@ -173,7 +161,6 @@ public class ProductSeeder
                     Name = "Gaming Mouse",
                     Description = "High-DPI gaming mouse with programmable buttons",
                     Price = 69.99m,
-                    // Quantity field removed - using QuantityInStock instead
                     Sku = "MS-GAM-010",
                     Location = "Warehouse A",
                     QuantityInStock = 35,
@@ -444,7 +431,6 @@ public class ProductSeeder
                 }
             };
 
-            // Add products to database
             await _dbContext.Products.AddRangeAsync(products);
             await _dbContext.SaveChangesAsync();
 

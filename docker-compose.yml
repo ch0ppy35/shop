@@ -81,6 +81,17 @@ services:
     networks:
       - nats-shop-network
 
+  recommendations:
+    build:
+      context: .
+      dockerfile: Services/Recommendations/Dockerfile
+    environment:
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      - nats
+    networks:
+      - nats-shop-network
+
   valkey:
     image: valkey/valkey:8.1-alpine
     ports:

@@ -17,14 +17,11 @@ public static class MudBlazorTestHelper
     /// <param name="context">The test context</param>
     public static void AddMudBlazorTestServices(this TestContext context)
     {
-        // Add MudBlazor services
         context.Services.AddMudServices();
 
-        // Add mock dialog service
         var mockDialogService = CreateMockDialogService();
         context.Services.AddSingleton(mockDialogService.Object);
 
-        // Add custom mock snackbar service
         var mockSnackbar = new MockSnackbar();
         context.Services.AddSingleton<ISnackbar>(mockSnackbar);
     }
@@ -38,7 +35,6 @@ public static class MudBlazorTestHelper
     {
         var mockDialogService = new Mock<IDialogService>();
 
-        // Setup ShowMessageBox to return the specified result
         mockDialogService
             .Setup(x => x.ShowMessageBox(
                 It.IsAny<string>(),

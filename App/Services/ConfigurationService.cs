@@ -26,7 +26,6 @@ public class ConfigurationService
     {
         try
         {
-            // Try to get the API base URL from JavaScript
             var jsApiBaseUrl = await _jsRuntime.InvokeAsync<string>("configHelper.getApiBaseUrl");
             
             if (!string.IsNullOrEmpty(jsApiBaseUrl))
@@ -40,7 +39,6 @@ public class ConfigurationService
             Console.WriteLine($"Error getting API base URL from JavaScript: {ex.Message}");
         }
 
-        // Fall back to configuration
         var configApiBaseUrl = _configuration["ApiBaseUrl"] ?? "http://localhost:8080";
         Console.WriteLine($"Using API base URL from configuration: {configApiBaseUrl}");
         return configApiBaseUrl;

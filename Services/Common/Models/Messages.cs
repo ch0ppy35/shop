@@ -1,6 +1,4 @@
 using System.Text.Json.Serialization;
-using System.Text.Json;
-
 
 namespace Common.Models;
 
@@ -60,7 +58,6 @@ public class ProductMessage : BaseMessage
     /// </summary>
     public decimal Price { get; set; }
 
-    // Quantity field removed - using QuantityInStock instead
 
     /// <summary>
     /// Gets or sets the SKU (Stock Keeping Unit)
@@ -263,4 +260,38 @@ public class CartItem
     /// Gets the total price for this item
     /// </summary>
     public decimal TotalPrice => Price * Quantity;
+}
+
+/// <summary>
+/// Message for recommendation-related operations
+/// </summary>
+[Serializable]
+public class RecommendationMessage : BaseMessage
+{
+    /// <summary>
+    /// Gets or sets the cart items to base recommendations on
+    /// </summary>
+    public List<CartItem>? CartItems { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum number of recommendations to return
+    /// </summary>
+    public int MaxRecommendations { get; set; } = 5;
+
+    /// <summary>
+    /// Gets or sets the operation type
+    /// </summary>
+    public RecommendationOperationType OperationType { get; set; }
+}
+
+/// <summary>
+/// Operation types for recommendation messages
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum RecommendationOperationType
+{
+    /// <summary>
+    /// Get recommendations based on cart items
+    /// </summary>
+    GetRecommendations
 }

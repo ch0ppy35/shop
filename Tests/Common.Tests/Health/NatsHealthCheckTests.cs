@@ -21,44 +21,34 @@ public class NatsHealthCheckTests
     [Fact]
     public void Name_ShouldReturnNATS()
     {
-        // Arrange
         var healthCheck = new NatsHealthCheck(_loggerMock.Object, _natsServiceMock.Object);
 
-        // Act
         var result = healthCheck.Name;
 
-        // Assert
         result.Should().Be("NATS");
     }
 
     [Fact]
     public void IsReady_ShouldReturnTrue_WhenNatsIsConnected()
     {
-        // Arrange
         _natsServiceMock.Setup(x => x.IsConnected).Returns(true);
 
         var healthCheck = new NatsHealthCheck(_loggerMock.Object, _natsServiceMock.Object);
 
-        // Act
         var result = healthCheck.IsReady();
 
-        // Assert
         result.Should().BeTrue();
     }
 
     [Fact]
     public void IsReady_ShouldReturnFalse_WhenNatsIsNotConnected()
     {
-        // Arrange
-        // Setup the IsConnected property to return false
         _natsServiceMock.Setup(x => x.IsConnected).Returns(false);
 
         var healthCheck = new NatsHealthCheck(_loggerMock.Object, _natsServiceMock.Object);
 
-        // Act
         var result = healthCheck.IsReady();
 
-        // Assert
         result.Should().BeFalse();
     }
 }

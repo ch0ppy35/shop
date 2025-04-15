@@ -1,7 +1,5 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using System.Text.Json;
+using StackExchange.Redis;
 
 namespace Cart.Services;
 
@@ -24,7 +22,6 @@ public class RedisService : IAsyncDisposable
     {
         _logger = logger;
 
-        // Get Redis configuration from environment variables or configuration
         _redisConnectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING") ??
                                configuration.GetValue<string>("Redis:ConnectionString") ??
                                "localhost:6379";
@@ -74,13 +71,11 @@ public class RedisService : IAsyncDisposable
                     _logger.LogInformation("Connecting to Redis server at {ConnectionString}", _redisConnectionString);
                 }
 
-                // Dispose previous connection if it exists
                 if (_redis != null)
                 {
                     await _redis.DisposeAsync();
                 }
 
-                // Connect to Redis
                 _redis = await ConnectionMultiplexer.ConnectAsync(_redisConnectionString);
                 _database = _redis.GetDatabase();
 
@@ -211,7 +206,6 @@ public class RedisService : IAsyncDisposable
             _logger.LogInformation("Redis connection disposed");
         }
 
-        // Call GC.SuppressFinalize to prevent derived types from needing to re-implement IDisposable
         GC.SuppressFinalize(this);
     }
 }

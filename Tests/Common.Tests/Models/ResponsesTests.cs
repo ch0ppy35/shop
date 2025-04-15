@@ -9,7 +9,6 @@ public class ResponsesTests
     [Fact]
     public void BaseResponse_ShouldSerializeAndDeserialize()
     {
-        // Arrange
         var response = new BaseResponse
         {
             Success = true,
@@ -17,11 +16,9 @@ public class ResponsesTests
             Error = null
         };
 
-        // Act
         var json = JsonSerializer.Serialize(response);
         var deserializedResponse = JsonSerializer.Deserialize<BaseResponse>(json);
 
-        // Assert
         deserializedResponse.Should().NotBeNull();
         deserializedResponse!.Success.Should().BeTrue();
         deserializedResponse.Message.Should().Be("Operation successful");
@@ -31,7 +28,6 @@ public class ResponsesTests
     [Fact]
     public void ProductResponse_ShouldSerializeAndDeserialize()
     {
-        // Arrange
         var product = new ProductMessage
         {
             ProductId = "123",
@@ -50,11 +46,9 @@ public class ResponsesTests
             Product = product
         };
 
-        // Act
         var json = JsonSerializer.Serialize(response);
         var deserializedResponse = JsonSerializer.Deserialize<ProductResponse>(json);
 
-        // Assert
         deserializedResponse.Should().NotBeNull();
         deserializedResponse!.Success.Should().BeTrue();
         deserializedResponse.Message.Should().Be("Product retrieved successfully");
@@ -71,7 +65,6 @@ public class ResponsesTests
     [Fact]
     public void ProductListResponse_ShouldSerializeAndDeserialize()
     {
-        // Arrange
         var products = new List<ProductMessage>
         {
             new ProductMessage
@@ -102,11 +95,9 @@ public class ResponsesTests
             Products = products
         };
 
-        // Act
         var json = JsonSerializer.Serialize(response);
         var deserializedResponse = JsonSerializer.Deserialize<ProductListResponse>(json);
 
-        // Assert
         deserializedResponse.Should().NotBeNull();
         deserializedResponse!.Success.Should().BeTrue();
         deserializedResponse.Message.Should().Be("Products retrieved successfully");
@@ -122,7 +113,6 @@ public class ResponsesTests
     [Fact]
     public void ProductListResponse_WithPagination_ShouldSerializeAndDeserialize()
     {
-        // Arrange
         var products = new List<ProductMessage>
         {
             new ProductMessage
@@ -157,18 +147,15 @@ public class ResponsesTests
             HasNextPage = true
         };
 
-        // Act
         var json = JsonSerializer.Serialize(response);
         var deserializedResponse = JsonSerializer.Deserialize<ProductListResponse>(json);
 
-        // Assert
         deserializedResponse.Should().NotBeNull();
         deserializedResponse!.Success.Should().BeTrue();
         deserializedResponse.Message.Should().Be("Products retrieved successfully");
         deserializedResponse.Products.Should().NotBeNull();
         deserializedResponse.Products!.Count.Should().Be(2);
 
-        // Pagination metadata assertions
         deserializedResponse.TotalCount.Should().Be(50);
         deserializedResponse.PageNumber.Should().Be(2);
         deserializedResponse.PageSize.Should().Be(10);
@@ -180,10 +167,8 @@ public class ResponsesTests
     [Fact]
     public void ProductListResponse_PaginationDefaults_ShouldBeZero()
     {
-        // Arrange & Act
         var response = new ProductListResponse();
 
-        // Assert
         response.TotalCount.Should().Be(0);
         response.PageNumber.Should().Be(0);
         response.PageSize.Should().Be(0);

@@ -33,13 +33,11 @@ public class ConfirmService : IConfirmService
     /// <returns>True if confirmed, false otherwise</returns>
     public async Task<bool> ShowConfirmation(string message, string title = "Confirm", string confirmType = "Warning", string confirmText = "Confirm")
     {
-        // For backward compatibility with existing components that might be using the event
         if (OnConfirmationRequested != null)
         {
             return await OnConfirmationRequested.Invoke(message, title, confirmType, confirmText);
         }
 
-        // Map the confirmType to MudBlazor's Color enum
         var color = confirmType.ToLower() switch
         {
             "danger" => Color.Error,
@@ -48,7 +46,6 @@ public class ConfirmService : IConfirmService
             _ => Color.Primary
         };
 
-        // Use MudBlazor's built-in confirmation dialog
         var parameters = new DialogParameters
         {
             { "ContentText", message },

@@ -1,7 +1,5 @@
 using Common.Messaging;
 using Common.Models;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Cart.Services;
 
@@ -34,10 +32,8 @@ public class CartConsumerService : BackgroundService
     {
         _logger.LogInformation("Cart consumer service starting");
 
-        // Wait for NATS connection to be established before starting consumers
         await WaitForNatsConnectionAsync(stoppingToken);
 
-        // Start all message handlers
         var tasks = new List<Task>
         {
             HandleGetCartRequests(stoppingToken),
@@ -47,7 +43,6 @@ public class CartConsumerService : BackgroundService
             HandleClearCartRequests(stoppingToken)
         };
 
-        // Wait for any task to complete (which should only happen on error or cancellation)
         await Task.WhenAny(tasks);
 
         _logger.LogWarning("One of the cart message handlers has stopped unexpectedly");
@@ -93,22 +88,18 @@ public class CartConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received get cart request - SessionId: {SessionId}", msg.SessionId ?? "Unknown");
 
-                // Ensure we have a session ID
                 if (string.IsNullOrEmpty(msg.SessionId))
                 {
                     _logger.LogWarning("Get cart request missing session ID");
                     continue;
                 }
 
-                // Get the cart
                 var response = await _cartService.GetCartAsync(msg.SessionId, stoppingToken);
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try
@@ -141,20 +132,17 @@ public class CartConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received add item request - SessionId: {SessionId}, ProductId: {ProductId}, Quantity: {Quantity}",
                     msg.SessionId ?? "Unknown", msg.ProductId ?? "Unknown", msg.Quantity);
 
-                // Ensure we have a session ID and product ID
                 if (string.IsNullOrEmpty(msg.SessionId) || string.IsNullOrEmpty(msg.ProductId))
                 {
                     _logger.LogWarning("Add item request missing session ID or product ID");
                     continue;
                 }
 
-                // Create the cart item
                 var cartItem = new CartItem
                 {
                     ProductId = msg.ProductId,
@@ -163,10 +151,8 @@ public class CartConsumerService : BackgroundService
                     Quantity = msg.Quantity
                 };
 
-                // Add the item to the cart
                 var response = await _cartService.AddItemAsync(msg.SessionId, cartItem, stoppingToken);
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try
@@ -199,23 +185,19 @@ public class CartConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received update item request - SessionId: {SessionId}, ProductId: {ProductId}, Quantity: {Quantity}",
                     msg.SessionId ?? "Unknown", msg.ProductId ?? "Unknown", msg.Quantity);
 
-                // Ensure we have a session ID and product ID
                 if (string.IsNullOrEmpty(msg.SessionId) || string.IsNullOrEmpty(msg.ProductId))
                 {
                     _logger.LogWarning("Update item request missing session ID or product ID");
                     continue;
                 }
 
-                // Update the item in the cart
                 var response = await _cartService.UpdateItemAsync(msg.SessionId, msg.ProductId, msg.Quantity, stoppingToken);
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try
@@ -248,23 +230,19 @@ public class CartConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received remove item request - SessionId: {SessionId}, ProductId: {ProductId}",
                     msg.SessionId ?? "Unknown", msg.ProductId ?? "Unknown");
 
-                // Ensure we have a session ID and product ID
                 if (string.IsNullOrEmpty(msg.SessionId) || string.IsNullOrEmpty(msg.ProductId))
                 {
                     _logger.LogWarning("Remove item request missing session ID or product ID");
                     continue;
                 }
 
-                // Remove the item from the cart
                 var response = await _cartService.RemoveItemAsync(msg.SessionId, msg.ProductId, stoppingToken);
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try
@@ -297,22 +275,18 @@ public class CartConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received clear cart request - SessionId: {SessionId}", msg.SessionId ?? "Unknown");
 
-                // Ensure we have a session ID
                 if (string.IsNullOrEmpty(msg.SessionId))
                 {
                     _logger.LogWarning("Clear cart request missing session ID");
                     continue;
                 }
 
-                // Clear the cart
                 var response = await _cartService.ClearCartAsync(msg.SessionId, stoppingToken);
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try

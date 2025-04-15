@@ -2,114 +2,126 @@
 using Common.Database;
 using Common.Health;
 using Common.Messaging;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Products.Health;
 using Products.Repositories;
 using Products.Services;
 
-// Get connection string from environment variables
+
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ??
                       "Host=localhost;Database=products;Username=postgres;Password=postgres";
 
-var host = Host.CreateDefaultBuilder(args)
-    .ConfigureAppConfiguration((hostContext, config) =>
-    {
-        config.AddEnvironmentVariables();
-    })
-    .ConfigureServices((hostContext, services) =>
-    {
-        // Add common services
-        services.AddCommonServices();
+var builder = Host.CreateApplicationBuilder(args);
 
-        // Add health checks
-        services.AddNatsHealthCheck();
-        services.AddPostgresHealthCheck();
 
-        // Add database services
-        services.AddDatabaseServices(connectionString);
+builder.Services.AddCommonServices();
+builder.Services.AddNatsHealthCheck();
+builder.Services.AddPostgresHealthCheck();
+builder.Services.AddDatabaseServices(connectionString);
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ProductSeeder>();
+builder.Services.AddHostedService<ProductConsumerService>();
+builder.Services.AddHostedService<ProductInitializationService>();
 
-        // Add repositories
-        services.AddScoped<IProductRepository, ProductRepository>();
 
-        // Add product service
-        services.AddScoped<IProductService, ProductService>();
+var host = builder.Build();
+await host.RunAsync();
 
-        // Add product seeder
-        services.AddScoped<ProductSeeder>();
-
-        // Add hosted service
-        services.AddHostedService<ProductConsumerService>();
-    })
-    .Build();
-
-var logger = host.Services.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("Products service starting");
-
-// Configure health checks first
-var healthService = host.Services.GetRequiredService<HealthService>();
-var natsHealthCheck = host.Services.GetRequiredService<NatsHealthCheck>();
-var postgresHealthCheck = host.Services.GetRequiredService<PostgresHealthCheck>();
-
-healthService.RegisterHealthCheck(natsHealthCheck);
-healthService.RegisterHealthCheck(postgresHealthCheck);
-
-// Start health endpoint before attempting to connect to dependencies
-// so it can report readiness status even when connections are being established
-var healthEndpoint = new HealthEndpoint(host.Services);
-logger.LogInformation("Starting health endpoint");
-await healthEndpoint.StartAsync();
-logger.LogInformation("Health endpoint started successfully");
-
-// Initialize database and NATS connections in the background
-var dbService = host.Services.GetRequiredService<IDatabaseService>();
-var natsService = host.Services.GetRequiredService<INatsService>();
-
-// Start a background task to initialize the database and then connect to NATS
-_ = Task.Run(async () =>
+/// <summary>
+/// Worker service for initializing database, connections and health checks
+/// </summary>
+public class ProductInitializationService : BackgroundService
 {
-    // Step 1: Initialize database connection
-    logger.LogInformation("Initializing database connection in background");
+    private readonly ILogger<ProductInitializationService> _logger;
+    private readonly HealthService _healthService;
+    private readonly NatsHealthCheck _natsHealthCheck;
+    private readonly PostgresHealthCheck _postgresHealthCheck;
+    private readonly INatsService _natsService;
+    private readonly IDatabaseService _dbService;
+    private readonly IServiceProvider _serviceProvider;
 
-    try
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProductInitializationService"/> class.
+    /// </summary>
+    public ProductInitializationService(
+        ILogger<ProductInitializationService> logger,
+        HealthService healthService,
+        NatsHealthCheck natsHealthCheck,
+        PostgresHealthCheck postgresHealthCheck,
+        INatsService natsService,
+        IDatabaseService dbService,
+        IServiceProvider serviceProvider)
     {
-        await dbService.InitializeDatabaseWithRetryAsync();
-        logger.LogInformation("Database connection initialized successfully");
+        _logger = logger;
+        _healthService = healthService;
+        _natsHealthCheck = natsHealthCheck;
+        _postgresHealthCheck = postgresHealthCheck;
+        _natsService = natsService;
+        _dbService = dbService;
+        _serviceProvider = serviceProvider;
+    }
 
-        // Run migrations
-        logger.LogInformation("Running database migrations");
-        await dbService.MigrateAsync();
-        logger.LogInformation("Database migrations completed successfully");
+    /// <summary>
+    /// Executes the background service
+    /// </summary>
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Products service initialization starting");
 
-        // Seed database
-        logger.LogInformation("Seeding database");
-        using var scope = host.Services.CreateScope();
-        var seeder = scope.ServiceProvider.GetRequiredService<ProductSeeder>();
-        await seeder.SeedAsync();
-        logger.LogInformation("Database seeding completed");
 
-        // Step 2: Only after database is ready, connect to NATS
-        logger.LogInformation("Database is ready, now connecting to NATS server");
+        _healthService.RegisterHealthCheck(_natsHealthCheck);
+        _healthService.RegisterHealthCheck(_postgresHealthCheck);
+
+
+        var healthEndpoint = new HealthEndpoint(_serviceProvider);
+        _logger.LogInformation("Starting health endpoint");
+        await healthEndpoint.StartAsync();
+        _logger.LogInformation("Health endpoint started successfully");
+
+
+        _logger.LogInformation("Initializing database connection");
+
         try
         {
-            // Use infinite retries (-1) to keep trying to connect
-            await natsService.ConnectWithRetryAsync(-1);
-            logger.LogInformation("Successfully connected to NATS server");
+            await _dbService.InitializeDatabaseWithRetryAsync();
+            _logger.LogInformation("Database connection initialized successfully");
+
+
+            _logger.LogInformation("Running database migrations");
+            await _dbService.MigrateAsync();
+            _logger.LogInformation("Database migrations completed successfully");
+
+
+            _logger.LogInformation("Seeding database");
+            using var scope = _serviceProvider.CreateScope();
+            var seeder = scope.ServiceProvider.GetRequiredService<ProductSeeder>();
+            await seeder.SeedAsync();
+            _logger.LogInformation("Database seeding completed");
+
+
+            _logger.LogInformation("Database is ready, now connecting to NATS server");
+            try
+            {
+
+                await _natsService.ConnectWithRetryAsync(-1);
+                _logger.LogInformation("Successfully connected to NATS server");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "NATS connection retry task failed");
+
+            }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "NATS connection retry task failed");
-            // Don't exit the application, let the health check report the failure
+            _logger.LogError(ex, "Database initialization or migration failed");
+
+        }
+
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
         }
     }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Database initialization or migration failed");
-        // Don't exit the application, let the health check report the failure
-    }
-});
-
-// Run the host
-await host.RunAsync();
+}

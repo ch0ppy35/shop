@@ -3,8 +3,6 @@ using Common.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Cart.Health;
 
@@ -26,11 +24,12 @@ public class HealthEndpoint : IDisposable
         _logger = serviceProvider.GetRequiredService<ILogger<HealthEndpoint>>();
         _healthService = serviceProvider.GetRequiredService<HealthService>();
 
-        // Create a minimal web application for health checks
         var builder = WebApplication.CreateBuilder();
-        builder.WebHost.UseUrls("http://0.0.0.0:8081");
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ListenAnyIP(8081);
+        });
 
-        // Configure JSON logging for the health endpoint
         builder.Logging.ClearProviders();
         builder.Logging.AddJsonLogger(config =>
         {
@@ -39,7 +38,6 @@ public class HealthEndpoint : IDisposable
 
         _app = builder.Build();
 
-        // Map health check endpoints
         _app.MapGet("/healthz", () =>
         {
             return _healthService.IsHealthy()
@@ -85,8 +83,8 @@ public class HealthEndpoint : IDisposable
         {
             if (disposing)
             {
-                _app.StopAsync().GetAwaiter().GetResult();
-                _app.DisposeAsync().GetAwaiter().GetResult();
+                Task.Run(async () => await _app.StopAsync()).GetAwaiter().GetResult();
+                Task.Run(async () => await _app.DisposeAsync()).GetAwaiter().GetResult();
                 _logger.LogInformation("Health endpoint disposed");
             }
 

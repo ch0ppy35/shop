@@ -1,7 +1,5 @@
 using Common.Messaging;
 using Common.Models;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Products.Services;
 
@@ -34,10 +32,8 @@ public class ProductConsumerService : BackgroundService
     {
         _logger.LogInformation("Product consumer service starting");
 
-        // Wait for NATS connection to be established before starting consumers
         await WaitForNatsConnectionAsync(stoppingToken);
 
-        // Start multiple consumers for different subjects
         var tasks = new List<Task>
         {
             HandleCreateProductRequests(stoppingToken),
@@ -49,7 +45,6 @@ public class ProductConsumerService : BackgroundService
             HandleUpdateInventoryRequests(stoppingToken)
         };
 
-        // Wait for any task to complete (which should only happen on error or cancellation)
         await Task.WhenAny(tasks);
 
         _logger.LogWarning("One of the product consumer tasks has completed unexpectedly");
@@ -95,25 +90,20 @@ public class ProductConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received create product request for product: {ProductName} - SessionId: {SessionId}", msg.Name, msg.SessionId ?? "Unknown");
 
-                // Prepare the response
                 var response = new ProductResponse { Success = false };
 
                 try
                 {
-                    // Create the product
                     var product = await _productService.CreateProductAsync(msg);
 
-                    // Set the response
                     response.Success = true;
                     response.Message = $"Product created with ID: {product.ProductId}";
                     response.Product = product;
 
-                    // Preserve the session ID in the response
                     if (!string.IsNullOrEmpty(msg.SessionId))
                     {
                         response.SessionId = msg.SessionId;
@@ -127,7 +117,6 @@ public class ProductConsumerService : BackgroundService
                     response.Error = $"Error creating product: {ex.Message}";
                 }
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try
@@ -160,30 +149,24 @@ public class ProductConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received update product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId, msg.SessionId ?? "Unknown");
 
-                // Prepare the response
                 var response = new ProductResponse { Success = false };
 
                 try
                 {
-                    // Update the product
                     var success = await _productService.UpdateProductAsync(msg);
 
                     if (success)
                     {
-                        // Get the updated product
                         var updatedProduct = await _productService.GetProductAsync(msg.ProductId!);
 
-                        // Set the response
                         response.Success = true;
                         response.Message = $"Product updated with ID: {msg.ProductId}";
                         response.Product = updatedProduct;
 
-                        // Preserve the session ID in the response
                         if (!string.IsNullOrEmpty(msg.SessionId))
                         {
                             response.SessionId = msg.SessionId;
@@ -203,7 +186,6 @@ public class ProductConsumerService : BackgroundService
                     response.Error = $"Error updating product: {ex.Message}";
                 }
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try
@@ -236,26 +218,21 @@ public class ProductConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received delete product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId, msg.SessionId ?? "Unknown");
 
-                // Prepare the response
                 var response = new BaseResponse { Success = false };
 
                 try
                 {
-                    // Delete the product
                     var success = await _productService.DeleteProductAsync(msg.ProductId!);
 
                     if (success)
                     {
-                        // Set the response
                         response.Success = true;
                         response.Message = $"Product with ID {msg.ProductId} deleted successfully";
 
-                        // Preserve the session ID in the response
                         if (!string.IsNullOrEmpty(msg.SessionId))
                         {
                             response.SessionId = msg.SessionId;
@@ -275,7 +252,6 @@ public class ProductConsumerService : BackgroundService
                     response.Error = $"Error deleting product: {ex.Message}";
                 }
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try
@@ -308,27 +284,22 @@ public class ProductConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received get product request for product ID: {ProductId} - SessionId: {SessionId}", msg.ProductId, msg.SessionId ?? "Unknown");
 
-                // Prepare the response
                 var response = new ProductResponse { Success = false };
 
                 try
                 {
-                    // Get the product
                     var product = await _productService.GetProductAsync(msg.ProductId!);
 
                     if (product != null)
                     {
-                        // Set the response
                         response.Success = true;
                         response.Message = $"Product with ID {msg.ProductId} found";
                         response.Product = product;
 
-                        // Preserve the session ID in the response
                         if (!string.IsNullOrEmpty(msg.SessionId))
                         {
                             response.SessionId = msg.SessionId;
@@ -348,7 +319,6 @@ public class ProductConsumerService : BackgroundService
                     response.Error = $"Error getting product: {ex.Message}";
                 }
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try
@@ -381,28 +351,23 @@ public class ProductConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received get all products request - SessionId: {SessionId}", msg.SessionId ?? "Unknown");
 
-                // Prepare the response
                 var response = new ProductListResponse { Success = false };
 
                 try
                 {
-                    // Validate pagination parameters
                     int pageNumber = Math.Max(1, msg.PageNumber);
                     int pageSize = Math.Clamp(msg.PageSize, 1, 100);
 
                     _logger.LogInformation("Processing get all products request with pagination: Page {PageNumber}, Size {PageSize}",
                         pageNumber, pageSize);
 
-                    // Get paginated products
                     var (products, totalCount, totalPages) = await _productService.GetPaginatedProductsAsync(pageNumber, pageSize);
                     var productsList = products.ToList();
 
-                    // Set the response with pagination metadata
                     response.Success = true;
                     response.Message = $"Retrieved {productsList.Count} products (page {pageNumber} of {totalPages})";
                     response.Products = productsList;
@@ -413,7 +378,6 @@ public class ProductConsumerService : BackgroundService
                     response.HasPreviousPage = pageNumber > 1;
                     response.HasNextPage = pageNumber < totalPages;
 
-                    // Preserve the session ID in the response
                     if (!string.IsNullOrEmpty(msg.SessionId))
                     {
                         response.SessionId = msg.SessionId;
@@ -428,7 +392,6 @@ public class ProductConsumerService : BackgroundService
                     response.Error = $"Error getting products: {ex.Message}";
                 }
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try
@@ -461,28 +424,23 @@ public class ProductConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received get inventory request for product ID: {ProductId} - SessionId: {SessionId}",
                     msg.ProductId, msg.SessionId ?? "Unknown");
 
-                // Prepare the response
                 var response = new ProductResponse { Success = false };
 
                 try
                 {
-                    // Get the product with inventory information
                     var product = await _productService.GetInventoryAsync(msg.ProductId ?? string.Empty);
 
                     if (product != null)
                     {
-                        // Set the response
                         response.Success = true;
                         response.Message = $"Retrieved inventory for product {product.ProductId}";
                         response.Product = product;
 
-                        // Preserve the session ID in the response
                         if (!string.IsNullOrEmpty(msg.SessionId))
                         {
                             response.SessionId = msg.SessionId;
@@ -502,7 +460,6 @@ public class ProductConsumerService : BackgroundService
                     response.Error = $"Error getting inventory: {ex.Message}";
                 }
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try
@@ -535,31 +492,25 @@ public class ProductConsumerService : BackgroundService
 
         try
         {
-            // Subscribe to the subject and handle each request
             await foreach (var msg in _natsService.SubscribeAsync<ProductMessage>(subject, queueGroup, stoppingToken))
             {
                 _logger.LogInformation("Received update inventory request for product ID: {ProductId} - SessionId: {SessionId}",
                     msg.ProductId, msg.SessionId ?? "Unknown");
 
-                // Prepare the response
                 var response = new ProductResponse { Success = false };
 
                 try
                 {
-                    // Update the inventory
                     var success = await _productService.UpdateInventoryAsync(msg.ProductId ?? string.Empty, msg.QuantityInStock);
 
                     if (success)
                     {
-                        // Get the updated product to include in the response
                         var updatedProduct = await _productService.GetInventoryAsync(msg.ProductId ?? string.Empty);
 
-                        // Set the response
                         response.Success = true;
                         response.Message = $"Updated inventory for product {msg.ProductId}";
                         response.Product = updatedProduct;
 
-                        // Preserve the session ID in the response
                         if (!string.IsNullOrEmpty(msg.SessionId))
                         {
                             response.SessionId = msg.SessionId;
@@ -579,7 +530,6 @@ public class ProductConsumerService : BackgroundService
                     response.Error = $"Error updating inventory: {ex.Message}";
                 }
 
-                // Reply to the request if a reply subject is provided
                 if (!string.IsNullOrEmpty(msg.ReplyTo))
                 {
                     try

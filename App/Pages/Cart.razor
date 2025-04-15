@@ -1,5 +1,6 @@
 @page "/cart"
 @inject ICartService CartService
+@inject IRecommendationService RecommendationService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject ToastService ToastService
@@ -71,13 +72,69 @@ else
     </div>
 }
 
+@if (!cart.IsEmpty)
+{
+    <div class="mt-8">
+        <MudDivider />
+        <MudText Typo="Typo.h5" Class="mt-6 mb-4">
+            <MudIcon Icon="@Icons.Material.Filled.Recommend" Class="mr-2" />
+            Recommended Products
+        </MudText>
+
+        @if (loadingRecommendations)
+        {
+            <MudProgressCircular Color="Color.Secondary" Indeterminate="true" />
+        }
+        else if (recommendations.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info" Class="my-4">
+                No recommendations available at this time.
+            </MudAlert>
+        }
+        else
+        {
+            <MudGrid>
+                @foreach (var product in recommendations)
+                {
+                    <MudItem xs="12" sm="6" md="4" lg="3">
+                        <MudCard Elevation="2" Class="h-100">
+                            <MudCardHeader Style="height: 64px; overflow: hidden;">
+                                <MudText Typo="Typo.h6" Align="Align.Center" Class="w-100"
+                                    Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@product.Name</MudText>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2"
+                                    Style="height: 80px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">
+                                    @product.Description</MudText>
+                                <MudText Typo="Typo.h6" Color="Color.Primary" Class="mt-2">$@product.Price.ToString("F2")</MudText>
+                            </MudCardContent>
+                            <MudCardActions Class="d-flex justify-center">
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                                    OnClick="() => NavigateToProductDetails(product.Id)">
+                                    View Details
+                                </MudButton>
+                                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="() => AddToCart(product.Id)">
+                                    Add to Cart
+                                </MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </div>
+}
+
 @code {
     private ShoppingCart cart = new ShoppingCart();
+    private List<Product> recommendations = new List<Product>();
     private bool loading = true;
+    private bool loadingRecommendations = true;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadCartAsync();
+        await LoadRecommendationsAsync();
     }
 
     private async Task LoadCartAsync()
@@ -191,5 +248,53 @@ else
     private void ContinueShopping()
     {
         NavigationManager.NavigateTo("/products");
+    }
+
+    private async Task LoadRecommendationsAsync()
+    {
+        loadingRecommendations = true;
+        recommendations = await RecommendationService.GetCartRecommendationsAsync(4);
+        loadingRecommendations = false;
+    }
+
+    private void NavigateToProductDetails(string? productId)
+    {
+        if (!string.IsNullOrEmpty(productId))
+        {
+            NavigationManager.NavigateTo($"/products/{productId}");
+        }
+    }
+
+    private async Task AddToCart(string? productId)
+    {
+        if (string.IsNullOrEmpty(productId))
+        {
+            return;
+        }
+
+        var success = await CartService.AddItemAsync(productId);
+
+        if (success)
+        {
+            ToastService.ShowSuccess("Item added to cart!");
+            await LoadCartAsync();
+            await LoadRecommendationsAsync();
+
+#if !TEST
+            try
+            {
+                // Refresh the cart count in the navigation menu
+                await JSRuntime.InvokeVoidAsync("cartHelper.refreshNavMenu");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error with JS interop: {ex.Message}");
+            }
+#endif
+        }
+        else
+        {
+            ToastService.ShowError("Failed to add item to cart. Please try again.");
+        }
     }
 }

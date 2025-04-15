@@ -37,7 +37,6 @@ public class HealthService
     /// </remarks>
     public bool IsHealthy()
     {
-        // Basic health check - always returns true
         _logger.LogDebug("Health check requested");
         return true;
     }
@@ -67,7 +66,6 @@ public class HealthService
             readinessDetails.Add($"{healthCheck.Name}: {(componentReady ? "Ready" : "Not Ready")}");
         }
 
-        // Log status change
         if (isReady != _lastReadinessStatus)
         {
             var logLevel = isReady ? LogLevel.Information : LogLevel.Warning;

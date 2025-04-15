@@ -33,7 +33,6 @@ public class CartService : ICartService
     {
         try
         {
-            // Use the injected HttpClient which already has the session ID header
             var response = await _httpClient.GetFromJsonAsync<CartResponse>("/api/cart");
 
             if (response == null || response.Items == null)
@@ -184,7 +183,6 @@ public class CartService : ICartService
         }
     }
 
-    // Response classes to match the API
     private class CartResponse
     {
         public bool Success { get; set; }

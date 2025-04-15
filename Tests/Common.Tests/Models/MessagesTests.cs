@@ -9,10 +9,8 @@ public class MessagesTests
     [Fact]
     public void BaseMessage_ShouldInitializeProperties()
     {
-        // Arrange & Act
         var message = new ProductMessage();
 
-        // Assert
         message.Id.Should().NotBeEmpty();
         message.Timestamp.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
     }
@@ -20,7 +18,6 @@ public class MessagesTests
     [Fact]
     public void ProductMessage_ShouldSerializeAndDeserialize()
     {
-        // Arrange
         var message = new ProductMessage
         {
             ProductId = "123",
@@ -31,11 +28,9 @@ public class MessagesTests
             OperationType = ProductOperationType.Create
         };
 
-        // Act
         var json = JsonSerializer.Serialize(message);
         var deserializedMessage = JsonSerializer.Deserialize<ProductMessage>(json);
 
-        // Assert
         deserializedMessage.Should().NotBeNull();
         deserializedMessage!.ProductId.Should().Be("123");
         deserializedMessage.Name.Should().Be("Test Product");
@@ -50,26 +45,21 @@ public class MessagesTests
     [Fact]
     public void ProductOperationType_ShouldSerializeAsString()
     {
-        // Arrange
         var message = new ProductMessage
         {
             OperationType = ProductOperationType.Create
         };
 
-        // Act
         var json = JsonSerializer.Serialize(message);
 
-        // Assert
         json.Should().Contain("\"OperationType\":\"Create\"");
     }
 
     [Fact]
     public void ProductMessage_ShouldHaveDefaultPaginationValues()
     {
-        // Arrange & Act
         var message = new ProductMessage();
 
-        // Assert
         message.PageNumber.Should().Be(1, "Default page number should be 1");
         message.PageSize.Should().Be(10, "Default page size should be 10");
     }
@@ -77,7 +67,6 @@ public class MessagesTests
     [Fact]
     public void ProductMessage_ShouldSerializeAndDeserializePaginationProperties()
     {
-        // Arrange
         var message = new ProductMessage
         {
             ProductId = "123",
@@ -86,11 +75,9 @@ public class MessagesTests
             PageSize = 25
         };
 
-        // Act
         var json = JsonSerializer.Serialize(message);
         var deserializedMessage = JsonSerializer.Deserialize<ProductMessage>(json);
 
-        // Assert
         deserializedMessage.Should().NotBeNull();
         deserializedMessage!.PageNumber.Should().Be(2);
         deserializedMessage.PageSize.Should().Be(25);
