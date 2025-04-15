@@ -1,30 +1,59 @@
 ﻿@using MudBlazor
 
 <MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-
-    <MudNavLink Href="products" Icon="@Icons.Material.Filled.Inventory">Products</MudNavLink>
-
-    <MudNavLink Href="cart" Icon="@Icons.Material.Filled.ShoppingCart">
-        @if (cartItemCount > 0)
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+        @if (DrawerOpen)
         {
-
-            <MudBadge Content="@cartItemCount" Color="Color.Primary" Origin="Origin.CenterRight" BadgeClass="mx-2">
-                Cart
-            </MudBadge>
-        }
-        else
-        {
-            <span>Cart</span>
+            <span>Home</span>
         }
     </MudNavLink>
 
-    <MudNavLink Href="admin/products" Icon="@Icons.Material.Filled.Settings">Admin</MudNavLink>
+    <MudNavLink Href="products" Icon="@Icons.Material.Filled.Inventory">
+        @if (DrawerOpen)
+        {
+            <span>Products</span>
+        }
+    </MudNavLink>
 
-    <MudNavLink Href="about" Icon="@Icons.Material.Filled.Info">About</MudNavLink>
+    <MudNavLink Href="cart" Icon="@Icons.Material.Filled.ShoppingCart">
+        @if (DrawerOpen)
+        {
+            @if (cartItemCount > 0)
+            {
+                <MudBadge Content="@cartItemCount" Color="Color.Primary" Origin="Origin.CenterRight" BadgeClass="mx-2">
+                    Cart
+                </MudBadge>
+            }
+            else
+            {
+                <span>Cart</span>
+            }
+        }
+        else if (cartItemCount > 0)
+        {
+            <MudBadge Content="@cartItemCount" Color="Color.Primary" Overlap="true" Origin="Origin.TopRight" />
+        }
+    </MudNavLink>
+
+    <MudNavLink Href="admin/products" Icon="@Icons.Material.Filled.Settings">
+        @if (DrawerOpen)
+        {
+            <span>Admin</span>
+        }
+    </MudNavLink>
+
+    <MudNavLink Href="about" Icon="@Icons.Material.Filled.Info">
+        @if (DrawerOpen)
+        {
+            <span>About</span>
+        }
+    </MudNavLink>
 </MudNavMenu>
 
 @code {
+    [Parameter]
+    public bool DrawerOpen { get; set; } = true;
+
     private int cartItemCount = 0;
 
     [Inject]
