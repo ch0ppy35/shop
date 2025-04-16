@@ -1,6 +1,8 @@
+using System.Net.Sockets;
 using Common.Database.Models;
 using Common.Models;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Products.Repositories;
@@ -52,6 +54,75 @@ public class ProductServiceTests
         count.Should().Be(20);
         pages.Should().Be(4); // 20 items with 5 per page = 4 pages
         _repositoryMock.Verify(r => r.GetPaginatedProductsAsync(2, 5), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPaginatedProductsAsync_WithDifferentPageSizes_ShouldReturnCorrectPages()
+    {
+        // Setup for page size 10
+        var testEntities10 = TestData.GetTestProductEntities(10);
+        int totalCount = 25;
+        _repositoryMock.Setup(r => r.GetPaginatedProductsAsync(1, 10))
+            .ReturnsAsync((testEntities10, totalCount));
+
+        // Act
+        var (products10, count10, pages10) = await _service.GetPaginatedProductsAsync(1, 10);
+
+        // Assert
+        products10.Should().HaveCount(10);
+        count10.Should().Be(25);
+        pages10.Should().Be(3); // 25 items with 10 per page = 3 pages
+
+        // Setup for page size 25
+        var testEntities25 = TestData.GetTestProductEntities(25);
+        _repositoryMock.Setup(r => r.GetPaginatedProductsAsync(1, 25))
+            .ReturnsAsync((testEntities25, totalCount));
+
+        // Act
+        var (products25, count25, pages25) = await _service.GetPaginatedProductsAsync(1, 25);
+
+        // Assert
+        products25.Should().HaveCount(25);
+        count25.Should().Be(25);
+        pages25.Should().Be(1); // 25 items with 25 per page = 1 page
+    }
+
+    [Fact]
+    public async Task GetPaginatedProductsAsync_WithPageBeyondAvailableData_ShouldReturnEmptyList()
+    {
+        // Setup for page beyond available data
+        var emptyList = new List<ProductEntity>();
+        int totalCount = 10;
+        _repositoryMock.Setup(r => r.GetPaginatedProductsAsync(3, 5))
+            .ReturnsAsync((emptyList, totalCount));
+
+        // Act
+        var (products, count, pages) = await _service.GetPaginatedProductsAsync(3, 5);
+
+        // Assert
+        products.Should().NotBeNull();
+        products.Should().BeEmpty();
+        count.Should().Be(10);
+        pages.Should().Be(2); // 10 items with 5 per page = 2 pages
+    }
+
+    [Fact]
+    public async Task GetPaginatedProductsAsync_WithEmptyDatabase_ShouldReturnEmptyListAndZeroCounts()
+    {
+        // Setup for empty database
+        var emptyList = new List<ProductEntity>();
+        int totalCount = 0;
+        _repositoryMock.Setup(r => r.GetPaginatedProductsAsync(1, 10))
+            .ReturnsAsync((emptyList, totalCount));
+
+        // Act
+        var (products, count, pages) = await _service.GetPaginatedProductsAsync(1, 10);
+
+        // Assert
+        products.Should().NotBeNull();
+        products.Should().BeEmpty();
+        count.Should().Be(0);
+        pages.Should().Be(0); // 0 items = 0 pages
     }
 
     [Fact]
@@ -113,7 +184,91 @@ public class ProductServiceTests
         result.Should().NotBeNull();
         result.ProductId.Should().NotBeNullOrEmpty();
         result.Name.Should().Be(testMessage.Name);
-        _repositoryMock.Verify(r => r.CreateProductAsync(It.Is<ProductEntity>(e => !string.IsNullOrEmpty(e.ProductId))), Times.Once);
+        _repositoryMock.Verify(r => r.CreateProductAsync(It.Is<ProductEntity>(e => !string.IsNullOrEmpty(e.ProductId))),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateProductAsync_ShouldHandleDbException()
+    {
+        var testMessage = TestData.GetTestProductMessage();
+
+        _repositoryMock.Setup(r => r.CreateProductAsync(It.IsAny<ProductEntity>()))
+            .ThrowsAsync(new DbUpdateException("Database error", new Exception("Inner exception")));
+
+        // The service should propagate the exception since it doesn't catch database exceptions
+        await Assert.ThrowsAsync<DbUpdateException>(() => _service.CreateProductAsync(testMessage));
+
+        _repositoryMock.Verify(r => r.CreateProductAsync(It.IsAny<ProductEntity>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateProductAsync_ShouldHandleGenericException()
+    {
+        var testMessage = TestData.GetTestProductMessage();
+
+        _repositoryMock.Setup(r => r.CreateProductAsync(It.IsAny<ProductEntity>()))
+            .ThrowsAsync(new InvalidOperationException("Some unexpected error"));
+
+        // The service should propagate the exception since it doesn't catch generic exceptions
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateProductAsync(testMessage));
+
+        _repositoryMock.Verify(r => r.CreateProductAsync(It.IsAny<ProductEntity>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateProductAsync_WithNullName_ShouldStillCreateProduct()
+    {
+        // Setup
+        var testMessage = TestData.GetTestProductMessage();
+        testMessage.Name = null; // Null name
+
+        _repositoryMock.Setup(r => r.CreateProductAsync(It.IsAny<ProductEntity>()))
+            .ReturnsAsync((ProductEntity entity) => entity);
+
+        // Act
+        var result = await _service.CreateProductAsync(testMessage);
+
+        // Assert
+        result.Should().NotBeNull();
+        // In .NET, string properties are initialized to empty string when set to null
+        result.Name.Should().BeEmpty();
+        _repositoryMock.Verify(r => r.CreateProductAsync(It.Is<ProductEntity>(e => e.Name == string.Empty)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateProductAsync_WithNegativePrice_ShouldStillCreateProduct()
+    {
+        // Setup
+        var testMessage = TestData.GetTestProductMessage();
+        testMessage.Price = -10.99m; // Negative price
+
+        _repositoryMock.Setup(r => r.CreateProductAsync(It.IsAny<ProductEntity>()))
+            .ReturnsAsync((ProductEntity entity) => entity);
+
+        // Act
+        var result = await _service.CreateProductAsync(testMessage);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Price.Should().Be(-10.99m);
+        _repositoryMock.Verify(r => r.CreateProductAsync(It.Is<ProductEntity>(e => e.Price == -10.99m)), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateProductAsync_WithNetworkFailure_ShouldPropagateException()
+    {
+        // Setup
+        var testMessage = TestData.GetTestProductMessage();
+
+        _repositoryMock.Setup(r => r.CreateProductAsync(It.IsAny<ProductEntity>()))
+            .ThrowsAsync(new SocketException((int)SocketError.ConnectionRefused));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<SocketException>(() => _service.CreateProductAsync(testMessage));
+
+        _repositoryMock.Verify(r => r.CreateProductAsync(It.IsAny<ProductEntity>()), Times.Once);
     }
 
     [Fact]
@@ -152,6 +307,21 @@ public class ProductServiceTests
 
         result.Should().BeFalse();
         _repositoryMock.Verify(r => r.UpdateProductAsync(It.IsAny<ProductEntity>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateProductAsync_WithDbUpdateException_ShouldPropagateException()
+    {
+        // Setup
+        var testMessage = TestData.GetTestProductMessage();
+
+        _repositoryMock.Setup(r => r.UpdateProductAsync(It.IsAny<ProductEntity>()))
+            .ThrowsAsync(new DbUpdateException("Database update error", new Exception("Inner exception")));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<DbUpdateException>(() => _service.UpdateProductAsync(testMessage));
+
+        _repositoryMock.Verify(r => r.UpdateProductAsync(It.IsAny<ProductEntity>()), Times.Once);
     }
 
     [Fact]
@@ -222,7 +392,8 @@ public class ProductServiceTests
 
         result.Should().BeTrue();
         _repositoryMock.Verify(r => r.GetProductByIdAsync(testMessage.ProductId!), Times.Once);
-        _repositoryMock.Verify(r => r.UpdateProductAsync(It.Is<ProductEntity>(e => e.QuantityInStock == 75)), Times.Once);
+        _repositoryMock.Verify(r => r.UpdateProductAsync(It.Is<ProductEntity>(e => e.QuantityInStock == 75)),
+            Times.Once);
     }
 
     [Fact]
@@ -251,5 +422,119 @@ public class ProductServiceTests
         result.Should().BeFalse();
         _repositoryMock.Verify(r => r.GetProductByIdAsync(It.IsAny<string>()), Times.Never);
         _repositoryMock.Verify(r => r.UpdateProductAsync(It.IsAny<ProductEntity>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData("test-id-1", -10)]
+    [InlineData("test-id-2", -1)]
+    public async Task UpdateInventoryAsync_WithNegativeQuantity_ShouldStillUpdate(string id, int quantity)
+    {
+        // Setup
+        var existingProduct = TestData.GetTestProductEntity(id);
+        existingProduct.QuantityInStock = 50; // Initial quantity
+
+        _repositoryMock.Setup(r => r.GetProductByIdAsync(id))
+            .ReturnsAsync(existingProduct);
+        _repositoryMock.Setup(r => r.UpdateProductAsync(It.IsAny<ProductEntity>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _service.UpdateInventoryAsync(id, quantity);
+
+        // Assert
+        result.Should().BeTrue();
+        _repositoryMock.Verify(r => r.GetProductByIdAsync(id), Times.Once);
+        _repositoryMock.Verify(r => r.UpdateProductAsync(It.Is<ProductEntity>(e =>
+            e.ProductId == id && e.QuantityInStock == quantity)), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateInventoryAsync_WithZeroQuantity_ShouldUpdate()
+    {
+        // Setup
+        var id = "test-product-id";
+        var existingProduct = TestData.GetTestProductEntity(id);
+        existingProduct.QuantityInStock = 50; // Initial quantity
+
+        _repositoryMock.Setup(r => r.GetProductByIdAsync(id))
+            .ReturnsAsync(existingProduct);
+        _repositoryMock.Setup(r => r.UpdateProductAsync(It.IsAny<ProductEntity>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _service.UpdateInventoryAsync(id, 0);
+
+        // Assert
+        result.Should().BeTrue();
+        _repositoryMock.Verify(r => r.GetProductByIdAsync(id), Times.Once);
+        _repositoryMock.Verify(r => r.UpdateProductAsync(It.Is<ProductEntity>(e =>
+            e.ProductId == id && e.QuantityInStock == 0)), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateInventoryAsync_WithExtremelyLargeQuantity_ShouldUpdate()
+    {
+        // Setup
+        var id = "test-product-id";
+        var existingProduct = TestData.GetTestProductEntity(id);
+        existingProduct.QuantityInStock = 50; // Initial quantity
+        var extremelyLargeQuantity = int.MaxValue;
+
+        _repositoryMock.Setup(r => r.GetProductByIdAsync(id))
+            .ReturnsAsync(existingProduct);
+        _repositoryMock.Setup(r => r.UpdateProductAsync(It.IsAny<ProductEntity>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _service.UpdateInventoryAsync(id, extremelyLargeQuantity);
+
+        // Assert
+        result.Should().BeTrue();
+        _repositoryMock.Verify(r => r.GetProductByIdAsync(id), Times.Once);
+        _repositoryMock.Verify(r => r.UpdateProductAsync(It.Is<ProductEntity>(e =>
+            e.ProductId == id && e.QuantityInStock == extremelyLargeQuantity)), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateInventoryAsync_WithNullId_ShouldReturnFalse()
+    {
+        // Act
+        var result = await _service.UpdateInventoryAsync(null!, 10);
+
+        // Assert
+        result.Should().BeFalse();
+        _repositoryMock.Verify(r => r.GetProductByIdAsync(It.IsAny<string>()), Times.Never);
+        _repositoryMock.Verify(r => r.UpdateProductAsync(It.IsAny<ProductEntity>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateInventoryAsync_WithEmptyId_ShouldReturnFalse()
+    {
+        // Act
+        var result = await _service.UpdateInventoryAsync("", 10);
+
+        // Assert
+        result.Should().BeFalse();
+        _repositoryMock.Verify(r => r.GetProductByIdAsync(It.IsAny<string>()), Times.Never);
+        _repositoryMock.Verify(r => r.UpdateProductAsync(It.IsAny<ProductEntity>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateInventoryAsync_WithDbUpdateException_ShouldPropagateException()
+    {
+        // Setup
+        var id = "test-product-id";
+        var existingProduct = TestData.GetTestProductEntity(id);
+
+        _repositoryMock.Setup(r => r.GetProductByIdAsync(id))
+            .ReturnsAsync(existingProduct);
+        _repositoryMock.Setup(r => r.UpdateProductAsync(It.IsAny<ProductEntity>()))
+            .ThrowsAsync(new DbUpdateException("Database update error", new Exception("Inner exception")));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<DbUpdateException>(() => _service.UpdateInventoryAsync(id, 10));
+
+        _repositoryMock.Verify(r => r.GetProductByIdAsync(id), Times.Once);
+        _repositoryMock.Verify(r => r.UpdateProductAsync(It.IsAny<ProductEntity>()), Times.Once);
     }
 }

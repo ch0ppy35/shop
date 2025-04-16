@@ -18,7 +18,8 @@ public interface IProductService
     /// <param name="pageNumber">The page number (1-based)</param>
     /// <param name="pageSize">The page size</param>
     /// <returns>A tuple containing the paginated products and pagination metadata</returns>
-    Task<(IEnumerable<ProductMessage> Products, int TotalCount, int TotalPages)> GetPaginatedProductsAsync(int pageNumber, int pageSize);
+    Task<(IEnumerable<ProductMessage> Products, int TotalCount, int TotalPages)> GetPaginatedProductsAsync(
+        int pageNumber, int pageSize);
 
     /// <summary>
     /// Gets a product by ID

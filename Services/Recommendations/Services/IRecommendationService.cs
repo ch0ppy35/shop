@@ -16,8 +16,8 @@ public interface IRecommendationService
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>A list of recommended products</returns>
     Task<List<ProductMessage>> GetRecommendationsAsync(
-        string sessionId, 
-        List<CartItem> cartItems, 
+        string sessionId,
+        List<CartItem> cartItems,
         int maxRecommendations = 5,
         CancellationToken cancellationToken = default);
 }

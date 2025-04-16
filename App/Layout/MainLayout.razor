@@ -1,24 +1,23 @@
 ﻿@inherits LayoutComponentBase
-@using Frontend.Components
 @inject SessionService SessionService
 @inject IDialogService DialogService
 
 <MudLayout>
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
-            OnClick="@((e) => DrawerToggle())" />
+                       OnClick="@((e) => DrawerToggle())"/>
         <MudText Typo="Typo.h6" Class="ml-3">NATS Shop</MudText>
-        <MudSpacer />
+        <MudSpacer/>
         <MudTooltip Text="@($"Session ID: {_sessionId}")">
             <MudText Color="Color.Primary" Class="d-flex align-center">
-                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" Size="Size.Small" />
+                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" Size="Size.Small"/>
                 <span>Session</span>
             </MudText>
         </MudTooltip>
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2" Variant="DrawerVariant.Mini">
-        <NavMenu DrawerOpen="_drawerOpen" />
+        <NavMenu DrawerOpen="_drawerOpen"/>
     </MudDrawer>
 
     <MudMainContent>
@@ -63,4 +62,5 @@
             _timer = null;
         }
     }
+
 }

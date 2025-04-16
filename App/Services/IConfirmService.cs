@@ -18,5 +18,6 @@ public interface IConfirmService
     /// <param name="confirmType">The type of confirmation</param>
     /// <param name="confirmText">The text for the confirm button</param>
     /// <returns>True if confirmed, false otherwise</returns>
-    Task<bool> ShowConfirmation(string message, string title = "Confirm", string confirmType = "Warning", string confirmText = "Confirm");
+    Task<bool> ShowConfirmation(string message, string title = "Confirm", string confirmType = "Warning",
+        string confirmText = "Confirm");
 }

@@ -63,7 +63,8 @@ public class CartController : ControllerBase
     [HttpPost("items")]
     public async Task<IActionResult> AddItem([FromBody] CartItemDto item)
     {
-        _logger.LogInformation("Received request to add item to cart: {ProductId}, Quantity: {Quantity}", item.ProductId, item.Quantity);
+        _logger.LogInformation("Received request to add item to cart: {ProductId}, Quantity: {Quantity}",
+            item.ProductId, item.Quantity);
 
         try
         {
@@ -137,7 +138,8 @@ public class CartController : ControllerBase
     [HttpPut("items/{productId}")]
     public async Task<IActionResult> UpdateItem(string productId, [FromBody] CartItemUpdateDto update)
     {
-        _logger.LogInformation("Received request to update item in cart: {ProductId}, Quantity: {Quantity}", productId, update.Quantity);
+        _logger.LogInformation("Received request to update item in cart: {ProductId}, Quantity: {Quantity}", productId,
+            update.Quantity);
 
         try
         {

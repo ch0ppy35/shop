@@ -7,8 +7,14 @@ publish:
 test:
 	dotnet test --collect:"XPlat Code Coverage"
 
+clean-test-results:
+	find Tests -type d -name "TestResults" -exec rm -rf {} \;
+
 test-app:
 	dotnet test Tests/App.Tests/App.Tests.csproj
+
+test-integration:
+	dotnet test Tests/Integration.Tests/Integration.Tests.csproj
 
 build-app:
 	dotnet publish -c Release -o ./App/publish App

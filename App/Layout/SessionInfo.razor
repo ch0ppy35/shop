@@ -12,9 +12,9 @@
     protected override async Task OnInitializedAsync()
     {
         await UpdateSessionIdAsync();
-        
+
         // Set up a timer to refresh the session ID every 30 seconds
-        _timer = new Timer(async _ => 
+        _timer = new Timer(async _ =>
         {
             await UpdateSessionIdAsync();
             await InvokeAsync(StateHasChanged);
@@ -34,4 +34,5 @@
             _timer = null;
         }
     }
+
 }

@@ -29,7 +29,8 @@ public class RecommendationsController : ControllerBase
     [HttpGet("cart")]
     public async Task<IActionResult> GetCartRecommendations([FromQuery] int maxRecommendations = 5)
     {
-        _logger.LogInformation("Received request for cart recommendations, max: {MaxRecommendations}", maxRecommendations);
+        _logger.LogInformation("Received request for cart recommendations, max: {MaxRecommendations}",
+            maxRecommendations);
 
         try
         {

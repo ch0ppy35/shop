@@ -29,8 +29,8 @@ public class ProductDbContext : DbContext, IProductDbContext
         _logger = logger;
 
         _connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ??
-                           configuration.GetConnectionString("DefaultConnection") ??
-                           "Host=localhost;Database=products;Username=postgres;Password=postgres";
+                            configuration.GetConnectionString("DefaultConnection") ??
+                            "Host=localhost;Database=products;Username=postgres;Password=postgres";
 
         _logger.LogInformation("ProductDbContext initialized with connection string: {ConnectionString}",
             _connectionString.Replace("Password=", "Password=***"));

@@ -1,5 +1,3 @@
-@using Microsoft.AspNetCore.Components.Web
-
 <div class="tooltip-container">
     <span class="tooltip-content" @onmouseover="ShowTooltip" @onmouseout="HideTooltip">@Content</span>
     @if (IsVisible)
@@ -11,23 +9,17 @@
 </div>
 
 @code {
-    [Parameter]
-    public string Content { get; set; } = "";
+    [Parameter] public string Content { get; set; } = "";
 
-    [Parameter]
-    public string TooltipText { get; set; } = "";
+    [Parameter] public string TooltipText { get; set; } = "";
 
-    [Parameter]
-    public string Position { get; set; } = "top";
+    [Parameter] public string Position { get; set; } = "top";
 
-    [Parameter]
-    public string Width { get; set; } = "auto";
+    [Parameter] public string Width { get; set; } = "auto";
 
-    [Parameter]
-    public int OffsetY { get; set; } = 0;
+    [Parameter] public int OffsetY { get; set; } = 0;
 
-    [Parameter]
-    public int OffsetX { get; set; } = 0;
+    [Parameter] public int OffsetX { get; set; } = 0;
 
     private bool IsVisible { get; set; }
 
@@ -46,4 +38,5 @@
         IsVisible = false;
         StateHasChanged();
     }
+
 }

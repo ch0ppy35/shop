@@ -31,7 +31,8 @@ public class ConfirmService : IConfirmService
     /// <param name="confirmType">The type of confirmation</param>
     /// <param name="confirmText">The text for the confirm button</param>
     /// <returns>True if confirmed, false otherwise</returns>
-    public async Task<bool> ShowConfirmation(string message, string title = "Confirm", string confirmType = "Warning", string confirmText = "Confirm")
+    public async Task<bool> ShowConfirmation(string message, string title = "Confirm", string confirmType = "Warning",
+        string confirmText = "Confirm")
     {
         if (OnConfirmationRequested != null)
         {

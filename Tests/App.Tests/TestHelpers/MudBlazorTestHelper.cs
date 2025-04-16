@@ -1,8 +1,11 @@
 using Bunit;
+using Frontend.Models;
+using Frontend.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.JSInterop;
+using Moq;
 using MudBlazor;
 using MudBlazor.Services;
-using Moq;
 
 namespace App.Tests.TestHelpers;
 
@@ -19,11 +22,50 @@ public static class MudBlazorTestHelper
     {
         context.Services.AddMudServices();
 
+        // Add mock services
         var mockDialogService = CreateMockDialogService();
         context.Services.AddSingleton(mockDialogService.Object);
 
         var mockSnackbar = new MockSnackbar();
         context.Services.AddSingleton<ISnackbar>(mockSnackbar);
+
+        // Use our custom MockJSRuntime implementation instead of Moq
+        var mockJsRuntime = new MockJSRuntime();
+        context.Services.AddSingleton<IJSRuntime>(mockJsRuntime);
+    }
+
+    /// <summary>
+    /// Adds all required services for cart tests
+    /// </summary>
+    public static void AddCartTestServices(this TestContext context)
+    {
+        // Add MudBlazor services first
+        context.Services.AddMudServices();
+
+        // Create mocks
+        var mockCartService = new Mock<ICartService>();
+        var mockRecommendationService = new Mock<IRecommendationService>();
+        var mockDialogService = CreateMockDialogService();
+        var mockSnackbar = new MockSnackbar();
+        var mockJsRuntime = new MockJSRuntime();
+
+        // Setup default behavior
+        mockRecommendationService.Setup(s => s.GetCartRecommendationsAsync(It.IsAny<int>()))
+            .ReturnsAsync(new List<Product>());
+
+        // Create services
+        var toastService = new ToastService(mockSnackbar);
+        var confirmService = new ConfirmService(mockDialogService.Object);
+
+        // Register all services at once
+        context.Services.AddSingleton(mockDialogService.Object);
+        context.Services.AddSingleton<ISnackbar>(mockSnackbar);
+        context.Services.AddSingleton<IJSRuntime>(mockJsRuntime);
+        context.Services.AddSingleton(mockCartService.Object);
+        context.Services.AddSingleton(mockRecommendationService.Object);
+        context.Services.AddSingleton(toastService);
+        context.Services.AddSingleton(confirmService);
+        context.Services.AddSingleton<IConfirmService>(confirmService);
     }
 
     /// <summary>

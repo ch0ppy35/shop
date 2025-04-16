@@ -174,7 +174,8 @@ public class JsonLoggerTests
         {
             using (logger.BeginScope(state))
             {
-                logger.Log(LogLevel.Information, new EventId(1), "Test message", null, (state, ex) => state.ToString()!);
+                logger.Log(LogLevel.Information, new EventId(1), "Test message", null,
+                    (state, ex) => state.ToString()!);
             }
 
             var output = stringWriter.ToString().Trim();
@@ -226,7 +227,8 @@ public class JsonLoggerTests
 
             var logEntry = JsonSerializer.Deserialize<JsonElement>(jsonString, options);
 
-            if (logEntry.TryGetProperty("Properties", out var properties) && properties.ValueKind == JsonValueKind.Object)
+            if (logEntry.TryGetProperty("Properties", out var properties) &&
+                properties.ValueKind == JsonValueKind.Object)
             {
                 if (properties.TryGetProperty("UserId", out var userId))
                 {

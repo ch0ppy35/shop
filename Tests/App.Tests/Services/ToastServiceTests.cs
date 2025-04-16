@@ -1,7 +1,7 @@
+using App.Tests.TestHelpers;
 using FluentAssertions;
 using Frontend.Services;
 using MudBlazor;
-using App.Tests.TestHelpers;
 
 namespace App.Tests.Services;
 

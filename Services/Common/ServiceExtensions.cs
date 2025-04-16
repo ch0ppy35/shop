@@ -21,10 +21,7 @@ public static class ServiceExtensions
         services.AddLogging(builder =>
         {
             builder.ClearProviders();
-            builder.AddJsonLogger(config =>
-            {
-                config.MinimumLogLevel = LogLevel.Information;
-            });
+            builder.AddJsonLogger(config => { config.MinimumLogLevel = LogLevel.Information; });
         });
 
         services.AddSingleton<INatsService, NatsService>();
@@ -44,10 +41,7 @@ public static class ServiceExtensions
     public static IServiceCollection AddDatabaseServices(this IServiceCollection services, string connectionString)
     {
         services.AddDbContext<ProductDbContext>(options =>
-            options.UseNpgsql(connectionString, npgsqlOptions =>
-            {
-                npgsqlOptions.MigrationsAssembly("Products");
-            }));
+            options.UseNpgsql(connectionString, npgsqlOptions => { npgsqlOptions.MigrationsAssembly("Products"); }));
 
         services.AddScoped<IProductDbContext>(provider => provider.GetRequiredService<ProductDbContext>());
 
@@ -71,6 +65,4 @@ public static class ServiceExtensions
         services.AddSingleton<PostgresHealthCheck>();
         return services;
     }
-
-
 }

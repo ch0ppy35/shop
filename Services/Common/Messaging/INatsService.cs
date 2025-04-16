@@ -30,7 +30,8 @@ public interface INatsService : IAsyncDisposable
     /// <summary>
     /// Sends a request message and waits for a reply
     /// </summary>
-    Task<TResponse?> RequestAsync<TRequest, TResponse>(string subject, TRequest message, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+    Task<TResponse?> RequestAsync<TRequest, TResponse>(string subject, TRequest message, TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
         where TRequest : class
         where TResponse : class;
 
@@ -42,6 +43,7 @@ public interface INatsService : IAsyncDisposable
     /// <summary>
     /// Subscribes to the specified subject
     /// </summary>
-    IAsyncEnumerable<T> SubscribeAsync<T>(string subject, string? queueGroup = null, CancellationToken cancellationToken = default)
+    IAsyncEnumerable<T> SubscribeAsync<T>(string subject, string? queueGroup = null,
+        CancellationToken cancellationToken = default)
         where T : BaseMessage;
 }

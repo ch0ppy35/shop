@@ -12,12 +12,14 @@
 
 @if (loading)
 {
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
 }
 else if (cart.IsEmpty)
 {
     <MudAlert Severity="Severity.Info" Class="my-4">
-        Your cart is empty. <MudLink Href="/products" Underline="Underline.Always">Browse products</MudLink> to add items to
+        Your cart is empty.
+        <MudLink Href="/products" Underline="Underline.Always">Browse products</MudLink>
+        to add items to
         your cart.
     </MudAlert>
 }
@@ -34,22 +36,23 @@ else
             </HeaderContent>
             <RowTemplate>
                 <MudTd>
-                    <MudLink Href="@($"/products/{context.ProductId}")" Underline="Underline.Hover">@context.Name</MudLink>
+                    <MudLink Href="@($"/products/{context.ProductId}")"
+                             Underline="Underline.Hover">@context.Name</MudLink>
                 </MudTd>
                 <MudTd>$@context.Price.ToString("F2")</MudTd>
                 <MudTd>
                     <div class="d-flex align-center" style="width: 150px;">
                         <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Primary"
-                            OnClick="() => UpdateQuantity(context.ProductId, Math.Max(1, context.Quantity - 1))" />
+                                       OnClick="() => UpdateQuantity(context.ProductId, Math.Max(1, context.Quantity - 1))"/>
                         <MudText Class="mx-3 text-center" Style="min-width: 30px;">@context.Quantity</MudText>
                         <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
-                            OnClick="() => UpdateQuantity(context.ProductId, context.Quantity + 1)" />
+                                       OnClick="() => UpdateQuantity(context.ProductId, context.Quantity + 1)"/>
                     </div>
                 </MudTd>
                 <MudTd>$@context.TotalPrice.ToString("F2")</MudTd>
                 <MudTd>
                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                        OnClick="() => RemoveItem(context.ProductId)" />
+                                   OnClick="() => RemoveItem(context.ProductId)"/>
                 </MudTd>
             </RowTemplate>
             <FooterContent>
@@ -62,12 +65,15 @@ else
 
     <div class="d-flex justify-space-between mt-6">
         <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.RemoveShoppingCart"
-            OnClick="ClearCart">Clear Cart</MudButton>
+                   OnClick="ClearCart">Clear Cart
+        </MudButton>
         <div>
             <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack"
-                OnClick="ContinueShopping" Class="mr-3">Continue Shopping</MudButton>
+                       OnClick="ContinueShopping" Class="mr-3">Continue Shopping
+            </MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Payment"
-                Disabled="true">Checkout</MudButton>
+                       Disabled="true">Checkout
+            </MudButton>
         </div>
     </div>
 }
@@ -75,15 +81,15 @@ else
 @if (!cart.IsEmpty)
 {
     <div class="mt-8">
-        <MudDivider />
+        <MudDivider/>
         <MudText Typo="Typo.h5" Class="mt-6 mb-4">
-            <MudIcon Icon="@Icons.Material.Filled.Recommend" Class="mr-2" />
+            <MudIcon Icon="@Icons.Material.Filled.Recommend" Class="mr-2"/>
             Recommended Products
         </MudText>
 
         @if (loadingRecommendations)
         {
-            <MudProgressCircular Color="Color.Secondary" Indeterminate="true" />
+            <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
         }
         else if (recommendations.Count == 0)
         {
@@ -100,20 +106,22 @@ else
                         <MudCard Elevation="2" Class="h-100">
                             <MudCardHeader Style="height: 64px; overflow: hidden;">
                                 <MudText Typo="Typo.h6" Align="Align.Center" Class="w-100"
-                                    Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@product.Name</MudText>
+                                         Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@product.Name</MudText>
                             </MudCardHeader>
                             <MudCardContent>
                                 <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2"
-                                    Style="height: 80px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">
+                                         Style="height: 80px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">
                                     @product.Description</MudText>
-                                <MudText Typo="Typo.h6" Color="Color.Primary" Class="mt-2">$@product.Price.ToString("F2")</MudText>
+                                <MudText Typo="Typo.h6" Color="Color.Primary" Class="mt-2">
+                                    $@product.Price.ToString("F2")</MudText>
                             </MudCardContent>
                             <MudCardActions Class="d-flex justify-center">
                                 <MudButton Variant="Variant.Outlined" Color="Color.Primary"
-                                    OnClick="() => NavigateToProductDetails(product.Id)">
+                                           OnClick="() => NavigateToProductDetails(product.Id)">
                                     View Details
                                 </MudButton>
-                                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="() => AddToCart(product.Id)">
+                                <MudButton Variant="Variant.Filled" Color="Color.Success"
+                                           OnClick="() => AddToCart(product.Id)">
                                     Add to Cart
                                 </MudButton>
                             </MudCardActions>
@@ -180,10 +188,10 @@ else
         }
 
         var confirmed = await ConfirmService.ShowConfirmation(
-        "Are you sure you want to remove this item from your cart?",
-        "Remove Item",
-        "Warning",
-        "Remove");
+            "Are you sure you want to remove this item from your cart?",
+            "Remove Item",
+            "Warning",
+            "Remove");
 
         if (!confirmed)
         {
@@ -214,10 +222,10 @@ else
     private async Task ClearCart()
     {
         var confirmed = await ConfirmService.ShowConfirmation(
-        "Are you sure you want to clear your cart?",
-        "Clear Cart",
-        "Danger",
-        "Clear");
+            "Are you sure you want to clear your cart?",
+            "Clear Cart",
+            "Danger",
+            "Clear");
 
         if (!confirmed)
         {
@@ -297,4 +305,5 @@ else
             ToastService.ShowError("Failed to add item to cart. Please try again.");
         }
     }
+
 }

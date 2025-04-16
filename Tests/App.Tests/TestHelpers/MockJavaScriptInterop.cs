@@ -8,12 +8,12 @@ namespace App.Tests.TestHelpers;
 public class MockJavaScriptInterop : IJavaScriptInterop
 {
     private string? _sessionId;
-    
+
     /// <summary>
     /// Gets the captured session ID that was set
     /// </summary>
     public string? CapturedSessionId => _sessionId;
-    
+
     /// <summary>
     /// Gets the session ID from "local storage"
     /// </summary>

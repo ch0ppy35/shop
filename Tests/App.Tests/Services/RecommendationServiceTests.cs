@@ -1,7 +1,5 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
-using Frontend.Models;
 using Frontend.Services;
 using Moq;
 using Moq.Protected;
@@ -29,8 +27,16 @@ public class RecommendationServiceTests
     {
         var recommendations = new List<object>
         {
-            new { productId = "1", name = "Product 1", description = "Description 1", price = 10.99m, sku = "SKU1", location = "Location 1", quantityInStock = 10 },
-            new { productId = "2", name = "Product 2", description = "Description 2", price = 15.99m, sku = "SKU2", location = "Location 2", quantityInStock = 20 }
+            new
+            {
+                productId = "1", name = "Product 1", description = "Description 1", price = 10.99m, sku = "SKU1",
+                location = "Location 1", quantityInStock = 10
+            },
+            new
+            {
+                productId = "2", name = "Product 2", description = "Description 2", price = 15.99m, sku = "SKU2",
+                location = "Location 2", quantityInStock = 20
+            }
         };
 
         var response = new

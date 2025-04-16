@@ -1,8 +1,4 @@
 @page "/admin/products"
-@using Microsoft.AspNetCore.WebUtilities
-@using Frontend.Models
-@using Frontend.Services
-@using Frontend.Components
 @inject ProductService ProductService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
@@ -17,12 +13,13 @@
 
 <div class="mb-4">
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-        OnClick="() => OpenProductModal(null)">Add New Product</MudButton>
+               OnClick="() => OpenProductModal(null)">Add New Product
+    </MudButton>
 </div>
 
 @if (products == null)
 {
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
 }
 else if (products.Items == null || !products.Items.Any())
 {
@@ -55,10 +52,12 @@ else
                 <MudTd>
                     <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
                         <MudButton Color="Color.Primary" OnClick="() => OpenProductModal(context)">
-                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-1" Size="Size.Small" /> Edit
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-1" Size="Size.Small"/>
+                            Edit
                         </MudButton>
                         <MudButton Color="Color.Error" OnClick="async () => await ConfirmDelete(context)">
-                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="mr-1" Size="Size.Small" /> Delete
+                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="mr-1" Size="Size.Small"/>
+                            Delete
                         </MudButton>
                     </MudButtonGroup>
                 </MudTd>
@@ -67,14 +66,14 @@ else
     </MudPaper>
 
     <div class="d-flex justify-center mt-4">
-        <MudPagination Count="@products.TotalPages" SelectedChanged="NavigateToPage" Selected="@products.PageNumber" />
+        <MudPagination Count="@products.TotalPages" SelectedChanged="NavigateToPage" Selected="@products.PageNumber"/>
     </div>
 }
 
 <MudDialog Visible="showProductModal" Options="dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Inventory" Class="mr-3" />
+            <MudIcon Icon="@Icons.Material.Filled.Inventory" Class="mr-3"/>
             @(editingProduct.Id == null ? "Add New Product" : "Edit Product")
         </MudText>
     </TitleContent>
@@ -83,34 +82,34 @@ else
             <MudGrid>
                 <MudItem xs="12">
                     <MudTextField @bind-Value="editingProduct.Name" Label="Name" Required="true"
-                        RequiredError="Name is required" />
+                                  RequiredError="Name is required"/>
                 </MudItem>
 
                 <MudItem xs="12">
-                    <MudTextField @bind-Value="editingProduct.Description" Label="Description" Lines="3" />
+                    <MudTextField @bind-Value="editingProduct.Description" Label="Description" Lines="3"/>
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
                     <MudTextField @bind-Value="editingProduct.Price" Label="Price" Adornment="Adornment.Start"
-                        AdornmentIcon="@Icons.Material.Filled.AttachMoney" InputType="InputType.Number" />
+                                  AdornmentIcon="@Icons.Material.Filled.AttachMoney" InputType="InputType.Number"/>
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="editingProduct.Sku" Label="SKU" />
+                    <MudTextField @bind-Value="editingProduct.Sku" Label="SKU"/>
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="editingProduct.Location" Label="Location" />
+                    <MudTextField @bind-Value="editingProduct.Location" Label="Location"/>
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
                     <MudTextField @bind-Value="editingProduct.QuantityInStock" Label="Quantity In Stock"
-                        InputType="InputType.Number" />
+                                  InputType="InputType.Number"/>
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
                     <MudTextField @bind-Value="editingProduct.ReorderThreshold" Label="Reorder Threshold"
-                        InputType="InputType.Number" />
+                                  InputType="InputType.Number"/>
                 </MudItem>
             </MudGrid>
         </MudForm>
@@ -133,13 +132,13 @@ else
     private Product? productToDelete;
     private MudForm? form;
     private bool success;
+
     private DialogOptions dialogOptions = new()
     {
         FullWidth = true,
         MaxWidth = MaxWidth.Medium,
         CloseButton = true
     };
-
 
 
     protected override async Task OnInitializedAsync()
@@ -260,10 +259,10 @@ else
     {
         productToDelete = product;
         var confirmed = await ConfirmService.ShowConfirmation(
-        $"Are you sure you want to delete the product \"{product.Name}\"?",
-        "Delete Product",
-        "Danger",
-        "Delete");
+            $"Are you sure you want to delete the product \"{product.Name}\"?",
+            "Delete Product",
+            "Danger",
+            "Delete");
 
         if (confirmed)
         {
@@ -289,4 +288,5 @@ else
             await LoadProductsAsync(currentPage);
         }
     }
+
 }

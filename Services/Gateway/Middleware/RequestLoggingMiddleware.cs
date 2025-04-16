@@ -37,15 +37,15 @@ public class RequestLoggingMiddleware
             var sessionId = context.Items["SessionId"]?.ToString() ?? "Unknown";
 
             using (_logger.BeginScope(new Dictionary<string, object>
-            {
-                ["RequestId"] = requestId,
-                ["SessionId"] = sessionId,
-                ["UserAgent"] = userAgent,
-                ["ClientIP"] = clientIp,
-                ["Method"] = method,
-                ["Path"] = path.ToString(),
-                ["QueryString"] = queryString.ToString()
-            }))
+                   {
+                       ["RequestId"] = requestId,
+                       ["SessionId"] = sessionId,
+                       ["UserAgent"] = userAgent,
+                       ["ClientIP"] = clientIp,
+                       ["Method"] = method,
+                       ["Path"] = path.ToString(),
+                       ["QueryString"] = queryString.ToString()
+                   }))
             {
                 _logger.LogInformation(
                     "Request: {Method} {Path}{QueryString} - ClientIP: {ClientIP} - UserAgent: {UserAgent} - SessionId: {SessionId}",

@@ -14,7 +14,7 @@
 }
 else if (loading)
 {
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
 }
 else
 {
@@ -24,7 +24,8 @@ else
                 <MudText Typo="Typo.h3" Class="mb-2">@product?.Name</MudText>
 
                 <div class="mb-4">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mr-2" Style="text-transform: none;">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mr-2"
+                               Style="text-transform: none;">
                         SKU: @product?.Sku
                     </MudButton>
                     <MudButton Variant="Variant.Outlined" Color="Color.Info" Style="text-transform: none;">
@@ -34,37 +35,40 @@ else
 
                 <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">$@product?.Price.ToString("F2")</MudText>
 
-                <MudDivider Class="my-4" />
+                <MudDivider Class="my-4"/>
 
                 <MudText Typo="Typo.h5" Class="mb-2">Description</MudText>
                 <MudText Typo="Typo.body1" Class="mb-4">@product?.Description</MudText>
 
-                <MudDivider Class="my-4" />
+                <MudDivider Class="my-4"/>
 
                 <MudText Typo="Typo.h5" Class="mb-3">Inventory Details</MudText>
                 <MudSimpleTable Bordered="true" Hover="true">
                     <tbody>
-                        <tr>
-                            <th>Location</th>
-                            <td>@product?.Location</td>
-                        </tr>
-                        <tr>
-                            <th>Quantity in Stock</th>
-                            <td>@product?.QuantityInStock</td>
-                        </tr>
-                        <tr>
-                            <th>Reorder Threshold</th>
-                            <td>@product?.ReorderThreshold</td>
-                        </tr>
+                    <tr>
+                        <th>Location</th>
+                        <td>@product?.Location</td>
+                    </tr>
+                    <tr>
+                        <th>Quantity in Stock</th>
+                        <td>@product?.QuantityInStock</td>
+                    </tr>
+                    <tr>
+                        <th>Reorder Threshold</th>
+                        <td>@product?.ReorderThreshold</td>
+                    </tr>
                     </tbody>
                 </MudSimpleTable>
 
                 <div class="mt-6 d-flex gap-3">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack"
-                        OnClick="GoBack">Back to Products</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.ArrowBack"
+                               OnClick="GoBack">Back to Products
+                    </MudButton>
                     <MudButton Variant="Variant.Filled" Color="Color.Success"
-                        StartIcon="@Icons.Material.Filled.AddShoppingCart" OnClick="AddToCart"
-                        Disabled="@(product?.QuantityInStock <= 0)">Add to Cart</MudButton>
+                               StartIcon="@Icons.Material.Filled.AddShoppingCart" OnClick="AddToCart"
+                               Disabled="@(product?.QuantityInStock <= 0)">Add to Cart
+                    </MudButton>
                 </div>
 
                 @if (showQuantitySelector)
@@ -73,17 +77,21 @@ else
                         <MudText Typo="Typo.h6" Class="mb-3">Add to Cart</MudText>
                         <div class="d-flex align-center gap-3">
                             <div class="d-flex align-center" style="min-width: 120px;">
-                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Primary"
-                                    OnClick="() => quantity = Math.Max(1, quantity - 1)" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small"
+                                               Color="Color.Primary"
+                                               OnClick="() => quantity = Math.Max(1, quantity - 1)"/>
                                 <MudTextField @bind-Value="quantity" InputType="InputType.Number" Class="mx-2"
-                                    Style="min-width: 60px;" />
+                                              Style="min-width: 60px;"/>
                                 <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
-                                    OnClick="() => quantity = Math.Min(product?.QuantityInStock ?? 1, quantity + 1)" />
+                                               OnClick="() => quantity = Math.Min(product?.QuantityInStock ?? 1, quantity + 1)"/>
                             </div>
-                            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AddToCartWithQuantity">Add to
-                                Cart</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AddToCartWithQuantity">
+                                Add to
+                                Cart
+                            </MudButton>
                             <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
-                                OnClick="() => showQuantitySelector = false">Cancel</MudButton>
+                                       OnClick="() => showQuantitySelector = false">Cancel
+                            </MudButton>
                         </div>
                     </MudPaper>
                 }
@@ -93,8 +101,7 @@ else
 }
 
 @code {
-    [Parameter]
-    public string Id { get; set; } = string.Empty;
+    [Parameter] public string Id { get; set; } = string.Empty;
 
     private Product? product;
     private bool loading = true;
@@ -160,4 +167,5 @@ else
             ToastService.ShowError("Failed to add item to cart. Please try again.");
         }
     }
+
 }

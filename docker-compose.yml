@@ -1,22 +1,10 @@
 services:
+  # Dependencies
   nats:
     image: nats:2.11-scratch
     ports:
       - "4222:4222"
       - "8222:8222"
-    networks:
-      - nats-shop-network
-
-  frontend:
-    build:
-      context: ./App
-      dockerfile: Dockerfile
-    ports:
-      - "8081:80"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-    depends_on:
-      - gateway
     networks:
       - nats-shop-network
 
@@ -30,7 +18,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # - postgres-data:/var/lib/postgresql/data
       - ./Scripts/postgres-init:/docker-entrypoint-initdb.d
     networks:
       - nats-shop-network
@@ -39,6 +26,32 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  valkey:
+    image: valkey/valkey:8.1-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - nats-shop-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Services
+  frontend:
+    build:
+      context: ./App
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    depends_on:
+      - gateway
+    networks:
+      - nats-shop-network
 
   gateway:
     build:
@@ -92,21 +105,6 @@ services:
     networks:
       - nats-shop-network
 
-  valkey:
-    image: valkey/valkey:8.1-alpine
-    ports:
-      - "6379:6379"
-    networks:
-      - nats-shop-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
 networks:
   nats-shop-network:
     driver: bridge
-
-# volumes:
-#   postgres-data:

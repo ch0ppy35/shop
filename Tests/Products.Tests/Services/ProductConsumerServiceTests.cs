@@ -1,6 +1,7 @@
 using Common.Messaging;
 using Common.Models;
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Products.Services;
@@ -18,9 +19,9 @@ public class ProductConsumerServiceTests
     {
         _loggerMock = new Mock<ILogger<ProductConsumerService>>();
 
-        var configMock = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+        var configMock = new Mock<IConfiguration>();
 
-        var natsUrlSection = new Mock<Microsoft.Extensions.Configuration.IConfigurationSection>();
+        var natsUrlSection = new Mock<IConfigurationSection>();
         natsUrlSection.Setup(x => x.Value).Returns("nats://localhost:4222");
         configMock.Setup(x => x.GetSection("Nats:Url")).Returns(natsUrlSection.Object);
 
@@ -270,6 +271,78 @@ public class ProductConsumerServiceTests
         _productServiceMock.Verify(s => s.UpdateProductAsync(It.IsAny<ProductMessage>()), Times.Once);
         _productServiceMock.Verify(s => s.GetProductAsync(testMessage.ProductId!), Times.Never);
     }
+
+    [Fact]
+    public async Task HandleCreateProductRequest_ShouldHandleServiceException()
+    {
+        var testMessage = TestData.GetTestProductMessage();
+        testMessage.OperationType = ProductOperationType.Create;
+        testMessage.SessionId = "test-session";
+        testMessage.ReplyTo = "test.reply";
+
+        _productServiceMock.Setup(s => s.CreateProductAsync(It.IsAny<ProductMessage>()))
+            .ThrowsAsync(new InvalidOperationException("Test exception"));
+
+        var replyHandled = false;
+        ProductResponse? capturedResponse = null;
+
+        Action<string, ProductResponse> replyHandler = (subject, response) =>
+        {
+            replyHandled = true;
+            capturedResponse = response;
+        };
+
+        var consumerService = new ProductConsumerServiceTestWrapper(
+            _loggerMock.Object,
+            _natsServiceMock.Object,
+            _productServiceMock.Object);
+
+        await consumerService.TestHandleCreateProductRequest(testMessage, replyHandler);
+
+        replyHandled.Should().BeTrue();
+        capturedResponse.Should().NotBeNull();
+        capturedResponse!.Success.Should().BeFalse();
+        capturedResponse.Error.Should().NotBeNullOrEmpty();
+        capturedResponse.Error.Should().Contain("Test exception");
+        capturedResponse.SessionId.Should().Be("test-session");
+
+        _productServiceMock.Verify(s => s.CreateProductAsync(It.IsAny<ProductMessage>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleGetProductRequest_WithMissingProductId_ShouldReturnError()
+    {
+        var testMessage = TestData.GetTestProductMessage();
+        testMessage.ProductId = null; // Missing product ID
+        testMessage.OperationType = ProductOperationType.Get;
+        testMessage.SessionId = "test-session";
+        testMessage.ReplyTo = "test.reply";
+
+        var replyHandled = false;
+        ProductResponse? capturedResponse = null;
+
+        Action<string, ProductResponse> replyHandler = (subject, response) =>
+        {
+            replyHandled = true;
+            capturedResponse = response;
+        };
+
+        var consumerService = new ProductConsumerServiceTestWrapper(
+            _loggerMock.Object,
+            _natsServiceMock.Object,
+            _productServiceMock.Object);
+
+        await consumerService.TestHandleGetProductRequest(testMessage, replyHandler);
+
+        replyHandled.Should().BeTrue();
+        capturedResponse.Should().NotBeNull();
+        capturedResponse!.Success.Should().BeFalse();
+        capturedResponse.Error.Should().NotBeNullOrEmpty();
+        capturedResponse.Error.Should().Contain("null");
+        capturedResponse.SessionId.Should().Be("test-session");
+
+        _productServiceMock.Verify(s => s.GetProductAsync(It.IsAny<string>()), Times.Never);
+    }
 }
 
 /// <summary>
@@ -296,13 +369,9 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
 
         try
         {
-            var product = await _productService.GetProductAsync(message.ProductId!);
-
-            if (product != null)
+            if (string.IsNullOrEmpty(message.ProductId))
             {
-                response.Success = true;
-                response.Message = $"Product with ID {message.ProductId} found";
-                response.Product = product;
+                response.Error = "Product ID cannot be null or empty";
 
                 if (!string.IsNullOrEmpty(message.SessionId))
                 {
@@ -311,11 +380,27 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
             }
             else
             {
-                response.Error = $"Product with ID {message.ProductId} not found";
+                var product = await _productService.GetProductAsync(message.ProductId);
 
-                if (!string.IsNullOrEmpty(message.SessionId))
+                if (product != null)
                 {
-                    response.SessionId = message.SessionId;
+                    response.Success = true;
+                    response.Message = $"Product with ID {message.ProductId} found";
+                    response.Product = product;
+
+                    if (!string.IsNullOrEmpty(message.SessionId))
+                    {
+                        response.SessionId = message.SessionId;
+                    }
+                }
+                else
+                {
+                    response.Error = $"Product with ID {message.ProductId} not found";
+
+                    if (!string.IsNullOrEmpty(message.SessionId))
+                    {
+                        response.SessionId = message.SessionId;
+                    }
                 }
             }
         }
@@ -384,6 +469,12 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
     {
         var response = new ProductResponse { Success = false };
 
+        // Set session ID early to ensure it's always included
+        if (!string.IsNullOrEmpty(message.SessionId))
+        {
+            response.SessionId = message.SessionId;
+        }
+
         try
         {
             var product = await _productService.CreateProductAsync(message);
@@ -391,11 +482,6 @@ public class ProductConsumerServiceTestWrapper : ProductConsumerService
             response.Success = true;
             response.Message = $"Product with ID {product.ProductId} created";
             response.Product = product;
-
-            if (!string.IsNullOrEmpty(message.SessionId))
-            {
-                response.SessionId = message.SessionId;
-            }
         }
         catch (Exception ex)
         {

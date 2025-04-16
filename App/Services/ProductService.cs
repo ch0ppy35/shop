@@ -37,7 +37,9 @@ public class ProductService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<ProductListResponse>($"/api/products?page={page}&pageSize={pageSize}");
+            var response =
+                await _httpClient.GetFromJsonAsync<ProductListResponse>(
+                    $"/api/products?page={page}&pageSize={pageSize}");
 
             if (response == null || response.Products == null)
             {

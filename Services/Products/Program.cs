@@ -6,9 +6,8 @@ using Products.Health;
 using Products.Repositories;
 using Products.Services;
 
-
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ??
-                      "Host=localhost;Database=products;Username=postgres;Password=postgres";
+                       "Host=localhost;Database=products;Username=postgres;Password=postgres";
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -102,20 +101,17 @@ public class ProductInitializationService : BackgroundService
             _logger.LogInformation("Database is ready, now connecting to NATS server");
             try
             {
-
                 await _natsService.ConnectWithRetryAsync(-1);
                 _logger.LogInformation("Successfully connected to NATS server");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "NATS connection retry task failed");
-
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Database initialization or migration failed");
-
         }
 
 

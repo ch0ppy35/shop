@@ -25,7 +25,9 @@ public class RecommendationService : IRecommendationService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<RecommendationResponse>($"/api/recommendations/cart?maxRecommendations={maxRecommendations}");
+            var response =
+                await _httpClient.GetFromJsonAsync<RecommendationResponse>(
+                    $"/api/recommendations/cart?maxRecommendations={maxRecommendations}");
 
             if (response == null || response.Recommendations == null)
             {

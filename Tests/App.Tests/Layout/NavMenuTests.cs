@@ -1,12 +1,11 @@
+using App.Tests.TestHelpers;
 using Bunit;
 using FluentAssertions;
 using Frontend.Layout;
 using Frontend.Models;
 using Frontend.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using Moq;
-using App.Tests.TestHelpers;
 
 namespace App.Tests.Layout;
 
@@ -26,12 +25,6 @@ public class NavMenuTests : TestContext
             ItemCount = 0
         });
         Services.AddSingleton(_mockCartService.Object);
-
-        var mockJsRuntime = new Mock<IJSRuntime>();
-        mockJsRuntime
-            .Setup(js => js.InvokeAsync<object>(It.IsAny<string>(), It.IsAny<object[]>()))
-            .ReturnsAsync((object)null!);
-        Services.AddSingleton(mockJsRuntime.Object);
     }
 
     [Fact]

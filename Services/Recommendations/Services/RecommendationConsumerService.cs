@@ -52,7 +52,8 @@ public class RecommendationConsumerService : BackgroundService
 
         while (!_natsService.IsConnected && !stoppingToken.IsCancellationRequested && retryCount < maxRetries)
         {
-            _logger.LogInformation("Waiting for NATS connection to be established... (Attempt {RetryCount}/{MaxRetries})",
+            _logger.LogInformation(
+                "Waiting for NATS connection to be established... (Attempt {RetryCount}/{MaxRetries})",
                 retryCount + 1, maxRetries);
 
             await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
@@ -85,9 +86,11 @@ public class RecommendationConsumerService : BackgroundService
 
         try
         {
-            await foreach (var msg in _natsService.SubscribeAsync<RecommendationMessage>(subject, queueGroup, stoppingToken))
+            await foreach (var msg in _natsService.SubscribeAsync<RecommendationMessage>(subject, queueGroup,
+                               stoppingToken))
             {
-                _logger.LogInformation("Received get recommendations request - SessionId: {SessionId}, CartItems: {CartItemCount}",
+                _logger.LogInformation(
+                    "Received get recommendations request - SessionId: {SessionId}, CartItems: {CartItemCount}",
                     msg.SessionId ?? "Unknown", msg.CartItems?.Count ?? 0);
 
                 if (string.IsNullOrEmpty(msg.SessionId))
