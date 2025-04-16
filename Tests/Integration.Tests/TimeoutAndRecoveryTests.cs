@@ -88,6 +88,14 @@ public class TimeoutAndRecoveryTests : IClassFixture<IntegrationTestFixture>
 
         // Step 1: Try to get a non-existent product (this will fail)
         var testableNatsService = (TestableNatsService)_fixture.NatsService;
+
+        // Add a mock response for the non-existent product
+        testableNatsService.AddMockResponse("products.get", new ProductResponse
+        {
+            Success = false,
+            Error = "Product not found"
+        });
+
         var getResponse = await testableNatsService.RequestAsync<ProductMessage, ProductResponse>(
             "products.get",
             new ProductMessage

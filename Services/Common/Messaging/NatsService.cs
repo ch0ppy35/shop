@@ -156,7 +156,7 @@ public class NatsService : INatsService, IAsyncDisposable
     /// <summary>
     /// Sends a request message and waits for a reply
     /// </summary>
-    public async Task<TResponse?> RequestAsync<TRequest, TResponse>(string subject, TRequest message,
+    public virtual async Task<TResponse?> RequestAsync<TRequest, TResponse>(string subject, TRequest message,
         TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         where TRequest : class
         where TResponse : class
@@ -258,7 +258,7 @@ public class NatsService : INatsService, IAsyncDisposable
     /// <summary>
     /// Disposes the NATS connection
     /// </summary>
-    public async ValueTask DisposeAsync()
+    public virtual async ValueTask DisposeAsync()
     {
         if (_connection != null)
         {

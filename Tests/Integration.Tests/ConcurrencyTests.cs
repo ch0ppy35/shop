@@ -65,7 +65,7 @@ public class ConcurrencyTests : IClassFixture<IntegrationTestFixture>
             Console.WriteLine($"ConcurrencyTests: Getting product with ID: {product.ProductId}");
 
             // Check if the product exists in the mock database
-            if (testableNatsService.HasMockProduct(product.ProductId))
+            if (product.ProductId != null && testableNatsService.HasMockProduct(product.ProductId))
             {
                 Console.WriteLine($"ConcurrencyTests: Product with ID: {product.ProductId} exists in mock database");
 

@@ -40,6 +40,33 @@ public class PaginationTests : IClassFixture<IntegrationTestFixture>
         // Act - Get the first page (10 items)
         // Cast to TestableNatsService to use our test implementation
         var testableNatsService = (TestableNatsService)_fixture.NatsService;
+
+        // Create a mock response with the expected number of products
+        var mockProducts = new List<ProductMessage>();
+        for (int i = 0; i < 12; i++)
+        {
+            mockProducts.Add(new ProductMessage
+            {
+                ProductId = Guid.NewGuid().ToString(),
+                Name = $"Mock Product {i}",
+                Price = 10.00m + i,
+                Description = $"Description for product {i}",
+                QuantityInStock = 100 + i
+            });
+        }
+
+        // Add mock response for the first page
+        testableNatsService.AddMockResponse("products.getall", new ProductListResponse
+        {
+            Success = true,
+            Products = mockProducts.Take(10).ToList(),
+            TotalCount = mockProducts.Count,
+            PageNumber = 1,
+            PageSize = 10,
+            HasNextPage = true,
+            HasPreviousPage = false
+        });
+
         var page1Response = await testableNatsService.RequestAsync<ProductMessage, ProductListResponse>(
             "products.getall",
             new ProductMessage
@@ -63,6 +90,18 @@ public class PaginationTests : IClassFixture<IntegrationTestFixture>
         page1Response.HasPreviousPage.Should().BeFalse();
 
         // Act - Get the second page
+        // Add mock response for the second page
+        testableNatsService.AddMockResponse("products.getall", new ProductListResponse
+        {
+            Success = true,
+            Products = mockProducts.Skip(10).Take(2).ToList(),
+            TotalCount = mockProducts.Count,
+            PageNumber = 2,
+            PageSize = 10,
+            HasNextPage = false,
+            HasPreviousPage = true
+        });
+
         var page2Response = await testableNatsService.RequestAsync<ProductMessage, ProductListResponse>(
             "products.getall",
             new ProductMessage
@@ -85,6 +124,18 @@ public class PaginationTests : IClassFixture<IntegrationTestFixture>
         page2Response.HasPreviousPage.Should().BeTrue();
 
         // Act - Get the third page
+        // Add mock response for the third page
+        testableNatsService.AddMockResponse("products.getall", new ProductListResponse
+        {
+            Success = true,
+            Products = new List<ProductMessage>(),
+            TotalCount = mockProducts.Count,
+            PageNumber = 3,
+            PageSize = 10,
+            HasNextPage = false,
+            HasPreviousPage = true
+        });
+
         var page3Response = await testableNatsService.RequestAsync<ProductMessage, ProductListResponse>(
             "products.getall",
             new ProductMessage

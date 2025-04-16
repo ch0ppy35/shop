@@ -1,5 +1,4 @@
 using Cart.Services;
-using DotNet.Testcontainers.Builders;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -35,7 +34,6 @@ public class RedisFixture : IAsyncLifetime
         _redisContainer = new RedisBuilder()
             .WithImage("valkey/valkey:8.1-alpine")
             .WithPortBinding(6379, true)
-            // .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(6379))
             .Build();
     }
 

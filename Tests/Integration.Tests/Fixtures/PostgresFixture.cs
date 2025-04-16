@@ -40,7 +40,6 @@ public class PostgresFixture : IAsyncLifetime
             .WithUsername("postgres")
             .WithPassword("postgres")
             .WithPortBinding(5432, true)
-            // .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(5432))
             .Build();
     }
 
@@ -69,7 +68,7 @@ public class PostgresFixture : IAsyncLifetime
         // Create a real DbContext with the PostgreSQL container
         Console.WriteLine("Creating DbContext with PostgreSQL...");
         var options = new DbContextOptionsBuilder<ProductDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestProducts") // Use in-memory for tests
+            .UseNpgsql(ConnectionString) // Use actual PostgreSQL container
             .Options;
 
         var logger = _services.BuildServiceProvider().GetRequiredService<ILogger<ProductDbContext>>();

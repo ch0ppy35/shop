@@ -307,7 +307,7 @@ public class IntegrationTestFixture : IAsyncLifetime
     /// <summary>
     /// Creates a test product
     /// </summary>
-    public async Task<ProductMessage> CreateTestProductAsync(string? name = null, decimal? price = null)
+    public Task<ProductMessage> CreateTestProductAsync(string? name = null, decimal? price = null)
     {
         var productPrice = price ?? 19.99m;
         var productMessage = new ProductMessage
@@ -340,7 +340,7 @@ public class IntegrationTestFixture : IAsyncLifetime
         }
 
         // For testing, just return the product message directly
-        return productMessage;
+        return Task.FromResult(productMessage);
     }
 
     /// <summary>

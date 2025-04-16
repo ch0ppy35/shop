@@ -35,7 +35,6 @@ public class NatsFixture : IAsyncLifetime
         _natsContainer = new NatsBuilder()
             .WithImage("nats:2.11")
             .WithPortBinding(4222, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(4222))
             .Build();
     }
 
