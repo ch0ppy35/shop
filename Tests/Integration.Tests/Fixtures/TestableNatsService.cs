@@ -4,7 +4,6 @@ using Common.Messaging;
 using Common.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using NATS.Client.Core;
 
 namespace Integration.Tests.Fixtures;
 
@@ -208,7 +207,8 @@ public class TestableNatsService : NatsService
         }
 
         // If no mock response or handler, use the real NATS connection
-        _logger.LogInformation("No mock response or handler found for subject: {Subject}, using real NATS connection", subject);
+        _logger.LogInformation("No mock response or handler found for subject: {Subject}, using real NATS connection",
+            subject);
         return await base.RequestAsync<TRequest, TResponse>(subject, message, timeout, cancellationToken);
     }
 
@@ -222,6 +222,7 @@ public class TestableNatsService : NatsService
         {
             await subscription.DisposeAsync();
         }
+
         _subscriptions.Clear();
 
         // Dispose the base connection

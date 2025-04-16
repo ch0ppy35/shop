@@ -1,8 +1,8 @@
+using System.Text.Json;
 using Cart.Services;
 using Common.Database;
 using Common.Messaging;
 using Common.Models;
-using CartItem = Common.Models.CartItem;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -10,6 +10,7 @@ using Products.Repositories;
 using Products.Services;
 using Recommendations.Services;
 using Xunit;
+using CartItem = Common.Models.CartItem;
 
 namespace Integration.Tests.Fixtures;
 
@@ -151,7 +152,7 @@ public class IntegrationTestFixture : IAsyncLifetime
         // Register handlers for cart operations
         await natsService.RegisterHandler("cart.additem", async (message) =>
         {
-            var cartMessage = System.Text.Json.JsonSerializer.Deserialize<CartMessage>(message);
+            var cartMessage = JsonSerializer.Deserialize<CartMessage>(message);
             var cartItem = new CartItem
             {
                 ProductId = cartMessage!.ProductId,
@@ -160,35 +161,36 @@ public class IntegrationTestFixture : IAsyncLifetime
                 Quantity = cartMessage.Quantity
             };
             var result = await cartService.AddItemAsync(cartMessage.SessionId!, cartItem);
-            return System.Text.Json.JsonSerializer.Serialize(result);
+            return JsonSerializer.Serialize(result);
         });
 
         await natsService.RegisterHandler("cart.updateitem", async (message) =>
         {
-            var cartMessage = System.Text.Json.JsonSerializer.Deserialize<CartMessage>(message);
-            var result = await cartService.UpdateItemAsync(cartMessage!.SessionId!, cartMessage.ProductId!, cartMessage.Quantity);
-            return System.Text.Json.JsonSerializer.Serialize(result);
+            var cartMessage = JsonSerializer.Deserialize<CartMessage>(message);
+            var result = await cartService.UpdateItemAsync(cartMessage!.SessionId!, cartMessage.ProductId!,
+                cartMessage.Quantity);
+            return JsonSerializer.Serialize(result);
         });
 
         await natsService.RegisterHandler("cart.removeitem", async (message) =>
         {
-            var cartMessage = System.Text.Json.JsonSerializer.Deserialize<CartMessage>(message);
+            var cartMessage = JsonSerializer.Deserialize<CartMessage>(message);
             var result = await cartService.RemoveItemAsync(cartMessage!.SessionId!, cartMessage.ProductId!);
-            return System.Text.Json.JsonSerializer.Serialize(result);
+            return JsonSerializer.Serialize(result);
         });
 
         await natsService.RegisterHandler("cart.get", async (message) =>
         {
-            var cartMessage = System.Text.Json.JsonSerializer.Deserialize<CartMessage>(message);
+            var cartMessage = JsonSerializer.Deserialize<CartMessage>(message);
             var result = await cartService.GetCartAsync(cartMessage!.SessionId!);
-            return System.Text.Json.JsonSerializer.Serialize(result);
+            return JsonSerializer.Serialize(result);
         });
 
         await natsService.RegisterHandler("cart.clear", async (message) =>
         {
-            var cartMessage = System.Text.Json.JsonSerializer.Deserialize<CartMessage>(message);
+            var cartMessage = JsonSerializer.Deserialize<CartMessage>(message);
             var result = await cartService.ClearCartAsync(cartMessage!.SessionId!);
-            return System.Text.Json.JsonSerializer.Serialize(result);
+            return JsonSerializer.Serialize(result);
         });
     }
 
@@ -199,7 +201,7 @@ public class IntegrationTestFixture : IAsyncLifetime
         // Register handlers for product operations
         await natsService.RegisterHandler("products.get", async (message) =>
         {
-            var productMessage = System.Text.Json.JsonSerializer.Deserialize<ProductMessage>(message);
+            var productMessage = JsonSerializer.Deserialize<ProductMessage>(message);
             var product = await productService.GetProductAsync(productMessage!.ProductId!);
             var response = new ProductResponse
             {
@@ -207,37 +209,38 @@ public class IntegrationTestFixture : IAsyncLifetime
                 Product = product,
                 Error = product == null ? "Product not found" : null
             };
-            return System.Text.Json.JsonSerializer.Serialize(response);
+            return JsonSerializer.Serialize(response);
         });
 
         await natsService.RegisterHandler("products.create", async (message) =>
         {
-            var productMessage = System.Text.Json.JsonSerializer.Deserialize<ProductMessage>(message);
+            var productMessage = JsonSerializer.Deserialize<ProductMessage>(message);
             var product = await productService.CreateProductAsync(productMessage!);
             var response = new ProductResponse
             {
                 Success = true,
                 Product = product
             };
-            return System.Text.Json.JsonSerializer.Serialize(response);
+            return JsonSerializer.Serialize(response);
         });
 
         await natsService.RegisterHandler("products.update", async (message) =>
         {
-            var productMessage = System.Text.Json.JsonSerializer.Deserialize<ProductMessage>(message);
+            var productMessage = JsonSerializer.Deserialize<ProductMessage>(message);
             var success = await productService.UpdateProductAsync(productMessage!);
             var response = new ProductResponse
             {
                 Success = success,
                 Error = success ? null : "Failed to update product"
             };
-            return System.Text.Json.JsonSerializer.Serialize(response);
+            return JsonSerializer.Serialize(response);
         });
 
         await natsService.RegisterHandler("products.inventory.update", async (message) =>
         {
-            var productMessage = System.Text.Json.JsonSerializer.Deserialize<ProductMessage>(message);
-            var success = await productService.UpdateInventoryAsync(productMessage!.ProductId!, productMessage.QuantityInStock);
+            var productMessage = JsonSerializer.Deserialize<ProductMessage>(message);
+            var success =
+                await productService.UpdateInventoryAsync(productMessage!.ProductId!, productMessage.QuantityInStock);
             var product = success ? await productService.GetProductAsync(productMessage.ProductId!) : null;
             var response = new ProductResponse
             {
@@ -245,13 +248,13 @@ public class IntegrationTestFixture : IAsyncLifetime
                 Product = product,
                 Error = success ? null : "Failed to update inventory"
             };
-            return System.Text.Json.JsonSerializer.Serialize(response);
+            return JsonSerializer.Serialize(response);
         });
 
         // Add handler for getting all products
         await natsService.RegisterHandler("products.getall", async (message) =>
         {
-            var productMessage = System.Text.Json.JsonSerializer.Deserialize<ProductMessage>(message);
+            var productMessage = JsonSerializer.Deserialize<ProductMessage>(message);
             var (products, totalCount, totalPages) = await productService.GetPaginatedProductsAsync(
                 productMessage!.PageNumber,
                 productMessage.PageSize);
@@ -268,7 +271,7 @@ public class IntegrationTestFixture : IAsyncLifetime
                 HasNextPage = productMessage.PageNumber < totalPages
             };
 
-            return System.Text.Json.JsonSerializer.Serialize(response);
+            return JsonSerializer.Serialize(response);
         });
     }
 
@@ -279,7 +282,7 @@ public class IntegrationTestFixture : IAsyncLifetime
         // Register handlers for recommendation operations
         await natsService.RegisterHandler("recommendations.get", async (message) =>
         {
-            var recommendationMessage = System.Text.Json.JsonSerializer.Deserialize<RecommendationMessage>(message);
+            var recommendationMessage = JsonSerializer.Deserialize<RecommendationMessage>(message);
             var recommendations = await recommendationService.GetRecommendationsAsync(
                 recommendationMessage!.SessionId!,
                 recommendationMessage.CartItems ?? new List<CartItem>(),
@@ -292,7 +295,7 @@ public class IntegrationTestFixture : IAsyncLifetime
                 SessionId = recommendationMessage.SessionId
             };
 
-            return System.Text.Json.JsonSerializer.Serialize(response);
+            return JsonSerializer.Serialize(response);
         });
     }
 
@@ -327,7 +330,8 @@ public class IntegrationTestFixture : IAsyncLifetime
         if (NatsService is TestableNatsService testableNatsService)
         {
             testableNatsService.AddMockProduct(productMessage.ProductId!, productMessage);
-            Console.WriteLine($"IntegrationTestFixture: Added product {productMessage.ProductId} to TestableNatsService");
+            Console.WriteLine(
+                $"IntegrationTestFixture: Added product {productMessage.ProductId} to TestableNatsService");
 
             // Also create a response for products.inventory.update
             var response = new ProductResponse
@@ -346,7 +350,8 @@ public class IntegrationTestFixture : IAsyncLifetime
     /// <summary>
     /// Adds a product to the cart
     /// </summary>
-    public Task<CartResponse> AddProductToCartAsync(string sessionId, string productId, int quantity = 1, decimal price = 29.99m)
+    public Task<CartResponse> AddProductToCartAsync(string sessionId, string productId, int quantity = 1,
+        decimal price = 29.99m)
     {
         Console.WriteLine($"IntegrationTestFixture: Adding product {productId} to cart for session {sessionId}");
 
@@ -397,7 +402,8 @@ public class IntegrationTestFixture : IAsyncLifetime
             Console.WriteLine($"IntegrationTestFixture: Added cart to TestableNatsService with {items.Count} items");
         }
 
-        Console.WriteLine($"IntegrationTestFixture: Successfully added product to cart. Cart now has {response.Items?.Count ?? 0} items");
+        Console.WriteLine(
+            $"IntegrationTestFixture: Successfully added product to cart. Cart now has {response.Items?.Count ?? 0} items");
         return Task.FromResult(response);
     }
 
@@ -448,7 +454,8 @@ public class IntegrationTestFixture : IAsyncLifetime
             Console.WriteLine($"IntegrationTestFixture: Updated cart in TestableNatsService with {items.Count} items");
         }
 
-        Console.WriteLine($"IntegrationTestFixture: Successfully removed product from cart. Cart now has {response.Items?.Count ?? 0} items");
+        Console.WriteLine(
+            $"IntegrationTestFixture: Successfully removed product from cart. Cart now has {response.Items?.Count ?? 0} items");
         return Task.FromResult(response);
     }
 
@@ -494,7 +501,8 @@ public class IntegrationTestFixture : IAsyncLifetime
     /// </summary>
     public Task<CartResponse> UpdateCartItemAsync(string sessionId, string productId, int quantity)
     {
-        Console.WriteLine($"IntegrationTestFixture: Updating product {productId} quantity to {quantity} in cart for session {sessionId}");
+        Console.WriteLine(
+            $"IntegrationTestFixture: Updating product {productId} quantity to {quantity} in cart for session {sessionId}");
 
         // Get the current cart
         if (!_mockCartItems.TryGetValue(sessionId, out var items))
@@ -556,7 +564,8 @@ public class IntegrationTestFixture : IAsyncLifetime
             Console.WriteLine($"IntegrationTestFixture: Updated cart in TestableNatsService with {items.Count} items");
         }
 
-        Console.WriteLine($"IntegrationTestFixture: Successfully updated product quantity in cart. Cart now has {response.Items?.Count ?? 0} items");
+        Console.WriteLine(
+            $"IntegrationTestFixture: Successfully updated product quantity in cart. Cart now has {response.Items?.Count ?? 0} items");
         return Task.FromResult(response);
     }
 
@@ -604,7 +613,8 @@ public class IntegrationTestFixture : IAsyncLifetime
                 testableService.AddMockResponse("products.inventory.update", response);
                 Console.WriteLine($"IntegrationTestFixture: Added mock response for products.inventory.update");
 
-                Console.WriteLine($"IntegrationTestFixture: Successfully updated product inventory to {quantityInStock}");
+                Console.WriteLine(
+                    $"IntegrationTestFixture: Successfully updated product inventory to {quantityInStock}");
                 return Task.FromResult(response);
             }
         }
@@ -700,7 +710,8 @@ public class IntegrationTestFixture : IAsyncLifetime
 
             if (response != null && response.Success && response.Items?.Count > 0)
             {
-                Console.WriteLine($"IntegrationTestFixture: Got cart from TestableNatsService with {response.Items?.Count ?? 0} items");
+                Console.WriteLine(
+                    $"IntegrationTestFixture: Got cart from TestableNatsService with {response.Items?.Count ?? 0} items");
                 return response;
             }
         }
@@ -724,7 +735,8 @@ public class IntegrationTestFixture : IAsyncLifetime
         if (NatsService is TestableNatsService testableService && items.Count > 0)
         {
             testableService.AddMockCart(sessionId, defaultResponse);
-            Console.WriteLine($"IntegrationTestFixture: Added mock cart to TestableNatsService with {items.Count} items");
+            Console.WriteLine(
+                $"IntegrationTestFixture: Added mock cart to TestableNatsService with {items.Count} items");
         }
 
         return defaultResponse;
@@ -736,7 +748,8 @@ public class IntegrationTestFixture : IAsyncLifetime
     public Task<RecommendationResponse> GetRecommendationsAsync(string sessionId,
         List<CartItem>? cartItems = null, int maxRecommendations = 5)
     {
-        Console.WriteLine($"IntegrationTestFixture: Getting recommendations for session {sessionId} with {cartItems?.Count ?? 0} cart items");
+        Console.WriteLine(
+            $"IntegrationTestFixture: Getting recommendations for session {sessionId} with {cartItems?.Count ?? 0} cart items");
 
         // Create mock recommendations
         var recommendations = new List<ProductMessage>();
@@ -760,7 +773,8 @@ public class IntegrationTestFixture : IAsyncLifetime
             Recommendations = recommendations
         };
 
-        Console.WriteLine($"IntegrationTestFixture: Successfully got {response.Recommendations?.Count ?? 0} recommendations");
+        Console.WriteLine(
+            $"IntegrationTestFixture: Successfully got {response.Recommendations?.Count ?? 0} recommendations");
         return Task.FromResult(response);
     }
 }

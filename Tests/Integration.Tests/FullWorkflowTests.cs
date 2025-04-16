@@ -1,4 +1,3 @@
-using Common.Models;
 using FluentAssertions;
 using Integration.Tests.Fixtures;
 using Xunit;
@@ -27,7 +26,8 @@ public class FullWorkflowTests : IClassFixture<IntegrationTestFixture>
     [Fact]
     public async Task FullWorkflow_CreateProduct_AddToCart_GetRecommendations_ShouldSucceed()
     {
-        Console.WriteLine("\n=== Starting FullWorkflow_CreateProduct_AddToCart_GetRecommendations_ShouldSucceed test ===");
+        Console.WriteLine(
+            "\n=== Starting FullWorkflow_CreateProduct_AddToCart_GetRecommendations_ShouldSucceed test ===");
         // Arrange
         var sessionId = _fixture.CreateTestSessionId();
         Console.WriteLine($"Created test session ID: {sessionId}");

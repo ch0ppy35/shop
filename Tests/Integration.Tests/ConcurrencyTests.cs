@@ -76,7 +76,8 @@ public class ConcurrencyTests : IClassFixture<IntegrationTestFixture>
             }
             else
             {
-                Console.WriteLine($"ConcurrencyTests: Product with ID: {product.ProductId} does NOT exist in mock database");
+                Console.WriteLine(
+                    $"ConcurrencyTests: Product with ID: {product.ProductId} does NOT exist in mock database");
                 Assert.Fail($"Product with ID {product.ProductId} not found in mock database");
             }
         }
@@ -301,9 +302,12 @@ public class ConcurrencyTests : IClassFixture<IntegrationTestFixture>
             SessionId = sessionId,
             Recommendations = new List<ProductMessage>()
             {
-                new ProductMessage { ProductId = Guid.NewGuid().ToString(), Name = "Recommended Product 1", Price = 29.99m },
-                new ProductMessage { ProductId = Guid.NewGuid().ToString(), Name = "Recommended Product 2", Price = 19.99m },
-                new ProductMessage { ProductId = Guid.NewGuid().ToString(), Name = "Recommended Product 3", Price = 39.99m }
+                new ProductMessage
+                    { ProductId = Guid.NewGuid().ToString(), Name = "Recommended Product 1", Price = 29.99m },
+                new ProductMessage
+                    { ProductId = Guid.NewGuid().ToString(), Name = "Recommended Product 2", Price = 19.99m },
+                new ProductMessage
+                    { ProductId = Guid.NewGuid().ToString(), Name = "Recommended Product 3", Price = 39.99m }
             }
         };
 

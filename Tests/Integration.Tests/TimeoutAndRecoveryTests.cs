@@ -1,6 +1,7 @@
 using Common.Models;
 using FluentAssertions;
 using Integration.Tests.Fixtures;
+using NATS.Client.Core;
 using Xunit;
 
 namespace Integration.Tests;
@@ -21,7 +22,7 @@ public class TimeoutAndRecoveryTests : IClassFixture<IntegrationTestFixture>
         _fixture = fixture;
 
         // Make sure the TestableNatsService has the necessary mock responses
-        if (_fixture.NatsService is Fixtures.TestableNatsService testableNatsService)
+        if (_fixture.NatsService is TestableNatsService testableNatsService)
         {
             // Add mock responses for the tests
             testableNatsService.AddMockResponse("products.get", new ProductResponse
@@ -65,13 +66,13 @@ public class TimeoutAndRecoveryTests : IClassFixture<IntegrationTestFixture>
         var nonExistentProductId = Guid.NewGuid().ToString();
 
         // Act - Request with a very short timeout
-        var exception = new NATS.Client.Core.NatsNoRespondersException();
+        var exception = new NatsNoRespondersException();
 
         // Assert
         exception.Should().NotBeNull();
         // In our test environment, we're getting a NatsNoRespondersException
         // This is expected as it indicates the request didn't complete successfully
-        exception.Should().BeOfType<NATS.Client.Core.NatsNoRespondersException>();
+        exception.Should().BeOfType<NatsNoRespondersException>();
 
         return Task.CompletedTask;
     }
