@@ -59,7 +59,7 @@ public class TimeoutAndRecoveryTests : IClassFixture<IntegrationTestFixture>
     /// Tests request timeout handling
     /// </summary>
     [Fact]
-    public async Task RequestTimeout_ShouldHandleTimeoutGracefully()
+    public Task RequestTimeout_ShouldHandleTimeoutGracefully()
     {
         // Arrange
         var nonExistentProductId = Guid.NewGuid().ToString();
@@ -72,6 +72,8 @@ public class TimeoutAndRecoveryTests : IClassFixture<IntegrationTestFixture>
         // In our test environment, we're getting a NatsNoRespondersException
         // This is expected as it indicates the request didn't complete successfully
         exception.Should().BeOfType<NATS.Client.Core.NatsNoRespondersException>();
+
+        return Task.CompletedTask;
     }
 
     /// <summary>

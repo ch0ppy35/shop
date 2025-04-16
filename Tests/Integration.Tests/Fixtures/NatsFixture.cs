@@ -33,9 +33,9 @@ public class NatsFixture : IAsyncLifetime
     public NatsFixture()
     {
         _natsContainer = new NatsBuilder()
-            .WithImage("nats:2.11-scratch")
+            .WithImage("nats:2.11")
             .WithPortBinding(4222, true)
-            // .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(4222))
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(4222))
             .Build();
     }
 
@@ -70,6 +70,11 @@ public class NatsFixture : IAsyncLifetime
         {
             await natsService.ConnectWithRetryAsync(5);
             Console.WriteLine("Successfully connected to NATS");
+
+            // Now that we're connected, set up the subscriptions for all registered handlers
+            Console.WriteLine("Setting up NATS subscriptions for all subjects...");
+            await SetupNatsSubscriptions(natsService);
+            Console.WriteLine("NATS subscriptions setup complete");
         }
         catch (Exception ex)
         {
@@ -84,6 +89,51 @@ public class NatsFixture : IAsyncLifetime
         _services.AddSingleton<INatsService>(NatsService);
 
         _serviceProvider = _services.BuildServiceProvider();
+    }
+
+    /// <summary>
+    /// Sets up NATS subscriptions for all subjects
+    /// </summary>
+    private async Task SetupNatsSubscriptions(TestableNatsService natsService)
+    {
+        // Create subscriptions for all the common subjects
+        var subjects = new[]
+        {
+            "products.get",
+            "products.create",
+            "products.update",
+            "products.delete",
+            "products.getall",
+            "products.inventory.update",
+            "cart.additem",
+            "cart.updateitem",
+            "cart.removeitem",
+            "cart.get",
+            "cart.clear",
+            "recommendations.get"
+        };
+
+        // For each subject, ensure we have a subscription
+        foreach (var subject in subjects)
+        {
+            try
+            {
+                // The handler is already registered in TestableNatsService constructor
+                // We just need to create the subscription
+                if (natsService.IsConnected)
+                {
+                    Console.WriteLine($"Setting up subscription for subject: {subject}");
+                    // The RegisterHandler method will create the subscription
+                    // We're just calling it again to ensure the subscription is created
+                    // since the handlers were registered before the connection was established
+                    await natsService.ResubscribeHandler(subject);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error setting up subscription for subject {subject}: {ex.Message}");
+            }
+        }
     }
 
     /// <summary>

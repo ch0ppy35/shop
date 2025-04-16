@@ -323,9 +323,21 @@ public class IntegrationTestFixture : IAsyncLifetime
             OperationType = ProductOperationType.Create
         };
 
-        // In a real test, we would call the service, but for our mock we'll just return the message
-        // var createdProduct = await ProductService.CreateProductAsync(productMessage);
-        // return createdProduct;
+        // Store the product in the TestableNatsService's mock database
+        if (NatsService is TestableNatsService testableNatsService)
+        {
+            testableNatsService.AddMockProduct(productMessage.ProductId!, productMessage);
+            Console.WriteLine($"IntegrationTestFixture: Added product {productMessage.ProductId} to TestableNatsService");
+
+            // Also create a response for products.inventory.update
+            var response = new ProductResponse
+            {
+                Success = true,
+                Product = productMessage
+            };
+            testableNatsService.AddMockResponse("products.inventory.update", response);
+            Console.WriteLine($"IntegrationTestFixture: Added mock response for products.inventory.update");
+        }
 
         // For testing, just return the product message directly
         return productMessage;
@@ -334,7 +346,7 @@ public class IntegrationTestFixture : IAsyncLifetime
     /// <summary>
     /// Adds a product to the cart
     /// </summary>
-    public Task<CartResponse> AddProductToCartAsync(string sessionId, string productId, int quantity = 1, decimal price = 19.99m)
+    public Task<CartResponse> AddProductToCartAsync(string sessionId, string productId, int quantity = 1, decimal price = 29.99m)
     {
         Console.WriteLine($"IntegrationTestFixture: Adding product {productId} to cart for session {sessionId}");
 
@@ -378,22 +390,328 @@ public class IntegrationTestFixture : IAsyncLifetime
             TotalPrice = totalPrice
         };
 
+        // Store this cart in the TestableNatsService for future use
+        if (NatsService is TestableNatsService testableService)
+        {
+            testableService.AddMockCart(sessionId, response);
+            Console.WriteLine($"IntegrationTestFixture: Added cart to TestableNatsService with {items.Count} items");
+        }
+
         Console.WriteLine($"IntegrationTestFixture: Successfully added product to cart. Cart now has {response.Items?.Count ?? 0} items");
         return Task.FromResult(response);
     }
 
     /// <summary>
+    /// Removes a product from the cart
+    /// </summary>
+    public Task<CartResponse> RemoveProductFromCartAsync(string sessionId, string productId)
+    {
+        Console.WriteLine($"IntegrationTestFixture: Removing product {productId} from cart for session {sessionId}");
+
+        // Get the current cart
+        if (!_mockCartItems.TryGetValue(sessionId, out var items))
+        {
+            items = new List<CartItem>();
+            _mockCartItems[sessionId] = items;
+        }
+
+        // Check if the product is in the cart
+        var existingItem = items.FirstOrDefault(i => i.ProductId == productId);
+        if (existingItem != null)
+        {
+            // Remove the item
+            items.Remove(existingItem);
+            Console.WriteLine($"IntegrationTestFixture: Removed product {productId} from cart");
+        }
+        else
+        {
+            Console.WriteLine($"IntegrationTestFixture: Product {productId} not found in cart");
+        }
+
+        // Calculate totals
+        var totalItems = items.Count;
+        var totalPrice = items.Sum(i => i.Price * i.Quantity);
+
+        var response = new CartResponse
+        {
+            Success = true,
+            SessionId = sessionId,
+            Items = items.ToList(), // Return a copy of the list
+            ItemCount = totalItems,
+            TotalPrice = totalPrice
+        };
+
+        // Store this cart in the TestableNatsService for future use
+        if (NatsService is TestableNatsService testableService)
+        {
+            testableService.AddMockCart(sessionId, response);
+            Console.WriteLine($"IntegrationTestFixture: Updated cart in TestableNatsService with {items.Count} items");
+        }
+
+        Console.WriteLine($"IntegrationTestFixture: Successfully removed product from cart. Cart now has {response.Items?.Count ?? 0} items");
+        return Task.FromResult(response);
+    }
+
+    /// <summary>
+    /// Clears the cart
+    /// </summary>
+    public Task<CartResponse> ClearCartAsync(string sessionId)
+    {
+        Console.WriteLine($"IntegrationTestFixture: Clearing cart for session {sessionId}");
+
+        // Clear the cart
+        if (_mockCartItems.TryGetValue(sessionId, out var items))
+        {
+            items.Clear();
+        }
+        else
+        {
+            _mockCartItems[sessionId] = new List<CartItem>();
+        }
+
+        var response = new CartResponse
+        {
+            Success = true,
+            SessionId = sessionId,
+            Items = new List<CartItem>(),
+            ItemCount = 0,
+            TotalPrice = 0
+        };
+
+        // Store this cart in the TestableNatsService for future use
+        if (NatsService is TestableNatsService testableService)
+        {
+            testableService.AddMockCart(sessionId, response);
+            Console.WriteLine($"IntegrationTestFixture: Updated cart in TestableNatsService with 0 items");
+        }
+
+        Console.WriteLine($"IntegrationTestFixture: Successfully cleared cart");
+        return Task.FromResult(response);
+    }
+
+    /// <summary>
+    /// Updates a cart item's quantity
+    /// </summary>
+    public Task<CartResponse> UpdateCartItemAsync(string sessionId, string productId, int quantity)
+    {
+        Console.WriteLine($"IntegrationTestFixture: Updating product {productId} quantity to {quantity} in cart for session {sessionId}");
+
+        // Get the current cart
+        if (!_mockCartItems.TryGetValue(sessionId, out var items))
+        {
+            items = new List<CartItem>();
+            _mockCartItems[sessionId] = items;
+
+            // Return error if cart is empty
+            var errorResponse = new CartResponse
+            {
+                Success = false,
+                SessionId = sessionId,
+                Error = "Cart is empty or item not found",
+                Items = items.ToList()
+            };
+            return Task.FromResult(errorResponse);
+        }
+
+        // Check if the product is in the cart
+        var existingItem = items.FirstOrDefault(i => i.ProductId == productId);
+        if (existingItem != null)
+        {
+            // Update the quantity
+            existingItem.Quantity = quantity;
+            Console.WriteLine($"IntegrationTestFixture: Updated product {productId} quantity to {quantity}");
+        }
+        else
+        {
+            Console.WriteLine($"IntegrationTestFixture: Product {productId} not found in cart");
+
+            // Return error if item not found
+            var errorResponse = new CartResponse
+            {
+                Success = false,
+                SessionId = sessionId,
+                Error = "Item not found in cart",
+                Items = items.ToList()
+            };
+            return Task.FromResult(errorResponse);
+        }
+
+        // Calculate totals
+        var totalItems = items.Count;
+        var totalPrice = items.Sum(i => i.Price * i.Quantity);
+
+        var response = new CartResponse
+        {
+            Success = true,
+            SessionId = sessionId,
+            Items = items.ToList(), // Return a copy of the list
+            ItemCount = totalItems,
+            TotalPrice = totalPrice
+        };
+
+        // Store this cart in the TestableNatsService for future use
+        if (NatsService is TestableNatsService testableService)
+        {
+            testableService.AddMockCart(sessionId, response);
+            Console.WriteLine($"IntegrationTestFixture: Updated cart in TestableNatsService with {items.Count} items");
+        }
+
+        Console.WriteLine($"IntegrationTestFixture: Successfully updated product quantity in cart. Cart now has {response.Items?.Count ?? 0} items");
+        return Task.FromResult(response);
+    }
+
+    /// <summary>
+    /// Updates a product's inventory quantity
+    /// </summary>
+    public Task<ProductResponse> UpdateProductInventoryAsync(string productId, int quantityInStock)
+    {
+        Console.WriteLine($"IntegrationTestFixture: Updating product {productId} inventory to {quantityInStock}");
+
+        // Check if the product exists in our mock database
+        if (NatsService is TestableNatsService testableService)
+        {
+            if (!testableService.HasMockProduct(productId))
+            {
+                Console.WriteLine($"IntegrationTestFixture: Product {productId} not found");
+
+                // Return error if product not found
+                var errorResponse = new ProductResponse
+                {
+                    Success = false,
+                    Error = "Product not found"
+                };
+                return Task.FromResult(errorResponse);
+            }
+
+            // Get the existing product
+            var product = testableService.GetMockProduct(productId);
+            if (product != null)
+            {
+                // Update the inventory
+                product.QuantityInStock = quantityInStock;
+
+                // Update the product in the mock database
+                testableService.AddMockProduct(productId, product);
+
+                // Create a successful response
+                var response = new ProductResponse
+                {
+                    Success = true,
+                    Product = product
+                };
+
+                // Add a mock response for the inventory update
+                testableService.AddMockResponse("products.inventory.update", response);
+                Console.WriteLine($"IntegrationTestFixture: Added mock response for products.inventory.update");
+
+                Console.WriteLine($"IntegrationTestFixture: Successfully updated product inventory to {quantityInStock}");
+                return Task.FromResult(response);
+            }
+        }
+
+        // If we get here, something went wrong
+        var failureResponse = new ProductResponse
+        {
+            Success = false,
+            Error = "Failed to update product inventory"
+        };
+        return Task.FromResult(failureResponse);
+    }
+
+    /// <summary>
+    /// Gets a product by ID
+    /// </summary>
+    public Task<ProductResponse> GetProductAsync(string productId)
+    {
+        Console.WriteLine($"IntegrationTestFixture: Getting product {productId}");
+
+        // Check if the product exists in our mock database
+        if (NatsService is TestableNatsService testableService)
+        {
+            if (!testableService.HasMockProduct(productId))
+            {
+                Console.WriteLine($"IntegrationTestFixture: Product {productId} not found");
+
+                // Return error if product not found
+                var errorResponse = new ProductResponse
+                {
+                    Success = false,
+                    Error = "Product not found"
+                };
+                return Task.FromResult(errorResponse);
+            }
+
+            // Get the existing product
+            var product = testableService.GetMockProduct(productId);
+            if (product != null)
+            {
+                // Create a successful response
+                var response = new ProductResponse
+                {
+                    Success = true,
+                    Product = product
+                };
+
+                // Add a mock response for the get product
+                testableService.AddMockResponse("products.get", response);
+                Console.WriteLine($"IntegrationTestFixture: Added mock response for products.get");
+
+                Console.WriteLine($"IntegrationTestFixture: Successfully got product {productId}");
+                return Task.FromResult(response);
+            }
+        }
+
+        // If we get here, something went wrong
+        var failureResponse = new ProductResponse
+        {
+            Success = false,
+            Error = "Failed to get product"
+        };
+        return Task.FromResult(failureResponse);
+    }
+
+    /// <summary>
     /// Gets the cart
     /// </summary>
-    public Task<CartResponse> GetCartAsync(string sessionId)
+    public async Task<CartResponse> GetCartAsync(string sessionId)
     {
-        // Create a mock cart response for testing
-        // Check if we have any items for this session in our mock storage
+        // If we're using TestableNatsService, check if it has a mock cart for this session
+        if (NatsService is TestableNatsService testableNatsService)
+        {
+            // First, check if we have a cart in the TestableNatsService's mock database
+            if (testableNatsService.HasMockCart(sessionId))
+            {
+                Console.WriteLine($"IntegrationTestFixture: Found cart in TestableNatsService for session {sessionId}");
+                var cart = testableNatsService.GetMockCart(sessionId);
+                if (cart != null)
+                {
+                    return cart;
+                }
+            }
+
+            // Try to get the cart from the TestableNatsService
+            var response = await testableNatsService.RequestAsync<CartMessage, CartResponse>(
+                "cart.get",
+                new CartMessage
+                {
+                    SessionId = sessionId,
+                    OperationType = CartOperationType.GetCart
+                });
+
+            if (response != null && response.Success && response.Items?.Count > 0)
+            {
+                Console.WriteLine($"IntegrationTestFixture: Got cart from TestableNatsService with {response.Items?.Count ?? 0} items");
+                return response;
+            }
+        }
+
+        // Fallback to our mock cart storage
         var items = _mockCartItems.TryGetValue(sessionId, out var sessionItems)
             ? sessionItems
             : new List<CartItem>();
 
-        var response = new CartResponse
+        Console.WriteLine($"IntegrationTestFixture: Using fallback mock cart with {items.Count} items");
+        var defaultResponse = new CartResponse
         {
             Success = true,
             SessionId = sessionId,
@@ -402,7 +720,14 @@ public class IntegrationTestFixture : IAsyncLifetime
             TotalPrice = items.Sum(i => i.Price * i.Quantity)
         };
 
-        return Task.FromResult(response);
+        // Store this cart in the TestableNatsService for future use
+        if (NatsService is TestableNatsService testableService && items.Count > 0)
+        {
+            testableService.AddMockCart(sessionId, defaultResponse);
+            Console.WriteLine($"IntegrationTestFixture: Added mock cart to TestableNatsService with {items.Count} items");
+        }
+
+        return defaultResponse;
     }
 
     /// <summary>
