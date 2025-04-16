@@ -20,7 +20,7 @@ public class RedisFixture : IAsyncLifetime
     /// <summary>
     /// Gets the Redis service
     /// </summary>
-    public FakeRedisService RedisService { get; private set; } = null!;
+    public RedisService RedisService { get; private set; } = null!;
 
     /// <summary>
     /// Gets the Redis connection string
@@ -33,9 +33,9 @@ public class RedisFixture : IAsyncLifetime
     public RedisFixture()
     {
         _redisContainer = new RedisBuilder()
-            .WithImage("redis:latest")
+            .WithImage("valkey/valkey:8.1-alpine")
             .WithPortBinding(6379, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(6379))
+            // .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(6379))
             .Build();
     }
 
@@ -44,9 +44,11 @@ public class RedisFixture : IAsyncLifetime
     /// </summary>
     public async Task InitializeAsync()
     {
-        // Skip container startup for faster tests
-        // Use a mock Redis service instead
-        ConnectionString = "localhost:6379";
+        Console.WriteLine("Starting Redis container...");
+        // Start the Redis container
+        await _redisContainer.StartAsync();
+        ConnectionString = _redisContainer.GetConnectionString();
+        Console.WriteLine($"Redis container started with connection string: {ConnectionString}");
 
         // Configure services
         var configuration = new ConfigurationBuilder()
@@ -59,10 +61,23 @@ public class RedisFixture : IAsyncLifetime
         _services.AddSingleton<IConfiguration>(configuration);
         _services.AddLogging(builder => builder.AddConsole());
 
-        // Create a fake Redis service
-        RedisService = new FakeRedisService();
-        await RedisService.ConnectAsync();
+        // Create and register the real Redis service
+        var logger = _services.BuildServiceProvider().GetRequiredService<ILogger<RedisService>>();
+        Console.WriteLine("Creating RedisService...");
+        RedisService = new RedisService(logger, configuration);
+        Console.WriteLine("Connecting to Redis...");
+        try
+        {
+            await RedisService.ConnectWithRetryAsync(5);
+            Console.WriteLine("Successfully connected to Redis");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error connecting to Redis: {ex.Message}");
+            throw;
+        }
 
+        // Register the Redis service
         _services.AddSingleton<IRedisService>(RedisService);
 
         _serviceProvider = _services.BuildServiceProvider();
@@ -73,10 +88,12 @@ public class RedisFixture : IAsyncLifetime
     /// </summary>
     public async Task DisposeAsync()
     {
-        // Dispose the fake Redis service
+        // Dispose the Redis service
         if (RedisService != null)
         {
             await RedisService.DisposeAsync();
         }
+
+        await _redisContainer.DisposeAsync();
     }
 }

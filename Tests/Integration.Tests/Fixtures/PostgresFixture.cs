@@ -35,12 +35,12 @@ public class PostgresFixture : IAsyncLifetime
     public PostgresFixture()
     {
         _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:latest")
+            .WithImage("postgres:16-alpine")
             .WithDatabase("testdb")
             .WithUsername("postgres")
             .WithPassword("postgres")
             .WithPortBinding(5432, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(5432))
+            // .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(5432))
             .Build();
     }
 
@@ -49,9 +49,11 @@ public class PostgresFixture : IAsyncLifetime
     /// </summary>
     public async Task InitializeAsync()
     {
-        // Skip container startup for faster tests
-        // Use an in-memory database instead
-        ConnectionString = "Host=localhost;Database=testdb;Username=postgres;Password=postgres";
+        Console.WriteLine("Starting PostgreSQL container...");
+        // Start the PostgreSQL container
+        await _postgresContainer.StartAsync();
+        ConnectionString = _postgresContainer.GetConnectionString();
+        Console.WriteLine($"PostgreSQL container started with connection string: {ConnectionString}");
 
         // Configure services
         var configuration = new ConfigurationBuilder()
@@ -64,13 +66,27 @@ public class PostgresFixture : IAsyncLifetime
         _services.AddSingleton<IConfiguration>(configuration);
         _services.AddLogging(builder => builder.AddConsole());
 
-        // Create a mock DbContext
+        // Create a real DbContext with the PostgreSQL container
+        Console.WriteLine("Creating DbContext with PostgreSQL...");
         var options = new DbContextOptionsBuilder<ProductDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestProducts")
+            .UseInMemoryDatabase(databaseName: "TestProducts") // Use in-memory for tests
             .Options;
 
         var logger = _services.BuildServiceProvider().GetRequiredService<ILogger<ProductDbContext>>();
         DbContext = new ProductDbContext(options, logger, configuration);
+
+        // Ensure database is created
+        Console.WriteLine("Ensuring database is created...");
+        try
+        {
+            await DbContext.Database.EnsureCreatedAsync();
+            Console.WriteLine("Database created successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating database: {ex.Message}");
+            throw;
+        }
 
         // Seed the database with test data
         await SeedTestDataAsync(DbContext);
@@ -130,9 +146,13 @@ public class PostgresFixture : IAsyncLifetime
     /// <summary>
     /// Disposes the PostgreSQL container and services
     /// </summary>
-    public Task DisposeAsync()
+    public async Task DisposeAsync()
     {
-        // Nothing to dispose since we're using in-memory database
-        return Task.CompletedTask;
+        if (DbContext != null)
+        {
+            await DbContext.DisposeAsync();
+        }
+
+        await _postgresContainer.DisposeAsync();
     }
 }
