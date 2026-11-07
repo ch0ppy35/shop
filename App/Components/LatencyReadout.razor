@@ -1,0 +1,52 @@
+@implements IDisposable
+@inject RequestTimeline Timeline
+
+@* The popover API handles open/close, outside clicks and Escape without any script *@
+<button type="button" class="readout" popovertarget="wire-log"
+        aria-label="@(_latest == null ? "No API requests yet" : $"Last API request took {RequestLog.FormatMs(_latest.ElapsedMs)}. Show request log")">
+    @if (_latest == null)
+    {
+        <span class="pulse"></span>
+        <span>Waiting for first request</span>
+    }
+    else
+    {
+        <span class="pulse @SpeedClass is-fresh" @key="_latest.At"></span>
+        <span>Last request</span>
+        <strong class="num">@RequestLog.FormatMs(_latest.ElapsedMs)</strong>
+    }
+</button>
+
+<div id="wire-log" class="wire" popover>
+    <header>Calls from this browser to the gateway, newest first.</header>
+    <RequestLog/>
+</div>
+
+@code {
+    private RequestTiming? _latest;
+
+    private string? SpeedClass => _latest switch
+    {
+        { Status: 0 or >= 400 } => "is-slow",
+        { ElapsedMs: < 50 } => "is-fast",
+        { ElapsedMs: > 500 } => "is-slow",
+        _ => null
+    };
+
+    protected override void OnInitialized()
+    {
+        Timeline.Changed += OnChanged;
+        _latest = Timeline.Latest;
+    }
+
+    private void OnChanged()
+    {
+        _latest = Timeline.Latest;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Timeline.Changed -= OnChanged;
+    }
+}

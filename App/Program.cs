@@ -2,8 +2,6 @@ using Frontend;
 using Frontend.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using MudBlazor;
-using MudBlazor.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -23,6 +21,8 @@ builder.Services.AddScoped<IJavaScriptInterop, JavaScriptInterop>();
 
 builder.Services.AddScoped<SessionService>();
 
+builder.Services.AddSingleton<RequestTimeline>();
+
 builder.Services.AddScoped<SessionHttpMessageHandler>();
 
 builder.Services.AddScoped(sp =>
@@ -39,21 +39,11 @@ builder.Services.AddScoped(sp =>
     return client;
 });
 
-builder.Services.AddMudServices(config =>
-{
-    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
-    config.SnackbarConfiguration.PreventDuplicates = false;
-    config.SnackbarConfiguration.NewestOnTop = true;
-    config.SnackbarConfiguration.ShowCloseIcon = true;
-    config.SnackbarConfiguration.VisibleStateDuration = 3000;
-    config.SnackbarConfiguration.HideTransitionDuration = 500;
-    config.SnackbarConfiguration.ShowTransitionDuration = 500;
-});
-
 builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+builder.Services.AddScoped<CartState>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<IConfirmService, ConfirmService>();
 

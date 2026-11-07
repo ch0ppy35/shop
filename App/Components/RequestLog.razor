@@ -1,0 +1,69 @@
+@implements IDisposable
+@inject RequestTimeline Timeline
+
+@if (!_rows.Any())
+{
+    <p class="wire-empty">No API requests yet. Open a page that loads products and they'll appear here.</p>
+}
+else
+{
+    <table class="log">
+        <thead>
+        <tr>
+            <th scope="col">Request</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="log-ms">Time</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var row in _rows)
+        {
+            <tr>
+                <td class="log-path" title="@row.Method @row.Path"><span class="spec">@row.Method</span> @row.Path</td>
+                <td class="num @(row.Status is 0 or >= 400 ? "is-error" : null)">@(row.Status == 0 ? "Failed" : row.Status)</td>
+                <td class="log-ms num">
+                    @FormatMs(row.ElapsedMs)
+                    <span class="log-bar" style="width: @BarWidth(row.ElapsedMs)"></span>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public int Limit { get; set; } = 25;
+
+    private List<RequestTiming> _rows = new();
+    private double _slowest;
+
+    protected override void OnInitialized()
+    {
+        Timeline.Changed += OnChanged;
+        Load();
+    }
+
+    protected override void OnParametersSet() => Load();
+
+    private void Load()
+    {
+        _rows = Timeline.Entries.Take(Limit).ToList();
+        _slowest = _rows.Count == 0 ? 0 : _rows.Max(r => r.ElapsedMs);
+    }
+
+    private void OnChanged()
+    {
+        Load();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string BarWidth(double ms) =>
+        _slowest <= 0 ? "0" : $"{Math.Max(4, ms / _slowest * 100).ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}%";
+
+    public static string FormatMs(double ms) => ms < 10 ? $"{ms:0.0} ms" : $"{ms:0} ms";
+
+    public void Dispose()
+    {
+        Timeline.Changed -= OnChanged;
+    }
+}

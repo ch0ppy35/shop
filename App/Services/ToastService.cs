@@ -1,64 +1,101 @@
-using MudBlazor;
-
 namespace Frontend.Services;
 
 /// <summary>
-/// Service for displaying toast notifications using MudBlazor Snackbar
+/// The visual style of a toast
+/// </summary>
+public enum ToastKind
+{
+    Success,
+    Error,
+    Info,
+    Warning
+}
+
+/// <summary>
+/// A toast notification currently on screen
+/// </summary>
+public sealed record Toast(Guid Id, ToastKind Kind, string Message);
+
+/// <summary>
+/// Service for displaying toast notifications rendered by the Toaster component
 /// </summary>
 public class ToastService
 {
-    private readonly ISnackbar _snackbar;
+    private readonly List<Toast> _toasts = new();
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ToastService"/> class
+    /// Raised whenever a toast is shown or dismissed
     /// </summary>
-    /// <param name="snackbar">The MudBlazor snackbar service</param>
-    public ToastService(ISnackbar snackbar)
-    {
-        _snackbar = snackbar;
-    }
+    public event Action? Changed;
+
+    /// <summary>
+    /// Gets the toasts currently on screen, oldest first
+    /// </summary>
+    public IReadOnlyList<Toast> Toasts => _toasts;
 
     /// <summary>
     /// Shows a success toast notification
     /// </summary>
     /// <param name="message">The message to display</param>
-    /// <param name="title">The title of the toast (not used in MudBlazor)</param>
+    /// <param name="title">Unused; kept for call-site compatibility</param>
     /// <param name="autoHideDelayMs">The delay in milliseconds before auto-hiding the toast</param>
-    public void ShowSuccess(string message, string title = "Success", int autoHideDelayMs = 3000)
-    {
-        _snackbar.Add(message, Severity.Success, config => { config.VisibleStateDuration = autoHideDelayMs; });
-    }
+    public void ShowSuccess(string message, string title = "Success", int autoHideDelayMs = 3000) =>
+        Show(ToastKind.Success, message, autoHideDelayMs);
 
     /// <summary>
     /// Shows an error toast notification
     /// </summary>
     /// <param name="message">The message to display</param>
-    /// <param name="title">The title of the toast (not used in MudBlazor)</param>
+    /// <param name="title">Unused; kept for call-site compatibility</param>
     /// <param name="autoHideDelayMs">The delay in milliseconds before auto-hiding the toast</param>
-    public void ShowError(string message, string title = "Error", int autoHideDelayMs = 3000)
-    {
-        _snackbar.Add(message, Severity.Error, config => { config.VisibleStateDuration = autoHideDelayMs; });
-    }
+    public void ShowError(string message, string title = "Error", int autoHideDelayMs = 5000) =>
+        Show(ToastKind.Error, message, autoHideDelayMs);
 
     /// <summary>
     /// Shows an info toast notification
     /// </summary>
     /// <param name="message">The message to display</param>
-    /// <param name="title">The title of the toast (not used in MudBlazor)</param>
+    /// <param name="title">Unused; kept for call-site compatibility</param>
     /// <param name="autoHideDelayMs">The delay in milliseconds before auto-hiding the toast</param>
-    public void ShowInfo(string message, string title = "Information", int autoHideDelayMs = 3000)
-    {
-        _snackbar.Add(message, Severity.Info, config => { config.VisibleStateDuration = autoHideDelayMs; });
-    }
+    public void ShowInfo(string message, string title = "Information", int autoHideDelayMs = 3000) =>
+        Show(ToastKind.Info, message, autoHideDelayMs);
 
     /// <summary>
     /// Shows a warning toast notification
     /// </summary>
     /// <param name="message">The message to display</param>
-    /// <param name="title">The title of the toast (not used in MudBlazor)</param>
+    /// <param name="title">Unused; kept for call-site compatibility</param>
     /// <param name="autoHideDelayMs">The delay in milliseconds before auto-hiding the toast</param>
-    public void ShowWarning(string message, string title = "Warning", int autoHideDelayMs = 3000)
+    public void ShowWarning(string message, string title = "Warning", int autoHideDelayMs = 4000) =>
+        Show(ToastKind.Warning, message, autoHideDelayMs);
+
+    /// <summary>
+    /// Removes a toast before its timer runs out
+    /// </summary>
+    /// <param name="id">The toast ID</param>
+    public void Dismiss(Guid id)
     {
-        _snackbar.Add(message, Severity.Warning, config => { config.VisibleStateDuration = autoHideDelayMs; });
+        if (_toasts.RemoveAll(t => t.Id == id) > 0)
+        {
+            Changed?.Invoke();
+        }
+    }
+
+    private void Show(ToastKind kind, string message, int autoHideDelayMs)
+    {
+        var toast = new Toast(Guid.NewGuid(), kind, message);
+        _toasts.Add(toast);
+        Changed?.Invoke();
+
+        if (autoHideDelayMs > 0)
+        {
+            _ = DismissLaterAsync(toast.Id, autoHideDelayMs);
+        }
+    }
+
+    private async Task DismissLaterAsync(Guid id, int delayMs)
+    {
+        await Task.Delay(delayMs);
+        Dismiss(id);
     }
 }

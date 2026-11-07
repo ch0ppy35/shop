@@ -32,7 +32,7 @@ public class RedisFixture : IAsyncLifetime
     public RedisFixture()
     {
         _redisContainer = new RedisBuilder()
-            .WithImage("valkey/valkey:8.1-alpine")
+            .WithImage("valkey/valkey:9.1.3-alpine")
             .WithPortBinding(6379, true)
             .Build();
     }

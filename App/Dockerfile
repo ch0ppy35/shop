@@ -4,7 +4,7 @@ WORKDIR /app
 COPY Scripts/webserver/webserver.go .
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o webserver webserver.go
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 WORKDIR /src
 COPY  App.csproj .

@@ -43,7 +43,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:16-alpine
+          image: postgres:18-alpine
           ports:
             - containerPort: 5432
           env:
@@ -55,7 +55,7 @@ spec:
               value: products
           volumeMounts:
             - name: postgres-data
-              mountPath: /var/lib/postgresql/data
+              mountPath: /var/lib/postgresql
             - name: postgres-init
               mountPath: /docker-entrypoint-initdb.d
           resources:

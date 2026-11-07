@@ -11,7 +11,7 @@ public class SessionInfoTests : TestContext
 {
     public SessionInfoTests()
     {
-        this.AddMudBlazorTestServices();
+        this.AddAppTestServices();
     }
 
     [Fact]

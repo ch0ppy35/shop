@@ -1,0 +1,53 @@
+@inject IJSRuntime JS
+
+@* Native <dialog>: focus trapping, Escape and the backdrop come from the browser *@
+<dialog @ref="_dialog" class="modal @Class" aria-labelledby="@_titleId" @onclose="HandleClosed">
+    @if (Open)
+    {
+        <header class="modal-head">
+            <h2 id="@_titleId">@Title</h2>
+            <button type="button" class="icon-btn" aria-label="Close" @onclick="RequestClose">
+                <Icon Name="close"/>
+            </button>
+        </header>
+        @ChildContent
+    }
+</dialog>
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Raised when the dialog closes by Escape, the close button, or the caller setting Open to false
+    /// </summary>
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private readonly string _titleId = $"modal-{Guid.NewGuid():N}";
+    private ElementReference _dialog;
+    private bool _shown;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Open == _shown)
+        {
+            return;
+        }
+
+        _shown = Open;
+        await JS.InvokeVoidAsync(Open ? "ui.showModal" : "ui.close", _dialog);
+    }
+
+    private async Task RequestClose()
+    {
+        await JS.InvokeVoidAsync("ui.close", _dialog);
+    }
+
+    private async Task HandleClosed()
+    {
+        _shown = false;
+        await OnClose.InvokeAsync();
+    }
+}

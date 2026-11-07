@@ -1,46 +1,72 @@
 ﻿@page "/"
-@inject NavigationManager NavigationManager
+@inject ProductService ProductService
+@inject CartState CartState
+@inject ToastService ToastService
 
-<PageTitle>NATS Shop - Home</PageTitle>
+<PageTitle>NATS Shop</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-16">
-    <MudText Typo="Typo.h2" Align="Align.Center" GutterBottom="true" Class="mt-8">Welcome to NATS Shop</MudText>
-    <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-8">A microservice-based webshop built with .NET, Wasm, and
-        NATS messaging
-    </MudText>
+<section class="hero">
+    <div>
+        <h1 class="hero-title">Desk hardware, served fast.</h1>
+        <p class="hero-copy">
+            Keyboards, mice, monitors and the cables between them. Every request goes through a gateway and over
+            NATS to small .NET services, and the request log shows how long each one took.
+        </p>
+        <div class="hero-actions">
+            <a href="products" class="btn btn-signal btn-large">Browse products</a>
+            <a href="about" class="btn btn-large">How it's built</a>
+        </div>
+    </div>
 
-    <MudDivider Class="my-6"/>
+    <div class="wire-panel">
+        <header>Live requests from this browser, newest first</header>
+        <RequestLog Limit="8"/>
+    </div>
+</section>
 
-    <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-8">Browse our selection of products or learn more about
-        this application.
-    </MudText>
+<section aria-labelledby="featured-heading">
+    <div class="section-head">
+        <h2 id="featured-heading">From the catalog</h2>
+        <a href="products" class="btn btn-text">See all products</a>
+    </div>
 
-    <MudGrid Justify="Justify.Center" Class="mt-8">
-        <MudItem>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="NavigateToProducts"
-                       StartIcon="@Icons.Material.Filled.ShoppingBag">
-                Browse Products
-            </MudButton>
-        </MudItem>
-        <MudItem>
-            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Large" OnClick="NavigateToAbout"
-                       StartIcon="@Icons.Material.Filled.Info">
-                About
-            </MudButton>
-        </MudItem>
-    </MudGrid>
-</MudContainer>
+    <div class="plates">
+        @if (_featured == null)
+        {
+            @for (var i = 0; i < FeaturedCount; i++)
+            {
+                <div class="plate is-skeleton" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+            }
+        }
+        else
+        {
+            @foreach (var product in _featured)
+            {
+                <ProductPlate Product="product" OnAdd="AddToCart" @key="product.Id"/>
+            }
+        }
+    </div>
+</section>
 
 @code {
+    private const int FeaturedCount = 4;
+    private List<Product>? _featured;
 
-    private void NavigateToProducts()
+    protected override async Task OnInitializedAsync()
     {
-        NavigationManager.NavigateTo("/products");
+        var page = await ProductService.GetProductsAsync(1, FeaturedCount);
+        _featured = page.Items;
     }
 
-    private void NavigateToAbout()
+    private async Task AddToCart(Product product)
     {
-        NavigationManager.NavigateTo("/about");
+        if (await CartState.AddAsync(product.Id!))
+        {
+            ToastService.ShowSuccess($"Added {product.Name} to your cart.");
+        }
+        else
+        {
+            ToastService.ShowError($"Couldn't add {product.Name} to your cart. Check that the cart service is running and try again.");
+        }
     }
-
 }

@@ -1,0 +1,22 @@
+@* Plain links, so pages are bookmarkable and work with the back button *@
+@if (TotalPages > 1)
+{
+    <nav class="pager" aria-label="Pages">
+        <span class="num">Page @PageNumber of @TotalPages</span>
+        <span class="pager-pages">
+            @for (var p = 1; p <= TotalPages; p++)
+            {
+                var n = p;
+                <a href="@Href(n)" aria-current="@(n == PageNumber ? "page" : null)">@n</a>
+            }
+        </span>
+    </nav>
+}
+
+@code {
+    [Parameter, EditorRequired] public string BasePath { get; set; } = "";
+    [Parameter] public int PageNumber { get; set; }
+    [Parameter] public int TotalPages { get; set; }
+
+    private string Href(int page) => page == 1 ? BasePath : $"{BasePath}?page={page}";
+}

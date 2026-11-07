@@ -1,0 +1,34 @@
+@* Ten cells measured against four times the reorder threshold, so "low" always sits in the first quarter *@
+<span class="gauge @StateClass">
+    <span class="gauge-cells" aria-hidden="true">
+        @for (var i = 0; i < Cells; i++)
+        {
+            <span class="@(i < Filled ? "on" : null)"></span>
+        }
+    </span>
+    <span class="num">@Label</span>
+</span>
+
+@code {
+    private const int Cells = 10;
+
+    [Parameter] public int Quantity { get; set; }
+    [Parameter] public int ReorderThreshold { get; set; }
+
+    private bool IsOut => Quantity <= 0;
+    private bool IsLow => !IsOut && Quantity <= ReorderThreshold;
+
+    private int Filled
+    {
+        get
+        {
+            if (IsOut) return 0;
+            var full = Math.Max(ReorderThreshold, 1) * 4;
+            return Math.Clamp((int)Math.Ceiling(Quantity * (double)Cells / full), 1, Cells);
+        }
+    }
+
+    private string? StateClass => IsOut ? "is-out" : IsLow ? "is-low" : null;
+
+    private string Label => IsOut ? "Out of stock" : IsLow ? $"Only {Quantity} left" : $"{Quantity} in stock";
+}

@@ -1,18 +1,22 @@
+using System.Diagnostics;
+
 namespace Frontend.Services;
 
 /// <summary>
-/// HTTP message handler that adds the session ID to all outgoing requests
+/// HTTP message handler that adds the session ID to all outgoing requests and times each round trip
 /// </summary>
 public class SessionHttpMessageHandler : DelegatingHandler
 {
     private readonly SessionService _sessionService;
+    private readonly RequestTimeline _timeline;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionHttpMessageHandler"/> class
     /// </summary>
-    public SessionHttpMessageHandler(SessionService sessionService)
+    public SessionHttpMessageHandler(SessionService sessionService, RequestTimeline timeline)
     {
         _sessionService = sessionService;
+        _timeline = timeline;
     }
 
     /// <summary>
@@ -25,6 +29,22 @@ public class SessionHttpMessageHandler : DelegatingHandler
 
         request.Headers.Add("X-Session-ID", sessionId);
 
-        return await base.SendAsync(request, cancellationToken);
+        var started = Stopwatch.GetTimestamp();
+        var status = 0;
+        try
+        {
+            var response = await base.SendAsync(request, cancellationToken);
+            status = (int)response.StatusCode;
+            return response;
+        }
+        finally
+        {
+            _timeline.Record(new RequestTiming(
+                DateTimeOffset.Now,
+                request.Method.Method,
+                request.RequestUri?.PathAndQuery ?? "",
+                status,
+                Stopwatch.GetElapsedTime(started).TotalMilliseconds));
+        }
     }
 }

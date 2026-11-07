@@ -1,66 +1,27 @@
 ﻿@inherits LayoutComponentBase
-@inject SessionService SessionService
-@inject IDialogService DialogService
 
-<MudLayout>
-    <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
-                       OnClick="@((e) => DrawerToggle())"/>
-        <MudText Typo="Typo.h6" Class="ml-3">NATS Shop</MudText>
-        <MudSpacer/>
-        <MudTooltip Text="@($"Session ID: {_sessionId}")">
-            <MudText Color="Color.Primary" Class="d-flex align-center">
-                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" Size="Size.Small"/>
-                <span>Session</span>
-            </MudText>
-        </MudTooltip>
-    </MudAppBar>
+<div class="shell">
+    <header class="masthead">
+        <div class="masthead-inner">
+            <a href="" class="wordmark">NATS Shop</a>
+            <NavMenu/>
+            <LatencyReadout/>
+        </div>
+    </header>
 
-    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2" Variant="DrawerVariant.Mini">
-        <NavMenu DrawerOpen="_drawerOpen"/>
-    </MudDrawer>
-
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large" Class="my-4 pt-4">
+    <main class="page">
+        <ErrorBoundary>
             @Body
-        </MudContainer>
-    </MudMainContent>
-</MudLayout>
+        </ErrorBoundary>
+    </main>
 
-@code {
-    private bool _drawerOpen = true;
-    private string _sessionId = "Loading...";
-    private Timer? _timer;
+    <footer class="footer">
+        <div class="footer-inner">
+            <span>A demo storefront running on .NET 10 services connected by NATS.</span>
+            <SessionInfo/>
+        </div>
+    </footer>
+</div>
 
-    protected override async Task OnInitializedAsync()
-    {
-        await UpdateSessionIdAsync();
-
-        // Set up a timer to refresh the session ID every 30 seconds
-        _timer = new Timer(async _ =>
-        {
-            await UpdateSessionIdAsync();
-            await InvokeAsync(StateHasChanged);
-        }, null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
-    }
-
-    private async Task UpdateSessionIdAsync()
-    {
-        _sessionId = await SessionService.GetSessionIdAsync();
-    }
-
-    private void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_timer != null)
-        {
-            await _timer.DisposeAsync();
-            _timer = null;
-        }
-    }
-
-}
+<Toaster/>
+<ConfirmHost/>

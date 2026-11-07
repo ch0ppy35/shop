@@ -1,171 +1,97 @@
 @page "/products/{id}"
 @inject ProductService ProductService
-@inject ICartService CartService
-@inject NavigationManager NavigationManager
-@inject IJSRuntime JSRuntime
+@inject CartState CartState
 @inject ToastService ToastService
 
-<PageTitle>Product Details</PageTitle>
+<PageTitle>@(_product?.Name ?? "Product") | NATS Shop</PageTitle>
 
-@if (product == null && !loading)
+<a href="products" class="back"><Icon Name="back"/> All products</a>
+
+@if (_loading)
 {
-    <MudAlert Severity="Severity.Warning" Class="mb-4">Product not found.</MudAlert>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GoBack">Back to Products</MudButton>
+    <div class="detail" aria-busy="true">
+        <div class="plate is-skeleton" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    </div>
 }
-else if (loading)
+else if (_product == null)
 {
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+    <div class="empty">
+        <h1 class="title">Product not found</h1>
+        <p>There's no product with this ID. It may have been deleted from Admin.</p>
+        <a href="products" class="btn btn-signal">Browse products</a>
+    </div>
 }
 else
 {
-    <MudGrid>
-        <MudItem xs="12" md="8">
-            <MudPaper Elevation="0" Class="pa-4">
-                <MudText Typo="Typo.h3" Class="mb-2">@product?.Name</MudText>
+    <div class="detail">
+        <div>
+            <p class="detail-sku spec">@_product.Sku</p>
+            <h1 class="detail-name">@_product.Name</h1>
+            <p class="detail-desc">@_product.Description</p>
+        </div>
 
-                <div class="mb-4">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mr-2"
-                               Style="text-transform: none;">
-                        SKU: @product?.Sku
-                    </MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Info" Style="text-transform: none;">
-                        @product?.QuantityInStock in stock
-                    </MudButton>
+        <aside class="buy" aria-label="Purchase">
+            <div class="buy-price">$@_product.Price.ToString("F2")</div>
+            <StockGauge Quantity="_product.QuantityInStock" ReorderThreshold="_product.ReorderThreshold"/>
+
+            @if (_product.QuantityInStock > 0)
+            {
+                <div class="buy-row">
+                    <QuantityStepper @bind-Value="_quantity" Max="_product.QuantityInStock" ItemName="@_product.Name"/>
+                    <button type="button" class="btn btn-signal btn-large" disabled="@_adding" @onclick="AddToCart">
+                        <Icon Name="cart"/> Add to cart
+                    </button>
                 </div>
+            }
 
-                <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">$@product?.Price.ToString("F2")</MudText>
-
-                <MudDivider Class="my-4"/>
-
-                <MudText Typo="Typo.h5" Class="mb-2">Description</MudText>
-                <MudText Typo="Typo.body1" Class="mb-4">@product?.Description</MudText>
-
-                <MudDivider Class="my-4"/>
-
-                <MudText Typo="Typo.h5" Class="mb-3">Inventory Details</MudText>
-                <MudSimpleTable Bordered="true" Hover="true">
-                    <tbody>
-                    <tr>
-                        <th>Location</th>
-                        <td>@product?.Location</td>
-                    </tr>
-                    <tr>
-                        <th>Quantity in Stock</th>
-                        <td>@product?.QuantityInStock</td>
-                    </tr>
-                    <tr>
-                        <th>Reorder Threshold</th>
-                        <td>@product?.ReorderThreshold</td>
-                    </tr>
-                    </tbody>
-                </MudSimpleTable>
-
-                <div class="mt-6 d-flex gap-3">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.ArrowBack"
-                               OnClick="GoBack">Back to Products
-                    </MudButton>
-                    <MudButton Variant="Variant.Filled" Color="Color.Success"
-                               StartIcon="@Icons.Material.Filled.AddShoppingCart" OnClick="AddToCart"
-                               Disabled="@(product?.QuantityInStock <= 0)">Add to Cart
-                    </MudButton>
-                </div>
-
-                @if (showQuantitySelector)
-                {
-                    <MudPaper Elevation="2" Class="mt-4 pa-4">
-                        <MudText Typo="Typo.h6" Class="mb-3">Add to Cart</MudText>
-                        <div class="d-flex align-center gap-3">
-                            <div class="d-flex align-center" style="min-width: 120px;">
-                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small"
-                                               Color="Color.Primary"
-                                               OnClick="() => quantity = Math.Max(1, quantity - 1)"/>
-                                <MudTextField @bind-Value="quantity" InputType="InputType.Number" Class="mx-2"
-                                              Style="min-width: 60px;"/>
-                                <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
-                                               OnClick="() => quantity = Math.Min(product?.QuantityInStock ?? 1, quantity + 1)"/>
-                            </div>
-                            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AddToCartWithQuantity">
-                                Add to
-                                Cart
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
-                                       OnClick="() => showQuantitySelector = false">Cancel
-                            </MudButton>
-                        </div>
-                    </MudPaper>
-                }
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
+            <dl class="specs">
+                <dt>Ships from</dt>
+                <dd>@_product.Location</dd>
+                <dt>In stock</dt>
+                <dd>@_product.QuantityInStock</dd>
+                <dt>Reorder point</dt>
+                <dd>@_product.ReorderThreshold</dd>
+            </dl>
+        </aside>
+    </div>
 }
 
 @code {
     [Parameter] public string Id { get; set; } = string.Empty;
 
-    private Product? product;
-    private bool loading = true;
-    private bool showQuantitySelector = false;
-    private int quantity = 1;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadProductAsync();
-    }
+    private Product? _product;
+    private bool _loading = true;
+    private bool _adding;
+    private int _quantity = 1;
 
     protected override async Task OnParametersSetAsync()
     {
-        await LoadProductAsync();
+        _loading = true;
+        _quantity = 1;
+        _product = await ProductService.GetProductAsync(Id);
+        _loading = false;
     }
 
-    private async Task LoadProductAsync()
+    private async Task AddToCart()
     {
-        loading = true;
-        product = await ProductService.GetProductAsync(Id);
-        loading = false;
-    }
-
-    private void GoBack()
-    {
-        NavigationManager.NavigateTo("/products");
-    }
-
-    private void AddToCart()
-    {
-        showQuantitySelector = true;
-        quantity = 1;
-    }
-
-    private async Task AddToCartWithQuantity()
-    {
-        if (product == null || string.IsNullOrEmpty(product.Id))
+        if (_product?.Id == null)
         {
             return;
         }
 
-        var success = await CartService.AddItemAsync(product.Id, quantity);
-
-        if (success)
+        _adding = true;
+        if (await CartState.AddAsync(_product.Id, _quantity))
         {
-            ToastService.ShowSuccess($"{quantity} item(s) added to cart!");
-
-#if !TEST
-            try
-            {
-                // Refresh the cart count in the navigation menu
-                await JSRuntime.InvokeVoidAsync("cartHelper.refreshNavMenu");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error with JS interop: {ex.Message}");
-            }
-#endif
-            showQuantitySelector = false;
+            ToastService.ShowSuccess(_quantity == 1
+                ? $"Added {_product.Name} to your cart."
+                : $"Added {_quantity} × {_product.Name} to your cart.");
+            _quantity = 1;
         }
         else
         {
-            ToastService.ShowError("Failed to add item to cart. Please try again.");
+            ToastService.ShowError($"Couldn't add {_product.Name} to your cart. Check that the cart service is running and try again.");
         }
-    }
 
+        _adding = false;
+    }
 }

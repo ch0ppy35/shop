@@ -1,292 +1,221 @@
 @page "/admin/products"
 @inject ProductService ProductService
-@inject NavigationManager NavigationManager
-@inject IJSRuntime JSRuntime
 @inject ToastService ToastService
 @inject IConfirmService ConfirmService
 
-<PageTitle>Product Administration</PageTitle>
+<PageTitle>Admin | NATS Shop</PageTitle>
 
-<MudText Typo="Typo.h3" Class="mb-4">Product Administration</MudText>
-
-<MudText Typo="Typo.body1" Class="mb-4">Manage your product catalog.</MudText>
-
-<div class="mb-4">
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-               OnClick="() => OpenProductModal(null)">Add New Product
-    </MudButton>
+<div class="page-head">
+    <div>
+        <h1 class="title">Catalog</h1>
+        <p class="lede">Add, edit and remove products. Changes go to the products service and show up in the shop right away.</p>
+    </div>
+    <button type="button" class="btn btn-signal" @onclick="() => OpenEditor(null)">
+        <Icon Name="plus"/> Add product
+    </button>
 </div>
 
-@if (products == null)
+@if (_products == null)
 {
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+    <p class="lede" aria-busy="true">Loading the catalog…</p>
 }
-else if (products.Items == null || !products.Items.Any())
+else if (_products.Items.Count == 0)
 {
-    <MudAlert Severity="Severity.Info">No products found.</MudAlert>
+    <div class="empty">
+        <h2>The catalog is empty</h2>
+        <p>Add your first product and it will appear on the Products page.</p>
+        <button type="button" class="btn btn-signal" @onclick="() => OpenEditor(null)">Add product</button>
+    </div>
 }
 else
 {
-    <MudPaper Elevation="2" Class="pa-4 mb-4">
-        <MudTable Items="@products.Items" Hover="true" Breakpoint="Breakpoint.Sm">
-            <HeaderContent>
-                <MudTh>ID</MudTh>
-                <MudTh>Name</MudTh>
-                <MudTh>Price</MudTh>
-                <MudTh>SKU</MudTh>
-                <MudTh>Quantity In Stock</MudTh>
-                <MudTh>Actions</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd>
-                    <div style="position: relative; display: inline-block;">
-                        <MudTooltip Text="@context.Id" Placement="Placement.Top" Color="Color.Primary">
-                            <MudText>@(context.Id?.Length > 8 ? context.Id.Substring(0, 8) + "..." : context.Id)</MudText>
-                        </MudTooltip>
-                    </div>
-                </MudTd>
-                <MudTd>@context.Name</MudTd>
-                <MudTd>$@context.Price.ToString("F2")</MudTd>
-                <MudTd>@context.Sku</MudTd>
-                <MudTd>@context.QuantityInStock</MudTd>
-                <MudTd>
-                    <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
-                        <MudButton Color="Color.Primary" OnClick="() => OpenProductModal(context)">
-                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-1" Size="Size.Small"/>
-                            Edit
-                        </MudButton>
-                        <MudButton Color="Color.Error" OnClick="async () => await ConfirmDelete(context)">
-                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="mr-1" Size="Size.Small"/>
-                            Delete
-                        </MudButton>
-                    </MudButtonGroup>
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
-    </MudPaper>
-
-    <div class="d-flex justify-center mt-4">
-        <MudPagination Count="@products.TotalPages" SelectedChanged="NavigateToPage" Selected="@products.PageNumber"/>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">SKU</th>
+                <th scope="col">Warehouse</th>
+                <th scope="col" class="is-num">Price</th>
+                <th scope="col">Stock</th>
+                <th scope="col" class="is-actions"><span class="visually-hidden">Actions</span></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var product in _products.Items)
+            {
+                <tr @key="product.Id">
+                    <td class="is-name"><a href="@($"products/{product.Id}")">@product.Name</a></td>
+                    <td class="spec">@product.Sku</td>
+                    <td>@product.Location</td>
+                    <td class="is-num">$@product.Price.ToString("F2")</td>
+                    <td><StockGauge Quantity="product.QuantityInStock" ReorderThreshold="product.ReorderThreshold"/></td>
+                    <td class="is-actions">
+                        <button type="button" class="icon-btn" aria-label="Edit @product.Name"
+                                @onclick="() => OpenEditor(product)">
+                            <Icon Name="edit"/>
+                        </button>
+                        <button type="button" class="icon-btn is-danger" aria-label="Delete @product.Name"
+                                @onclick="() => ConfirmDelete(product)">
+                            <Icon Name="trash"/>
+                        </button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
     </div>
+
+    <Pager BasePath="admin/products" PageNumber="_products.PageNumber" TotalPages="_products.TotalPages"/>
 }
 
-<MudDialog Visible="showProductModal" Options="dialogOptions">
-    <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Inventory" Class="mr-3"/>
-            @(editingProduct.Id == null ? "Add New Product" : "Edit Product")
-        </MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudForm Model="@editingProduct" @ref="form" @bind-IsValid="@success">
-            <MudGrid>
-                <MudItem xs="12">
-                    <MudTextField @bind-Value="editingProduct.Name" Label="Name" Required="true"
-                                  RequiredError="Name is required"/>
-                </MudItem>
-
-                <MudItem xs="12">
-                    <MudTextField @bind-Value="editingProduct.Description" Label="Description" Lines="3"/>
-                </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="editingProduct.Price" Label="Price" Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.AttachMoney" InputType="InputType.Number"/>
-                </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="editingProduct.Sku" Label="SKU"/>
-                </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="editingProduct.Location" Label="Location"/>
-                </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="editingProduct.QuantityInStock" Label="Quantity In Stock"
-                                  InputType="InputType.Number"/>
-                </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="editingProduct.ReorderThreshold" Label="Reorder Threshold"
-                                  InputType="InputType.Number"/>
-                </MudItem>
-            </MudGrid>
-        </MudForm>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="CloseProductModal" Variant="Variant.Outlined" Color="Color.Secondary">Cancel</MudButton>
-        <MudButton OnClick="SaveProduct" Variant="Variant.Filled" Color="Color.Primary" Disabled="!success">Save
-        </MudButton>
-    </DialogActions>
-</MudDialog>
-
-
+<Modal Open="_editing != null" Title="@(_editing?.Id == null ? "Add product" : "Edit product")"
+       OnClose="CloseEditor">
+    @if (_editing != null)
+    {
+        <EditForm Model="_editing" OnValidSubmit="SaveProduct" FormName="product-editor">
+            <DataAnnotationsValidator/>
+            <div class="modal-body form-grid">
+                <div class="field is-wide">
+                    <label for="p-name">Name</label>
+                    <InputText id="p-name" @bind-Value="_editing.Name" autocomplete="off"/>
+                    <ValidationMessage For="() => _editing.Name"/>
+                </div>
+                <div class="field is-wide">
+                    <label for="p-desc">Description</label>
+                    <InputTextArea id="p-desc" @bind-Value="_editing.Description" rows="3"/>
+                </div>
+                <div class="field">
+                    <label for="p-price">Price ($)</label>
+                    <InputNumber id="p-price" @bind-Value="_editing.Price" step="0.01" min="0"/>
+                    <ValidationMessage For="() => _editing.Price"/>
+                </div>
+                <div class="field">
+                    <label for="p-sku">SKU</label>
+                    <InputText id="p-sku" @bind-Value="_editing.Sku" autocomplete="off"/>
+                </div>
+                <div class="field">
+                    <label for="p-stock">In stock</label>
+                    <InputNumber id="p-stock" @bind-Value="_editing.QuantityInStock" min="0"/>
+                    <ValidationMessage For="() => _editing.QuantityInStock"/>
+                </div>
+                <div class="field">
+                    <label for="p-reorder">Reorder point</label>
+                    <InputNumber id="p-reorder" @bind-Value="_editing.ReorderThreshold" min="0"/>
+                    <ValidationMessage For="() => _editing.ReorderThreshold"/>
+                </div>
+                <div class="field is-wide">
+                    <label for="p-location">Warehouse</label>
+                    <InputText id="p-location" @bind-Value="_editing.Location"/>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn" @onclick="CloseEditor">Cancel</button>
+                <button type="submit" class="btn btn-signal" disabled="@_saving">
+                    @(_editing.Id == null ? "Add product" : "Save changes")
+                </button>
+            </div>
+        </EditForm>
+    }
+</Modal>
 
 @code {
-    private PaginatedList<Product>? products;
-    private int currentPage = 1;
     private const int PageSize = 10;
-    private bool showProductModal = false;
-    private Product editingProduct = new();
-    private Product? productToDelete;
-    private MudForm? form;
-    private bool success;
+    private PaginatedList<Product>? _products;
+    private Product? _editing;
+    private bool _saving;
 
-    private DialogOptions dialogOptions = new()
-    {
-        FullWidth = true,
-        MaxWidth = MaxWidth.Medium,
-        CloseButton = true
-    };
-
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadProductsAsync(currentPage);
-    }
+    [SupplyParameterFromQuery] public int? Page { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
-        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("page", out var pageValue))
+        var page = Math.Max(Page ?? 1, 1);
+        if (_products?.PageNumber != page)
         {
-            if (int.TryParse(pageValue, out var page) && page > 0)
-            {
-                // Only load if the page is different from the current page
-                if (page != currentPage)
-                {
-                    currentPage = page;
-                    await LoadProductsAsync(currentPage);
-                }
-            }
-        }
-        else if (currentPage != 1)
-        {
-            // If no page parameter is in the URL, go to page 1
-            await NavigateToPage(1);
+            await LoadProductsAsync(page);
         }
     }
 
     private async Task LoadProductsAsync(int page)
     {
-        products = await ProductService.GetProductsAsync(page, PageSize);
-        currentPage = products.PageNumber;
+        _products = await ProductService.GetProductsAsync(page, PageSize);
     }
 
-    private async Task NavigateToPage(int page)
+    private void OpenEditor(Product? product)
     {
-        if (page < 1 || (products != null && page > products.TotalPages))
-        {
-            return;
-        }
-
-        currentPage = page;
-        await LoadProductsAsync(page);
-
-        // Update the URL without causing a navigation
-        var uri = NavigationManager.GetUriWithQueryParameter("page", page);
-        NavigationManager.NavigateTo(uri, false);
-    }
-
-    private void OpenProductModal(Product? product)
-    {
-        if (product == null)
-        {
-            // Creating a new product
-            editingProduct = new Product();
-        }
-        else
-        {
-            // Editing an existing product - create a copy to avoid modifying the original
-            editingProduct = new Product
+        // Edit a copy so cancelling leaves the table untouched
+        _editing = product == null
+            ? new Product()
+            : new Product
             {
                 Id = product.Id,
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
-                // Quantity field removed - using QuantityInStock instead
                 Sku = product.Sku,
                 Location = product.Location,
                 QuantityInStock = product.QuantityInStock,
                 ReorderThreshold = product.ReorderThreshold
             };
-        }
-
-        showProductModal = true;
     }
 
-    private void CloseProductModal()
+    private void CloseEditor()
     {
-        showProductModal = false;
+        _editing = null;
     }
 
     private async Task SaveProduct()
     {
-        if (string.IsNullOrEmpty(editingProduct.Id))
+        if (_editing == null)
         {
-            // Create new product
-            var createdProduct = await ProductService.CreateProductAsync(editingProduct);
-            if (createdProduct != null)
-            {
-                ToastService.ShowSuccess("Product created successfully!");
-            }
-            else
-            {
-                ToastService.ShowError("Failed to create product. Please try again.");
-            }
-        }
-        else
-        {
-            // Update existing product
-            var success = await ProductService.UpdateProductAsync(editingProduct);
-            if (success)
-            {
-                ToastService.ShowSuccess("Product updated successfully!");
-            }
-            else
-            {
-                ToastService.ShowError("Failed to update product. Please try again.");
-            }
+            return;
         }
 
-        // Close the modal and refresh the product list
-        CloseProductModal();
-        await LoadProductsAsync(currentPage);
+        _saving = true;
+        var product = _editing;
+        var isNew = string.IsNullOrEmpty(product.Id);
+
+        var saved = isNew
+            ? await ProductService.CreateProductAsync(product) != null
+            : await ProductService.UpdateProductAsync(product);
+
+        _saving = false;
+
+        if (!saved)
+        {
+            ToastService.ShowError(isNew
+                ? "Couldn't add the product. Check that the products service is running and try again."
+                : "Couldn't save your changes. Check that the products service is running and try again.");
+            return;
+        }
+
+        ToastService.ShowSuccess(isNew ? $"Added {product.Name}." : $"Saved changes to {product.Name}.");
+        CloseEditor();
+        await LoadProductsAsync(_products?.PageNumber ?? 1);
     }
 
     private async Task ConfirmDelete(Product product)
     {
-        productToDelete = product;
         var confirmed = await ConfirmService.ShowConfirmation(
-            $"Are you sure you want to delete the product \"{product.Name}\"?",
-            "Delete Product",
+            $"{product.Name} will be removed from the catalog. This can't be undone.",
+            "Delete this product?",
             "Danger",
-            "Delete");
+            "Delete product");
 
-        if (confirmed)
+        if (!confirmed)
         {
-            await DeleteProduct();
+            return;
         }
-    }
 
-    private async Task DeleteProduct()
-    {
-        if (productToDelete != null)
+        if (await ProductService.DeleteProductAsync(product.Id!))
         {
-            var success = await ProductService.DeleteProductAsync(productToDelete.Id!);
-            if (success)
-            {
-                ToastService.ShowSuccess("Product deleted successfully!");
-            }
-            else
-            {
-                ToastService.ShowError("Failed to delete product. Please try again.");
-            }
-
-            // Refresh the product list
-            await LoadProductsAsync(currentPage);
+            ToastService.ShowSuccess($"Deleted {product.Name}.");
         }
-    }
+        else
+        {
+            ToastService.ShowError($"Couldn't delete {product.Name}. Try again.");
+        }
 
+        await LoadProductsAsync(_products?.PageNumber ?? 1);
+    }
 }

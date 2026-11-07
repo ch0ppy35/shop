@@ -1,0 +1,40 @@
+<article class="plate">
+    <div class="plate-sku spec">
+        <span>@Product.Sku</span>
+        <span>@Product.Location</span>
+    </div>
+    <h3 class="plate-name"><a href="@($"products/{Product.Id}")">@Product.Name</a></h3>
+    <p class="plate-desc">@Product.Description</p>
+    <div class="plate-price">$@Product.Price.ToString("F2")</div>
+    <div class="plate-foot">
+        <StockGauge Quantity="Product.QuantityInStock" ReorderThreshold="Product.ReorderThreshold"/>
+        <button type="button" class="btn plate-add" disabled="@(_adding || Product.QuantityInStock <= 0)"
+                @onclick="Add" aria-label="Add @Product.Name to cart">
+            <Icon Name="cart"/> Add
+        </button>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public Product Product { get; set; } = default!;
+
+    /// <summary>
+    /// Called with the product when the shopper adds it to the cart
+    /// </summary>
+    [Parameter] public EventCallback<Product> OnAdd { get; set; }
+
+    private bool _adding;
+
+    private async Task Add()
+    {
+        _adding = true;
+        try
+        {
+            await OnAdd.InvokeAsync(Product);
+        }
+        finally
+        {
+            _adding = false;
+        }
+    }
+}

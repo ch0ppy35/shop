@@ -7,7 +7,7 @@ communicates with the backend services through the Gateway API.
 
 ### Prerequisites
 
-- .NET 9.0 SDK
+- .NET 10 SDK
 - Docker and Docker Compose (for running with the backend services)
 
 ### Running Locally

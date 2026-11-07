@@ -15,56 +15,29 @@ public class NavMenuTests : TestContext
 
     public NavMenuTests()
     {
-        this.AddMudBlazorTestServices();
-
-        _mockCartService = new Mock<ICartService>();
-        _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(new ShoppingCart
-        {
-            Items = new List<CartItem>(),
-            TotalPrice = 0,
-            ItemCount = 0
-        });
-        Services.AddSingleton(_mockCartService.Object);
+        _mockCartService = this.AddAppTestServices();
     }
 
     [Fact]
-    public void NavMenu_ShouldRender_WithLinks_WhenDrawerOpen()
+    public void NavMenu_ShouldRender_AllLinks()
     {
-        var cut = RenderComponent<NavMenu>(parameters => parameters
-            .Add(p => p.DrawerOpen, true));
+        var cut = RenderComponent<NavMenu>();
 
-        cut.Markup.Should().Contain("href=\"\""); // Home link has empty href
-        cut.Markup.Should().Contain("href=\"products\""); // MudBlazor doesn't add leading slash
-        cut.Markup.Should().Contain("href=\"cart\""); // MudBlazor doesn't add leading slash
-        cut.Markup.Should().Contain("href=\"admin/products\""); // MudBlazor doesn't add leading slash
-        cut.Markup.Should().Contain("href=\"about\""); // MudBlazor doesn't add leading slash
-        cut.Markup.Should().Contain("Home");
-        cut.Markup.Should().Contain("Products");
-        cut.Markup.Should().Contain("Cart");
-        cut.Markup.Should().Contain("Admin");
-        cut.Markup.Should().Contain("About");
+        var hrefs = cut.FindAll("a").Select(a => a.GetAttribute("href"));
+        hrefs.Should().Equal("products", "cart", "admin/products", "about");
+        cut.Markup.Should().Contain("Products").And.Contain("Cart").And.Contain("Admin").And.Contain("About");
     }
 
     [Fact]
-    public void NavMenu_ShouldRender_WithoutText_WhenDrawerClosed()
+    public void NavMenu_ShouldHideCartCount_WhenCartIsEmpty()
     {
-        var cut = RenderComponent<NavMenu>(parameters => parameters
-            .Add(p => p.DrawerOpen, false));
+        var cut = RenderComponent<NavMenu>();
 
-        cut.Markup.Should().Contain("href=\"\""); // Home link has empty href
-        cut.Markup.Should().Contain("href=\"products\""); // MudBlazor doesn't add leading slash
-        cut.Markup.Should().Contain("href=\"cart\""); // MudBlazor doesn't add leading slash
-        cut.Markup.Should().Contain("href=\"admin/products\""); // MudBlazor doesn't add leading slash
-        cut.Markup.Should().Contain("href=\"about\""); // MudBlazor doesn't add leading slash
-        cut.Markup.Should().NotContain("<span>Home</span>");
-        cut.Markup.Should().NotContain("<span>Products</span>");
-        cut.Markup.Should().NotContain("<span>Cart</span>");
-        cut.Markup.Should().NotContain("<span>Admin</span>");
-        cut.Markup.Should().NotContain("<span>About</span>");
+        cut.FindAll(".cart-count").Should().BeEmpty();
     }
 
     [Fact]
-    public void NavMenu_ShouldShowCartCount_WhenCartHasItems_AndDrawerOpen()
+    public void NavMenu_ShouldShowCartCount_WhenCartHasItems()
     {
         _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(new ShoppingCart
         {
@@ -77,31 +50,18 @@ public class NavMenuTests : TestContext
             ItemCount = 3
         });
 
-        var cut = RenderComponent<NavMenu>(parameters => parameters
-            .Add(p => p.DrawerOpen, true));
+        var cut = RenderComponent<NavMenu>();
 
-        cut.Markup.Should().Contain("3");
-        cut.Markup.Should().Contain("Cart");
+        cut.WaitForAssertion(() => cut.Find(".cart-count").TextContent.Should().Be("3"));
     }
 
     [Fact]
-    public void NavMenu_ShouldShowCartCount_WhenCartHasItems_AndDrawerClosed()
+    public void NavMenu_ShouldUpdateCartCount_WhenCartStateChanges()
     {
-        _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(new ShoppingCart
-        {
-            Items = new List<CartItem>
-            {
-                new() { ProductId = "1", Quantity = 2 },
-                new() { ProductId = "2", Quantity = 1 }
-            },
-            TotalPrice = 29.99m,
-            ItemCount = 3
-        });
+        var cut = RenderComponent<NavMenu>();
 
-        var cut = RenderComponent<NavMenu>(parameters => parameters
-            .Add(p => p.DrawerOpen, false));
+        Services.GetRequiredService<CartState>().SetItemCount(5);
 
-        cut.Markup.Should().Contain("3");
-        cut.Markup.Should().NotContain("<span>Cart</span>");
+        cut.WaitForAssertion(() => cut.Find(".cart-count").TextContent.Should().Be("5"));
     }
 }

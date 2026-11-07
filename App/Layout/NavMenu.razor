@@ -1,102 +1,30 @@
-﻿<MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
-        @if (DrawerOpen)
-        {
-            <span>Home</span>
-        }
-    </MudNavLink>
+﻿@implements IDisposable
+@inject CartState CartState
 
-    <MudNavLink Href="products" Icon="@Icons.Material.Filled.Inventory">
-        @if (DrawerOpen)
+<nav class="nav" aria-label="Main">
+    <NavLink href="products">Products</NavLink>
+    <NavLink href="cart">
+        Cart
+        @if (CartState.ItemCount > 0)
         {
-            <span>Products</span>
+            <span class="cart-count num" aria-label="@CartState.ItemCount items">@CartState.ItemCount</span>
         }
-    </MudNavLink>
-
-    <MudNavLink Href="cart" Icon="@Icons.Material.Filled.ShoppingCart">
-        @if (DrawerOpen)
-        {
-            @if (cartItemCount > 0)
-            {
-                <MudBadge Content="@cartItemCount" Color="Color.Primary" Origin="Origin.CenterRight" BadgeClass="mx-2">
-                    Cart
-                </MudBadge>
-            }
-            else
-            {
-                <span>Cart</span>
-            }
-        }
-        else if (cartItemCount > 0)
-        {
-            <MudBadge Content="@cartItemCount" Color="Color.Primary" Overlap="true" Origin="Origin.TopRight"/>
-        }
-    </MudNavLink>
-
-    <MudNavLink Href="admin/products" Icon="@Icons.Material.Filled.Settings">
-        @if (DrawerOpen)
-        {
-            <span>Admin</span>
-        }
-    </MudNavLink>
-
-    <MudNavLink Href="about" Icon="@Icons.Material.Filled.Info">
-        @if (DrawerOpen)
-        {
-            <span>About</span>
-        }
-    </MudNavLink>
-</MudNavMenu>
+    </NavLink>
+    <NavLink href="admin/products">Admin</NavLink>
+    <NavLink href="about">About</NavLink>
+</nav>
 
 @code {
-    [Parameter] public bool DrawerOpen { get; set; } = true;
-
-    private int cartItemCount = 0;
-
-    [Inject] private ICartService CartService { get; set; } = default!;
-
-    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
-
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
-        await UpdateCartItemCount();
-
-#if !TEST
-        // Listen for cart updates - skip in test environment
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("eval",
-                "document.addEventListener('cartUpdated', function() { DotNet.invokeMethodAsync('App', 'RefreshNavMenu'); });");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error setting up cart update listener: {ex.Message}");
-        }
-#endif
+        CartState.Changed += OnCartChanged;
+        await CartState.RefreshAsync();
     }
 
-    [JSInvokable]
-    public static async Task RefreshNavMenu()
+    private void OnCartChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
     {
-        if (NavMenuInstance != null)
-        {
-            await NavMenuInstance.UpdateCartItemCount();
-        }
+        CartState.Changed -= OnCartChanged;
     }
-
-    private static NavMenu? NavMenuInstance;
-
-    protected override void OnInitialized()
-    {
-        NavMenuInstance = this;
-    }
-
-    private async Task UpdateCartItemCount()
-    {
-        var cart = await CartService.GetCartAsync();
-        cartItemCount = cart.ItemCount;
-        StateHasChanged();
-    }
-
 }

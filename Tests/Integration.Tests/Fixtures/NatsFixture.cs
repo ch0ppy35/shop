@@ -32,7 +32,7 @@ public class NatsFixture : IAsyncLifetime
     public NatsFixture()
     {
         _natsContainer = new NatsBuilder()
-            .WithImage("nats:2.11-scratch")
+            .WithImage("nats:2.15.2-scratch")
             .WithPortBinding(4222, true)
             .Build();
     }

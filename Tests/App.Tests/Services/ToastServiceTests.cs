@@ -1,58 +1,66 @@
-using App.Tests.TestHelpers;
 using FluentAssertions;
 using Frontend.Services;
-using MudBlazor;
 
 namespace App.Tests.Services;
 
 public class ToastServiceTests
 {
-    private readonly MockSnackbar _mockSnackbar;
-    private readonly ToastService _toastService;
+    private readonly ToastService _toastService = new();
 
-    public ToastServiceTests()
+    [Theory]
+    [InlineData(ToastKind.Success)]
+    [InlineData(ToastKind.Error)]
+    [InlineData(ToastKind.Info)]
+    [InlineData(ToastKind.Warning)]
+    public void Show_ShouldAddToast_WithMatchingKind(ToastKind kind)
     {
-        _mockSnackbar = new MockSnackbar();
-        _toastService = new ToastService(_mockSnackbar);
+        Action<string> show = kind switch
+        {
+            ToastKind.Success => m => _toastService.ShowSuccess(m),
+            ToastKind.Error => m => _toastService.ShowError(m),
+            ToastKind.Info => m => _toastService.ShowInfo(m),
+            _ => m => _toastService.ShowWarning(m)
+        };
+
+        show("Hello");
+
+        _toastService.Toasts.Should().ContainSingle()
+            .Which.Should().Match<Toast>(t => t.Kind == kind && t.Message == "Hello");
     }
 
     [Fact]
-    public void ShowSuccess_ShouldCallSnackbar_WithSuccessSeverity()
+    public void Show_ShouldRaiseChanged()
     {
-        _toastService.ShowSuccess("Success message");
+        var raised = 0;
+        _toastService.Changed += () => raised++;
 
-        _mockSnackbar.AddCallCount.Should().Be(1);
-        _mockSnackbar.LastMessage.Should().Be("Success message");
-        _mockSnackbar.LastSeverity.Should().Be(Severity.Success);
+        _toastService.ShowSuccess("Saved");
+
+        raised.Should().Be(1);
     }
 
     [Fact]
-    public void ShowError_ShouldCallSnackbar_WithErrorSeverity()
+    public void Dismiss_ShouldRemoveToast_AndRaiseChanged()
     {
-        _toastService.ShowError("Error message");
+        _toastService.ShowInfo("First", autoHideDelayMs: 0);
+        _toastService.ShowInfo("Second", autoHideDelayMs: 0);
+        var raised = 0;
+        _toastService.Changed += () => raised++;
 
-        _mockSnackbar.AddCallCount.Should().Be(1);
-        _mockSnackbar.LastMessage.Should().Be("Error message");
-        _mockSnackbar.LastSeverity.Should().Be(Severity.Error);
+        _toastService.Dismiss(_toastService.Toasts[0].Id);
+
+        _toastService.Toasts.Should().ContainSingle().Which.Message.Should().Be("Second");
+        raised.Should().Be(1);
     }
 
     [Fact]
-    public void ShowInfo_ShouldCallSnackbar_WithInfoSeverity()
+    public async Task Show_ShouldAutoDismiss_AfterDelay()
     {
-        _toastService.ShowInfo("Info message");
+        _toastService.ShowSuccess("Gone soon", autoHideDelayMs: 20);
 
-        _mockSnackbar.AddCallCount.Should().Be(1);
-        _mockSnackbar.LastMessage.Should().Be("Info message");
-        _mockSnackbar.LastSeverity.Should().Be(Severity.Info);
-    }
+        _toastService.Toasts.Should().HaveCount(1);
+        await Task.Delay(200);
 
-    [Fact]
-    public void ShowWarning_ShouldCallSnackbar_WithWarningSeverity()
-    {
-        _toastService.ShowWarning("Warning message");
-
-        _mockSnackbar.AddCallCount.Should().Be(1);
-        _mockSnackbar.LastMessage.Should().Be("Warning message");
-        _mockSnackbar.LastSeverity.Should().Be(Severity.Warning);
+        _toastService.Toasts.Should().BeEmpty();
     }
 }

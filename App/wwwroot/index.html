@@ -4,42 +4,34 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="color-scheme" content="light dark"/>
+    <meta name="theme-color" content="#E4E7EA" media="(prefers-color-scheme: light)"/>
+    <meta name="theme-color" content="#16191D" media="(prefers-color-scheme: dark)"/>
     <title>NATS Shop</title>
     <base href="/"/>
-    <!-- Google Fonts - Roboto for MudBlazor -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Special+Gothic&display=swap" rel="stylesheet">
-
-    <!-- Material Icons -->
-    <link href="https://fonts.googleapis.com/css?family=Material+Icons&display=block" rel="stylesheet">
-
-    <!-- MudBlazor CSS -->
-    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet"/>
-
-    <!-- Custom styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap"
+          rel="stylesheet">
     <link rel="stylesheet" href="css/app.css"/>
-    <link rel="stylesheet" href="css/session-info.css"/>
-    <link rel="stylesheet" href="css/product-cards.css"/>
     <link rel="icon" type="image/png" href="favicon.png"/>
-    <link href="Frontend.styles.css" rel="stylesheet"/>
 </head>
 
 <body>
 <div id="app">
-    <svg class="loading-progress">
-        <circle r="40%" cx="50%" cy="50%"/>
-        <circle r="40%" cx="50%" cy="50%"/>
-    </svg>
-    <div class="loading-progress-text"></div>
+    <div class="boot" role="status">
+        <span class="boot-mark">NATS Shop</span>
+        <span class="boot-bar"><span></span></span>
+        <span class="boot-text"></span>
+    </div>
 </div>
 
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
+<div id="blazor-error-ui" role="alert">
+    Something went wrong and the page stopped responding.
     <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    <button type="button" class="dismiss" aria-label="Dismiss">&times;</button>
 </div>
+
 <!-- Configuration script -->
 <script src="js/config.js"></script>
 
@@ -49,15 +41,8 @@
     // window.API_BASE_URL = 'https://api.example.com';
 </script>
 
-<!-- App JS -->
-<script src="js/app.js"></script>
-<script src="js/cart.js"></script>
-
-<!-- Blazor Framework -->
+<script src="js/ui.js"></script>
 <script src="_framework/blazor.webassembly.js"></script>
-
-<!-- MudBlazor JS -->
-<script src="_content/MudBlazor/MudBlazor.min.js"></script>
 </body>
 
 </html>

@@ -1,0 +1,51 @@
+@implements IDisposable
+@inject IConfirmService ConfirmService
+
+<Modal Open="_pending != null" Title="@_title" Class="is-narrow" OnClose="() => Resolve(false)">
+    <div class="modal-body">
+        <p>@_message</p>
+    </div>
+    <div class="modal-actions">
+        <button type="button" class="btn" @onclick="() => Resolve(false)">Cancel</button>
+        <button type="button" class="btn @(_danger ? "btn-danger" : "btn-signal")" @onclick="() => Resolve(true)"
+                autofocus>@_confirmText</button>
+    </div>
+</Modal>
+
+@code {
+    private TaskCompletionSource<bool>? _pending;
+    private string _title = "";
+    private string _message = "";
+    private string _confirmText = "";
+    private bool _danger;
+
+    protected override void OnInitialized()
+    {
+        ConfirmService.OnConfirmationRequested += Ask;
+    }
+
+    private Task<bool> Ask(string message, string title, string confirmType, string confirmText)
+    {
+        _pending?.TrySetResult(false);
+        _pending = new TaskCompletionSource<bool>();
+        _message = message;
+        _title = title;
+        _confirmText = confirmText;
+        _danger = confirmType.Equals("danger", StringComparison.OrdinalIgnoreCase);
+        InvokeAsync(StateHasChanged);
+        return _pending.Task;
+    }
+
+    private void Resolve(bool confirmed)
+    {
+        var pending = _pending;
+        _pending = null;
+        pending?.TrySetResult(confirmed);
+    }
+
+    public void Dispose()
+    {
+        ConfirmService.OnConfirmationRequested -= Ask;
+        _pending?.TrySetResult(false);
+    }
+}
