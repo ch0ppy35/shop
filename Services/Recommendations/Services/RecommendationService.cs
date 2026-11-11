@@ -1,4 +1,3 @@
-using Common.Messaging;
 using Common.Models;
 
 namespace Recommendations.Services;
@@ -9,20 +8,23 @@ namespace Recommendations.Services;
 public class RecommendationService : IRecommendationService
 {
     private readonly ILogger<RecommendationService> _logger;
-    private readonly INatsService _natsService;
+    private readonly IProductCatalog _catalog;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RecommendationService"/> class.
     /// </summary>
-    public RecommendationService(ILogger<RecommendationService> logger, INatsService natsService)
+    public RecommendationService(ILogger<RecommendationService> logger, IProductCatalog catalog)
     {
         _logger = logger;
-        _natsService = natsService;
+        _catalog = catalog;
     }
 
     /// <summary>
     /// Gets recommendations based on cart items
     /// </summary>
+    /// <remarks>
+    /// Cart items only need a product ID; a missing price is looked up in the catalog.
+    /// </remarks>
     public async Task<List<ProductMessage>> GetRecommendationsAsync(
         string sessionId,
         List<CartItem> cartItems,
@@ -32,107 +34,39 @@ public class RecommendationService : IRecommendationService
         _logger.LogInformation("Generating recommendations for session ID: {SessionId}, Items: {ItemCount}",
             sessionId, cartItems.Count);
 
-        if (cartItems.Count == 0)
-        {
-            _logger.LogInformation("No items in cart, returning popular products");
-            return await GetPopularProductsAsync(sessionId, maxRecommendations, cancellationToken);
-        }
-
-        var allProducts = await GetAllProductsAsync(sessionId, cancellationToken);
+        var allProducts = await _catalog.GetProductsAsync(sessionId, cancellationToken);
         if (allProducts.Count == 0)
         {
             _logger.LogWarning("No products available for recommendations");
             return new List<ProductMessage>();
         }
 
+        if (cartItems.Count == 0)
+        {
+            return allProducts
+                .OrderBy(p => p.Price)
+                .Take(maxRecommendations)
+                .ToList();
+        }
+
+        var byId = allProducts.Where(p => p.ProductId != null).ToDictionary(p => p.ProductId!);
+        var cartPrices = cartItems
+            .Select(i => i.Price > 0 ? i.Price : byId.GetValueOrDefault(i.ProductId ?? "")?.Price)
+            .OfType<decimal>()
+            .ToList();
+        var avgCartPrice = cartPrices.Count > 0 ? cartPrices.Average() : 0m;
         var cartProductIds = cartItems.Select(i => i.ProductId).ToHashSet();
 
-        var availableProducts = allProducts
+        var recommendations = allProducts
             .Where(p => !cartProductIds.Contains(p.ProductId))
-            .ToList();
-
-        if (availableProducts.Count == 0)
-        {
-            _logger.LogInformation("No available products for recommendations (all products are in cart)");
-            return new List<ProductMessage>();
-        }
-
-
-        var recommendations = new List<(ProductMessage Product, decimal Score)>();
-
-        var avgCartPrice = cartItems.Average(i => i.Price);
-
-        foreach (var product in availableProducts)
-        {
-            var priceDifference = Math.Abs(product.Price - avgCartPrice);
-            var similarityScore = 1.0m / (1.0m + priceDifference);
-
-            recommendations.Add((product, similarityScore));
-        }
-
-        var topRecommendations = recommendations
-            .OrderByDescending(r => r.Score)
+            .OrderByDescending(p => 1.0m / (1.0m + Math.Abs(p.Price - avgCartPrice)))
+            .ThenBy(p => p.ProductId)
             .Take(maxRecommendations)
-            .Select(r => r.Product)
             .ToList();
 
         _logger.LogInformation("Generated {Count} recommendations for session ID: {SessionId}",
-            topRecommendations.Count, sessionId);
+            recommendations.Count, sessionId);
 
-        return topRecommendations;
-    }
-
-    /// <summary>
-    /// Gets popular products when cart is empty
-    /// </summary>
-    private async Task<List<ProductMessage>> GetPopularProductsAsync(
-        string sessionId,
-        int maxProducts,
-        CancellationToken cancellationToken)
-    {
-        var allProducts = await GetAllProductsAsync(sessionId, cancellationToken);
-
-        return allProducts
-            .OrderBy(p => p.Price)
-            .Take(maxProducts)
-            .ToList();
-    }
-
-    /// <summary>
-    /// Gets all products from the product service
-    /// </summary>
-    private async Task<List<ProductMessage>> GetAllProductsAsync(
-        string sessionId,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var message = new ProductMessage
-            {
-                OperationType = ProductOperationType.GetAll,
-                SessionId = sessionId,
-                PageNumber = 1,
-                PageSize = 100 // Get a large number of products
-            };
-
-            var response = await _natsService.RequestAsync<ProductMessage, ProductListResponse>(
-                "products.getall",
-                message,
-                TimeSpan.FromSeconds(5),
-                cancellationToken);
-
-            if (response == null || !response.Success || response.Products == null)
-            {
-                _logger.LogWarning("Failed to get products for recommendations");
-                return new List<ProductMessage>();
-            }
-
-            return response.Products;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting products for recommendations");
-            return new List<ProductMessage>();
-        }
+        return recommendations;
     }
 }

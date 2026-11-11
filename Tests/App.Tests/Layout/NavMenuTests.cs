@@ -60,7 +60,7 @@ public class NavMenuTests : TestContext
     {
         var cut = RenderComponent<NavMenu>();
 
-        Services.GetRequiredService<CartState>().SetItemCount(5);
+        Services.GetRequiredService<CartState>().ApplyPushed(new ShoppingCart { ItemCount = 5 });
 
         cut.WaitForAssertion(() => cut.Find(".cart-count").TextContent.Should().Be("5"));
     }

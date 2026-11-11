@@ -166,6 +166,10 @@ public class RedisServiceTests
 
         public bool IsConnected => _isConnected;
 
+        public IDatabase Database => _isConnected && _database != null
+            ? _database
+            : throw new InvalidOperationException("Not connected to Redis server");
+
         public void SetTestDatabase(IDatabase database)
         {
             _database = database;

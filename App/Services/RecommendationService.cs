@@ -18,16 +18,20 @@ public class RecommendationService : IRecommendationService
         _httpClient = httpClient;
     }
 
-    /// <summary>
-    /// Gets recommendations based on the current cart
-    /// </summary>
-    public async Task<List<Product>> GetCartRecommendationsAsync(int maxRecommendations = 5)
+    /// <inheritdoc />
+    /// <remarks>
+    /// Sends the product IDs the browser already holds, so the gateway needs no cart lookup and can serve the
+    /// answer from its cache. The request carries no session header, so it needs no CORS preflight.
+    /// </remarks>
+    public async Task<List<Product>> GetRecommendationsAsync(IEnumerable<string> productIds,
+        int maxRecommendations = 5)
     {
         try
         {
+            var ids = string.Join(',', productIds.Distinct().Order(StringComparer.Ordinal));
             var response =
                 await _httpClient.GetFromJsonAsync<RecommendationResponse>(
-                    $"/api/recommendations/cart?maxRecommendations={maxRecommendations}");
+                    $"/api/recommendations?productIds={Uri.EscapeDataString(ids)}&maxRecommendations={maxRecommendations}");
 
             if (response == null || response.Recommendations == null)
             {

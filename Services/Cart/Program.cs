@@ -11,6 +11,7 @@ builder.Services.AddNatsHealthCheck();
 builder.Services.AddRedisHealthCheck();
 builder.Services.AddSingleton<IRedisService, RedisService>();
 builder.Services.AddSingleton<RedisService>(sp => (RedisService)sp.GetRequiredService<IRedisService>());
+builder.Services.AddSingleton<ICartStore, RedisCartStore>();
 builder.Services.AddSingleton<CartService>();
 builder.Services.AddHostedService<CartConsumerService>();
 builder.Services.AddHostedService<CartInitializationService>();

@@ -3,13 +3,13 @@ using Frontend.Models;
 namespace Frontend.Services;
 
 /// <summary>
-/// Interface for recommendation service
+/// Gets product recommendations
 /// </summary>
 public interface IRecommendationService
 {
     /// <summary>
-    /// Gets recommendations based on the current cart
+    /// Gets recommendations for a set of products, such as what is in the cart; empty when there are none
+    /// or the service can't be reached
     /// </summary>
-    /// <param name="maxRecommendations">The maximum number of recommendations to return</param>
-    Task<List<Product>> GetCartRecommendationsAsync(int maxRecommendations = 5);
+    Task<List<Product>> GetRecommendationsAsync(IEnumerable<string> productIds, int maxRecommendations = 5);
 }

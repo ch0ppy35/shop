@@ -49,7 +49,7 @@ public class InMemoryDbContextFixture : IDisposable
 
         _configMock.Setup(x => x.GetSection("ConnectionStrings")).Returns(connectionStringsSection.Object);
 
-        Context = new ProductDbContext(_options, _loggerMock.Object, _configMock.Object);
+        Context = new ProductDbContext(_options);
     }
 
     /// <summary>
@@ -57,7 +57,7 @@ public class InMemoryDbContextFixture : IDisposable
     /// </summary>
     public ProductDbContext CreateContext()
     {
-        return new ProductDbContext(_options, _loggerMock.Object, _configMock.Object);
+        return new ProductDbContext(_options);
     }
 
     /// <summary>

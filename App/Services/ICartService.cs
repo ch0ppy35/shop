@@ -3,37 +3,33 @@ using Frontend.Models;
 namespace Frontend.Services;
 
 /// <summary>
-/// Interface for cart service
+/// Talks to the cart API. Every call returns the cart as the server holds it after the call,
+/// or null when the request failed, so callers never need a second round trip to refresh.
 /// </summary>
 public interface ICartService
 {
     /// <summary>
     /// Gets the current cart
     /// </summary>
-    Task<ShoppingCart> GetCartAsync();
+    Task<ShoppingCart?> GetCartAsync();
 
     /// <summary>
     /// Adds an item to the cart
     /// </summary>
-    /// <param name="productId">The product ID</param>
-    /// <param name="quantity">The quantity to add</param>
-    Task<bool> AddItemAsync(string productId, int quantity = 1);
+    Task<ShoppingCart?> AddItemAsync(string productId, int quantity = 1);
 
     /// <summary>
-    /// Updates an item in the cart
+    /// Sets the quantity of an item in the cart
     /// </summary>
-    /// <param name="productId">The product ID</param>
-    /// <param name="quantity">The new quantity</param>
-    Task<bool> UpdateItemAsync(string productId, int quantity);
+    Task<ShoppingCart?> UpdateItemAsync(string productId, int quantity);
 
     /// <summary>
     /// Removes an item from the cart
     /// </summary>
-    /// <param name="productId">The product ID</param>
-    Task<bool> RemoveItemAsync(string productId);
+    Task<ShoppingCart?> RemoveItemAsync(string productId);
 
     /// <summary>
-    /// Clears the cart
+    /// Empties the cart
     /// </summary>
-    Task<bool> ClearCartAsync();
+    Task<ShoppingCart?> ClearCartAsync();
 }

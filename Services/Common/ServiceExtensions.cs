@@ -40,7 +40,7 @@ public static class ServiceExtensions
     /// </summary>
     public static IServiceCollection AddDatabaseServices(this IServiceCollection services, string connectionString)
     {
-        services.AddDbContext<ProductDbContext>(options =>
+        services.AddDbContextPool<ProductDbContext>(options =>
             options.UseNpgsql(connectionString, npgsqlOptions => { npgsqlOptions.MigrationsAssembly("Products"); }));
 
         services.AddScoped<IProductDbContext>(provider => provider.GetRequiredService<ProductDbContext>());

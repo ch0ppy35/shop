@@ -1,9 +1,9 @@
 @page "/cart"
-@inject ICartService CartService
 @inject IRecommendationService RecommendationService
 @inject CartState CartState
 @inject ToastService ToastService
 @inject IConfirmService ConfirmService
+@implements IDisposable
 
 <PageTitle>Cart | NATS Shop</PageTitle>
 
@@ -15,7 +15,7 @@
 {
     <p class="lede" aria-busy="true">Loading your cart…</p>
 }
-else if (_cart.IsEmpty)
+else if (Current.IsEmpty)
 {
     <div class="empty">
         <h2>Your cart is empty</h2>
@@ -28,18 +28,18 @@ else
     <div class="cart">
         <section aria-label="Items in your cart">
             <ul class="lines">
-                @foreach (var item in _cart.Items)
+                @foreach (var item in Current.Items)
                 {
                     <li class="line" @key="item.ProductId">
                         <div>
                             <a class="line-name" href="@($"products/{item.ProductId}")">@item.Name</a>
                             <div class="line-unit num">$@item.Price.ToString("F2") each</div>
                         </div>
-                        <QuantityStepper Value="item.Quantity" ItemName="@item.Name" Disabled="_busy"
+                        <QuantityStepper Value="item.Quantity" ItemName="@item.Name" 
                                          ValueChanged="q => UpdateQuantity(item, q)"/>
                         <div class="line-total">$@item.TotalPrice.ToString("F2")</div>
                         <button type="button" class="icon-btn is-danger" aria-label="Remove @item.Name"
-                                disabled="@_busy" @onclick="() => RemoveItem(item)">
+                                @onclick="() => RemoveItem(item)">
                             <Icon Name="trash"/>
                         </button>
                     </li>
@@ -47,14 +47,14 @@ else
             </ul>
             <div class="lines-foot">
                 <a href="products" class="btn btn-text"><Icon Name="back"/> Keep shopping</a>
-                <button type="button" class="btn btn-text btn-danger" disabled="@_busy" @onclick="ClearCart">Empty cart</button>
+                <button type="button" class="btn btn-text btn-danger" @onclick="ClearCart">Empty cart</button>
             </div>
         </section>
 
         <aside class="summary" aria-label="Order summary">
             <div class="summary-total">
-                <span class="num">@_cart.ItemCount @(_cart.ItemCount == 1 ? "item" : "items")</span>
-                <strong>$@_cart.TotalPrice.ToString("F2")</strong>
+                <span class="num">@Current.ItemCount @(Current.ItemCount == 1 ? "item" : "items")</span>
+                <strong>$@Current.TotalPrice.ToString("F2")</strong>
             </div>
             <button type="button" class="btn btn-signal btn-large" disabled>Check out</button>
             <p class="note">Checkout isn't part of this demo. Carts are kept in Valkey for 15 minutes after your last change.</p>
@@ -94,29 +94,34 @@ else
 @code {
     private const int RecommendationCount = 4;
 
-    private ShoppingCart _cart = new();
     private List<Product> _recommendations = new();
     private bool _loading = true;
     private bool _loadingRecommendations = true;
-    private bool _busy;
+
+    private ShoppingCart Current => CartState.Cart;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadCartAsync();
+        CartState.Changed += OnCartChanged;
+        await CartState.EnsureLoadedAsync();
         _loading = false;
         await LoadRecommendationsAsync();
     }
 
-    private async Task LoadCartAsync()
+    private void OnCartChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
     {
-        _cart = await CartService.GetCartAsync();
-        CartState.SetItemCount(_cart.ItemCount);
+        CartState.Changed -= OnCartChanged;
     }
 
     private async Task LoadRecommendationsAsync()
     {
         _loadingRecommendations = true;
-        _recommendations = await RecommendationService.GetCartRecommendationsAsync(RecommendationCount);
+        var productIds = Current.Items.Where(i => !string.IsNullOrEmpty(i.ProductId)).Select(i => i.ProductId!).ToList();
+        _recommendations = productIds.Count == 0
+            ? new List<Product>()
+            : await RecommendationService.GetRecommendationsAsync(productIds, RecommendationCount);
         _loadingRecommendations = false;
     }
 
@@ -127,17 +132,10 @@ else
             return;
         }
 
-        _busy = true;
-        if (await CartService.UpdateItemAsync(item.ProductId, quantity))
-        {
-            await LoadCartAsync();
-        }
-        else
+        if (!await CartState.SetQuantityAsync(item.ProductId, quantity))
         {
             ToastService.ShowError($"Couldn't change the quantity of {item.Name}. Try again.");
         }
-
-        _busy = false;
     }
 
     private async Task RemoveItem(CartItem item)
@@ -147,10 +145,8 @@ else
             return;
         }
 
-        _busy = true;
-        if (await CartService.RemoveItemAsync(item.ProductId))
+        if (await CartState.RemoveAsync(item.ProductId))
         {
-            await LoadCartAsync();
             ToastService.ShowInfo($"Removed {item.Name} from your cart.");
             await LoadRecommendationsAsync();
         }
@@ -158,14 +154,12 @@ else
         {
             ToastService.ShowError($"Couldn't remove {item.Name}. Try again.");
         }
-
-        _busy = false;
     }
 
     private async Task ClearCart()
     {
         var confirmed = await ConfirmService.ShowConfirmation(
-            $"This removes all {_cart.ItemCount} items from your cart.",
+            $"This removes all {Current.ItemCount} items from your cart.",
             "Empty your cart?",
             "Danger",
             "Empty cart");
@@ -175,26 +169,21 @@ else
             return;
         }
 
-        _busy = true;
-        if (await CartService.ClearCartAsync())
+        if (await CartState.ClearAsync())
         {
-            await LoadCartAsync();
             ToastService.ShowInfo("Emptied your cart.");
         }
         else
         {
             ToastService.ShowError("Couldn't empty your cart. Try again.");
         }
-
-        _busy = false;
     }
 
     private async Task AddToCart(Product product)
     {
-        if (await CartState.AddAsync(product.Id!))
+        if (await CartState.AddAsync(product))
         {
             ToastService.ShowSuccess($"Added {product.Name} to your cart.");
-            await LoadCartAsync();
             await LoadRecommendationsAsync();
         }
         else

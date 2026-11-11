@@ -35,6 +35,13 @@ public class RedisService : IRedisService, IAsyncDisposable
     public virtual bool IsConnected => _isConnected;
 
     /// <summary>
+    /// Gets the connected database
+    /// </summary>
+    public virtual IDatabase Database => _isConnected && _database != null
+        ? _database
+        : throw new InvalidOperationException("Not connected to Redis server");
+
+    /// <summary>
     /// Gets the cart TTL
     /// </summary>
     public TimeSpan CartTtl => _cartTtl;

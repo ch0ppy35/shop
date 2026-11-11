@@ -29,7 +29,7 @@ public class ProductRepository : IProductRepository
     {
         _logger.LogInformation("Getting all products from database");
 
-        var products = await _dbContext.Products.ToListAsync();
+        var products = await _dbContext.Products.AsNoTracking().ToListAsync();
 
         var firstProduct = products.FirstOrDefault();
         if (firstProduct != null)
@@ -59,6 +59,7 @@ public class ProductRepository : IProductRepository
         var totalCount = await _dbContext.Products.CountAsync();
 
         var products = await _dbContext.Products
+            .AsNoTracking()
             .OrderBy(p => p.Id) // Ensure consistent ordering
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -82,6 +83,7 @@ public class ProductRepository : IProductRepository
         _logger.LogInformation("Getting product with ID: {ProductId} from database", productId);
 
         return await _dbContext.Products
+            .AsNoTracking()
             .FirstOrDefaultAsync(p => p.ProductId == productId);
     }
 

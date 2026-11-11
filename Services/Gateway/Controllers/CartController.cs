@@ -1,5 +1,6 @@
 using Common.Messaging;
 using Common.Models;
+using Gateway.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gateway.Controllers;
@@ -10,11 +11,13 @@ public class CartController : ControllerBase
 {
     private readonly ILogger<CartController> _logger;
     private readonly NatsService _natsService;
+    private readonly CatalogCache _catalogCache;
 
-    public CartController(ILogger<CartController> logger, NatsService natsService)
+    public CartController(ILogger<CartController> logger, NatsService natsService, CatalogCache catalogCache)
     {
         _logger = logger;
         _natsService = natsService;
+        _catalogCache = catalogCache;
     }
 
     [HttpGet]
@@ -84,17 +87,8 @@ public class CartController : ControllerBase
                 return BadRequest(new { error = "Session ID is required" });
             }
 
-            var productMessage = new ProductMessage
-            {
-                ProductId = item.ProductId,
-                OperationType = ProductOperationType.Get,
-                SessionId = sessionId
-            };
-
-            var productResponse = await _natsService.RequestAsync<ProductMessage, ProductResponse>(
-                "products.get",
-                productMessage,
-                TimeSpan.FromSeconds(5));
+            // Name and price come from the catalog cache, so this is usually a single NATS hop (cart.additem)
+            var productResponse = await _catalogCache.GetProductAsync(item.ProductId, HttpContext.RequestAborted);
 
             if (productResponse == null || !productResponse.Success || productResponse.Product == null)
             {

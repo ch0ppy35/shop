@@ -63,8 +63,10 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://0.0.0.0:8080
       - NATS_URL=nats://nats:4222
+      - REDIS_CONNECTION_STRING=valkey:6379
     depends_on:
       - nats
+      - valkey
     networks:
       - nats-shop-network
 

@@ -1,5 +1,7 @@
 using Common.Messaging;
 using Common.Models;
+using Gateway.Filters;
+using Gateway.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gateway.Controllers;
@@ -10,14 +12,17 @@ public class ProductsController : ControllerBase
 {
     private readonly ILogger<ProductsController> _logger;
     private readonly NatsService _natsService;
+    private readonly CatalogCache _catalogCache;
 
-    public ProductsController(ILogger<ProductsController> logger, NatsService natsService)
+    public ProductsController(ILogger<ProductsController> logger, NatsService natsService, CatalogCache catalogCache)
     {
         _logger = logger;
         _natsService = natsService;
+        _catalogCache = catalogCache;
     }
 
     [HttpGet]
+    [ETag]
     public async Task<IActionResult> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         _logger.LogInformation("Received request to get products: Page {Page}, PageSize {PageSize}", page, pageSize);
@@ -27,22 +32,7 @@ public class ProductsController : ControllerBase
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 10;
 
-
-            var sessionId = HttpContext.Items["SessionId"]?.ToString();
-
-            var message = new ProductMessage
-            {
-                OperationType = ProductOperationType.GetAll,
-                SessionId = sessionId,
-                PageNumber = page,
-                PageSize = pageSize
-            };
-
-
-            var response = await _natsService.RequestAsync<ProductMessage, ProductListResponse>(
-                "products.getall",
-                message,
-                TimeSpan.FromSeconds(5));
+            var response = await _catalogCache.GetPageAsync(page, pageSize, HttpContext.RequestAborted);
 
             if (response == null)
             {
@@ -64,26 +54,14 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [ETag]
     public async Task<IActionResult> GetProduct(string id)
     {
         _logger.LogInformation("Received request to get product with ID: {ProductId}", id);
 
         try
         {
-            var sessionId = HttpContext.Items["SessionId"]?.ToString();
-
-            var message = new ProductMessage
-            {
-                ProductId = id,
-                OperationType = ProductOperationType.Get,
-                SessionId = sessionId
-            };
-
-
-            var response = await _natsService.RequestAsync<ProductMessage, ProductResponse>(
-                "products.get",
-                message,
-                TimeSpan.FromSeconds(5));
+            var response = await _catalogCache.GetProductAsync(id, HttpContext.RequestAborted);
 
             if (response == null)
             {

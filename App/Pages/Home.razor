@@ -60,7 +60,7 @@
 
     private async Task AddToCart(Product product)
     {
-        if (await CartState.AddAsync(product.Id!))
+        if (await CartState.AddAsync(product))
         {
             ToastService.ShowSuccess($"Added {product.Name} to your cart.");
         }

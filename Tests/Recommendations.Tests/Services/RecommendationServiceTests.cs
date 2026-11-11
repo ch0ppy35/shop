@@ -18,7 +18,8 @@ public class RecommendationServiceTests
     {
         _mockLogger = new Mock<ILogger<RecommendationService>>();
         _mockNatsService = new Mock<INatsService>();
-        _service = new RecommendationService(_mockLogger.Object, _mockNatsService.Object);
+        _service = new RecommendationService(_mockLogger.Object,
+            new ProductCatalog(Mock.Of<ILogger<ProductCatalog>>(), _mockNatsService.Object));
     }
 
     [Fact]

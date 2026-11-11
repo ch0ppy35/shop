@@ -3,8 +3,18 @@ namespace Gateway.Middleware;
 /// <summary>
 /// Middleware to handle session IDs
 /// </summary>
+/// <remarks>
+/// Session IDs end up in Valkey keys, NATS subjects (<c>cart.changed.{session}</c>) and SignalR group names, so only
+/// a GUID is accepted, normalized to its lowercase "D" form. Anything else gets a fresh session. The SignalR hub
+/// can't send headers over a browser WebSocket, so it may pass the session as the <c>session</c> query parameter.
+/// </remarks>
 public class SessionMiddleware
 {
+    /// <summary>
+    /// The header carrying the session ID
+    /// </summary>
+    public const string HeaderName = "X-Session-ID";
+
     private readonly RequestDelegate _next;
     private readonly ILogger<SessionMiddleware> _logger;
 
@@ -18,24 +28,28 @@ public class SessionMiddleware
     }
 
     /// <summary>
+    /// Reads a session ID if it is a GUID, normalized; otherwise null
+    /// </summary>
+    public static string? Normalize(string? value) =>
+        Guid.TryParse(value, out var guid) ? guid.ToString("D") : null;
+
+    /// <summary>
     /// Invokes the middleware
     /// </summary>
     public async Task InvokeAsync(HttpContext context)
     {
-        if (!context.Request.Headers.TryGetValue("X-Session-ID", out var sessionId) || string.IsNullOrEmpty(sessionId))
+        var sessionId = Normalize(context.Request.Headers[HeaderName])
+                        ?? Normalize(context.Request.Query["session"]);
+
+        if (sessionId == null)
         {
-            sessionId = Guid.NewGuid().ToString();
-            context.Request.Headers["X-Session-ID"] = sessionId;
+            sessionId = Guid.NewGuid().ToString("D");
+            _logger.LogInformation("Request had no valid session ID; issued {SessionId}", sessionId);
         }
 
-        context.Items["SessionId"] = sessionId.ToString();
-
-        _logger.LogInformation("Request associated with session ID: {SessionId}", sessionId.ToString());
-
-        if (!context.Response.Headers.ContainsKey("X-Session-ID"))
-        {
-            context.Response.Headers["X-Session-ID"] = sessionId.ToString();
-        }
+        context.Request.Headers[HeaderName] = sessionId;
+        context.Items["SessionId"] = sessionId;
+        context.Response.Headers[HeaderName] = sessionId;
 
         await _next(context);
     }

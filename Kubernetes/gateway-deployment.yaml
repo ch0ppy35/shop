@@ -28,6 +28,8 @@ spec:
               value: "http://0.0.0.0:8080"
             - name: NATS_URL
               value: "nats://nats:4222"
+            - name: REDIS_CONNECTION_STRING
+              value: "valkey:6379"
           resources:
             limits:
               cpu: "0.5"

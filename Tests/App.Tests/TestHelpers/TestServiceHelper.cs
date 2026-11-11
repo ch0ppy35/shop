@@ -43,7 +43,7 @@ public static class TestServiceHelper
         context.AddAppTestServices();
 
         var mockRecommendationService = new Mock<IRecommendationService>();
-        mockRecommendationService.Setup(s => s.GetCartRecommendationsAsync(It.IsAny<int>()))
+        mockRecommendationService.Setup(s => s.GetRecommendationsAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<int>()))
             .ReturnsAsync(new List<Product>());
 
         context.Services.AddSingleton(mockRecommendationService.Object);

@@ -8,7 +8,8 @@ var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddCommonServices();
 builder.Services.AddNatsHealthCheck();
-builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+builder.Services.AddSingleton<IProductCatalog, ProductCatalog>();
+builder.Services.AddSingleton<IRecommendationService, RecommendationService>();
 builder.Services.AddHostedService<RecommendationConsumerService>();
 builder.Services.AddHostedService<RecommendationInitializationService>();
 

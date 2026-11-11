@@ -1,6 +1,4 @@
 using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
 using Frontend.Models;
 
 namespace Frontend.Services;
@@ -11,7 +9,6 @@ namespace Frontend.Services;
 public class CartService : ICartService
 {
     private readonly HttpClient _httpClient;
-    private readonly JsonSerializerOptions _jsonOptions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CartService"/> class
@@ -19,191 +16,103 @@ public class CartService : ICartService
     public CartService(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        };
     }
 
+    /// <inheritdoc />
+    public Task<ShoppingCart?> GetCartAsync() =>
+        SendAsync("getting cart", () => _httpClient.GetAsync("/api/cart"));
+
+    /// <inheritdoc />
+    public Task<ShoppingCart?> AddItemAsync(string productId, int quantity = 1)
+    {
+        if (string.IsNullOrEmpty(productId) || quantity <= 0)
+        {
+            return Task.FromResult<ShoppingCart?>(null);
+        }
+
+        return SendAsync("adding item to cart", () =>
+            _httpClient.PostAsJsonAsync("/api/cart/items", new { productId, quantity }));
+    }
+
+    /// <inheritdoc />
+    public Task<ShoppingCart?> UpdateItemAsync(string productId, int quantity)
+    {
+        if (string.IsNullOrEmpty(productId) || quantity < 0)
+        {
+            return Task.FromResult<ShoppingCart?>(null);
+        }
+
+        return SendAsync("updating item in cart", () =>
+            _httpClient.PutAsJsonAsync($"/api/cart/items/{Uri.EscapeDataString(productId)}", new { quantity }));
+    }
+
+    /// <inheritdoc />
+    public Task<ShoppingCart?> RemoveItemAsync(string productId)
+    {
+        if (string.IsNullOrEmpty(productId))
+        {
+            return Task.FromResult<ShoppingCart?>(null);
+        }
+
+        return SendAsync("removing item from cart", () =>
+            _httpClient.DeleteAsync($"/api/cart/items/{Uri.EscapeDataString(productId)}"));
+    }
+
+    /// <inheritdoc />
+    public Task<ShoppingCart?> ClearCartAsync() =>
+        SendAsync("clearing cart", () => _httpClient.DeleteAsync("/api/cart"));
+
     /// <summary>
-    /// Gets the current cart
+    /// Converts the API's cart shape (also used by live CartChanged pushes) into the UI model
     /// </summary>
-    public async Task<ShoppingCart> GetCartAsync()
+    internal static ShoppingCart ToShoppingCart(CartResponse response) => new()
+    {
+        Items = (response.Items ?? new List<CartItemDto>()).Select(i => new CartItem
+        {
+            ProductId = i.ProductId,
+            Name = i.Name,
+            Price = i.Price,
+            Quantity = i.Quantity
+        }).ToList(),
+        TotalPrice = response.TotalPrice,
+        ItemCount = response.ItemCount
+    };
+
+    private static async Task<ShoppingCart?> SendAsync(string action, Func<Task<HttpResponseMessage>> send)
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<CartResponse>("/api/cart");
-
-            if (response == null || response.Items == null)
+            using var response = await send();
+            if (!response.IsSuccessStatusCode)
             {
-                return new ShoppingCart
-                {
-                    Items = new List<CartItem>(),
-                    TotalPrice = 0,
-                    ItemCount = 0
-                };
+                Console.WriteLine($"Error {action}: HTTP {(int)response.StatusCode}");
+                return null;
             }
 
-            return new ShoppingCart
-            {
-                Items = response.Items.Select(i => new CartItem
-                {
-                    ProductId = i.ProductId,
-                    Name = i.Name,
-                    Price = i.Price,
-                    Quantity = i.Quantity
-                }).ToList(),
-                TotalPrice = response.TotalPrice,
-                ItemCount = response.ItemCount
-            };
+            var body = await response.Content.ReadFromJsonAsync<CartResponse>();
+            return body == null ? null : ToShoppingCart(body);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error getting cart: {ex.Message}");
-            return new ShoppingCart
-            {
-                Items = new List<CartItem>(),
-                TotalPrice = 0,
-                ItemCount = 0
-            };
+            Console.WriteLine($"Error {action}: {ex.Message}");
+            return null;
         }
     }
 
-    /// <summary>
-    /// Adds an item to the cart
-    /// </summary>
-    /// <param name="productId">The product ID</param>
-    /// <param name="quantity">The quantity to add</param>
-    public async Task<bool> AddItemAsync(string productId, int quantity = 1)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(productId) || quantity <= 0)
-            {
-                return false;
-            }
-
-            var cartItemDto = new CartItemDto
-            {
-                ProductId = productId,
-                Quantity = quantity
-            };
-
-            var content = new StringContent(
-                JsonSerializer.Serialize(cartItemDto, _jsonOptions),
-                Encoding.UTF8,
-                "application/json");
-
-            var response = await _httpClient.PostAsync("/api/cart/items", content);
-
-            return response.IsSuccessStatusCode;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error adding item to cart: {ex.Message}");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Updates an item in the cart
-    /// </summary>
-    /// <param name="productId">The product ID</param>
-    /// <param name="quantity">The new quantity</param>
-    public async Task<bool> UpdateItemAsync(string productId, int quantity)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(productId) || quantity < 0)
-            {
-                return false;
-            }
-
-            var updateDto = new CartItemUpdateDto
-            {
-                Quantity = quantity
-            };
-
-            var content = new StringContent(
-                JsonSerializer.Serialize(updateDto, _jsonOptions),
-                Encoding.UTF8,
-                "application/json");
-
-            var response = await _httpClient.PutAsync($"/api/cart/items/{productId}", content);
-
-            return response.IsSuccessStatusCode;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error updating item in cart: {ex.Message}");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Removes an item from the cart
-    /// </summary>
-    /// <param name="productId">The product ID</param>
-    public async Task<bool> RemoveItemAsync(string productId)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(productId))
-            {
-                return false;
-            }
-
-            var response = await _httpClient.DeleteAsync($"/api/cart/items/{productId}");
-
-            return response.IsSuccessStatusCode;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error removing item from cart: {ex.Message}");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Clears the cart
-    /// </summary>
-    public async Task<bool> ClearCartAsync()
-    {
-        try
-        {
-            var response = await _httpClient.DeleteAsync("/api/cart");
-
-            return response.IsSuccessStatusCode;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error clearing cart: {ex.Message}");
-            return false;
-        }
-    }
-
-    private class CartResponse
+    internal class CartResponse
     {
         public bool Success { get; set; }
-        public string? Message { get; set; }
         public string? Error { get; set; }
         public List<CartItemDto>? Items { get; set; }
         public decimal TotalPrice { get; set; }
         public int ItemCount { get; set; }
     }
 
-    private class CartItemDto
+    internal class CartItemDto
     {
         public string? ProductId { get; set; }
         public string? Name { get; set; }
         public decimal Price { get; set; }
-        public int Quantity { get; set; }
-        public decimal TotalPrice { get; set; }
-    }
-
-    private class CartItemUpdateDto
-    {
         public int Quantity { get; set; }
     }
 }

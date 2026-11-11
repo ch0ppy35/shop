@@ -6,8 +6,30 @@ namespace Cart.Services;
 /// <summary>
 /// Hosted service for consuming cart-related messages from NATS
 /// </summary>
+/// <remarks>
+/// Each subject handles up to <see cref="MaxConcurrency"/> messages at once. That is safe because every cart write
+/// is a single atomic Valkey transaction (see <see cref="RedisCartStore"/>).
+/// </remarks>
 public class CartConsumerService : BackgroundService
 {
+    /// <summary>
+    /// The queue group every Cart instance joins
+    /// </summary>
+    public const string QueueGroup = "cart-service";
+
+    /// <summary>
+    /// The most messages a single subject handles at the same time
+    /// </summary>
+    public const int MaxConcurrency = 32;
+
+    /// <summary>
+    /// The request subjects this service answers
+    /// </summary>
+    public static readonly IReadOnlyList<string> RequestSubjects = new[]
+    {
+        "cart.get", "cart.additem", "cart.updateitem", "cart.removeitem", "cart.clear"
+    };
+
     private readonly ILogger<CartConsumerService> _logger;
     private readonly INatsService _natsService;
     private readonly CartService _cartService;
@@ -34,18 +56,123 @@ public class CartConsumerService : BackgroundService
 
         await WaitForNatsConnectionAsync(stoppingToken);
 
-        var tasks = new List<Task>
-        {
-            HandleGetCartRequests(stoppingToken),
-            HandleAddItemRequests(stoppingToken),
-            HandleUpdateItemRequests(stoppingToken),
-            HandleRemoveItemRequests(stoppingToken),
-            HandleClearCartRequests(stoppingToken)
-        };
+        var tasks = RequestSubjects.Select(subject => ConsumeAsync(subject, stoppingToken)).ToList();
 
         await Task.WhenAny(tasks);
 
-        _logger.LogWarning("One of the cart message handlers has stopped unexpectedly");
+        if (!stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogWarning("One of the cart message handlers has stopped unexpectedly");
+        }
+    }
+
+    /// <summary>
+    /// Handles one request: runs it, replies, and publishes the new cart after a successful write
+    /// </summary>
+    public async Task<CartResponse> HandleRequestAsync(string subject, CartMessage msg,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Received {Subject} request - SessionId: {SessionId}, ProductId: {ProductId}",
+            subject, msg.SessionId ?? "Unknown", msg.ProductId ?? "-");
+
+        var response = await DispatchAsync(subject, msg, cancellationToken);
+
+        if (!string.IsNullOrEmpty(msg.ReplyTo))
+        {
+            try
+            {
+                await _natsService.PublishAsync(msg.ReplyTo, response, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending response to {ReplyTo}", msg.ReplyTo);
+            }
+        }
+
+        if (response.Success && subject != "cart.get" && Guid.TryParse(msg.SessionId, out _))
+        {
+            await PublishCartChangedAsync(msg.SessionId!, response, cancellationToken);
+        }
+
+        return response;
+    }
+
+    private Task<CartResponse> DispatchAsync(string subject, CartMessage msg, CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(msg.SessionId))
+        {
+            return Task.FromResult(Invalid(msg, "Session ID is required"));
+        }
+
+        var needsProduct = subject is "cart.additem" or "cart.updateitem" or "cart.removeitem";
+        if (needsProduct && string.IsNullOrEmpty(msg.ProductId))
+        {
+            return Task.FromResult(Invalid(msg, "Product ID is required"));
+        }
+
+        return subject switch
+        {
+            "cart.get" => _cartService.GetCartAsync(msg.SessionId, ct),
+            "cart.additem" => _cartService.AddItemAsync(msg.SessionId, new CartItem
+            {
+                ProductId = msg.ProductId,
+                Name = msg.Name,
+                Price = msg.Price,
+                Quantity = msg.Quantity
+            }, ct),
+            "cart.updateitem" => _cartService.UpdateItemAsync(msg.SessionId, msg.ProductId!, msg.Quantity, ct),
+            "cart.removeitem" => _cartService.RemoveItemAsync(msg.SessionId, msg.ProductId!, ct),
+            "cart.clear" => _cartService.ClearCartAsync(msg.SessionId, ct),
+            _ => Task.FromResult(Invalid(msg, $"Unknown cart subject {subject}"))
+        };
+    }
+
+    private CartResponse Invalid(CartMessage msg, string error)
+    {
+        _logger.LogWarning("Rejected cart request: {Error}", error);
+        return new CartResponse { Success = false, Error = error, SessionId = msg.SessionId };
+    }
+
+    private async Task PublishCartChangedAsync(string sessionId, CartResponse cart, CancellationToken ct)
+    {
+        try
+        {
+            await _natsService.PublishAsync(Subjects.CartChanged(sessionId), new CartChangedEvent
+            {
+                SessionId = sessionId,
+                Items = cart.Items ?? new List<CartItem>(),
+                TotalPrice = cart.TotalPrice,
+                ItemCount = cart.ItemCount
+            }, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error publishing cart change for session {SessionId}", sessionId);
+        }
+    }
+
+    private async Task ConsumeAsync(string subject, CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
+            subject, QueueGroup);
+
+        var options = new ParallelOptions { MaxDegreeOfParallelism = MaxConcurrency, CancellationToken = stoppingToken };
+
+        try
+        {
+            await Parallel.ForEachAsync(
+                _natsService.SubscribeAsync<CartMessage>(subject, QueueGroup, stoppingToken),
+                options,
+                async (msg, token) => await HandleRequestAsync(subject, msg, token));
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("{Subject} request handling cancelled", subject);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling {Subject} requests", subject);
+        }
     }
 
     /// <summary>
@@ -53,9 +180,9 @@ public class CartConsumerService : BackgroundService
     /// </summary>
     private async Task WaitForNatsConnectionAsync(CancellationToken stoppingToken)
     {
-        const int maxRetries = 60; // Maximum number of retries (10 minutes with 10-second delay)
-        const int retryDelaySeconds = 10; // Delay between retries
-        int retryCount = 0;
+        const int maxRetries = 60;
+        const int retryDelaySeconds = 10;
+        var retryCount = 0;
 
         while (!_natsService.IsConnected && retryCount < maxRetries && !stoppingToken.IsCancellationRequested)
         {
@@ -78,247 +205,6 @@ public class CartConsumerService : BackgroundService
         else
         {
             _logger.LogError("Failed to establish NATS connection after {MaxRetries} retries", maxRetries);
-        }
-    }
-
-    private async Task HandleGetCartRequests(CancellationToken stoppingToken)
-    {
-        const string subject = "cart.get";
-        const string queueGroup = "cart-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
-            subject, queueGroup);
-
-        try
-        {
-            await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
-            {
-                _logger.LogInformation("Received get cart request - SessionId: {SessionId}",
-                    msg.SessionId ?? "Unknown");
-
-                if (string.IsNullOrEmpty(msg.SessionId))
-                {
-                    _logger.LogWarning("Get cart request missing session ID");
-                    continue;
-                }
-
-                var response = await _cartService.GetCartAsync(msg.SessionId, stoppingToken);
-
-                if (!string.IsNullOrEmpty(msg.ReplyTo))
-                {
-                    try
-                    {
-                        await _natsService.PublishAsync(msg.ReplyTo, response, stoppingToken);
-                        _logger.LogDebug("Sent response to {ReplyTo}", msg.ReplyTo);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error sending response to {ReplyTo}", msg.ReplyTo);
-                    }
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogInformation("Get cart request handling cancelled");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling get cart requests");
-        }
-    }
-
-    private async Task HandleAddItemRequests(CancellationToken stoppingToken)
-    {
-        const string subject = "cart.additem";
-        const string queueGroup = "cart-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
-            subject, queueGroup);
-
-        try
-        {
-            await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
-            {
-                _logger.LogInformation(
-                    "Received add item request - SessionId: {SessionId}, ProductId: {ProductId}, Quantity: {Quantity}",
-                    msg.SessionId ?? "Unknown", msg.ProductId ?? "Unknown", msg.Quantity);
-
-                if (string.IsNullOrEmpty(msg.SessionId) || string.IsNullOrEmpty(msg.ProductId))
-                {
-                    _logger.LogWarning("Add item request missing session ID or product ID");
-                    continue;
-                }
-
-                var cartItem = new CartItem
-                {
-                    ProductId = msg.ProductId,
-                    Name = msg.Name,
-                    Price = msg.Price,
-                    Quantity = msg.Quantity
-                };
-
-                var response = await _cartService.AddItemAsync(msg.SessionId, cartItem, stoppingToken);
-
-                if (!string.IsNullOrEmpty(msg.ReplyTo))
-                {
-                    try
-                    {
-                        await _natsService.PublishAsync(msg.ReplyTo, response, stoppingToken);
-                        _logger.LogDebug("Sent response to {ReplyTo}", msg.ReplyTo);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error sending response to {ReplyTo}", msg.ReplyTo);
-                    }
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogInformation("Add item request handling cancelled");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling add item requests");
-        }
-    }
-
-    private async Task HandleUpdateItemRequests(CancellationToken stoppingToken)
-    {
-        const string subject = "cart.updateitem";
-        const string queueGroup = "cart-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
-            subject, queueGroup);
-
-        try
-        {
-            await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
-            {
-                _logger.LogInformation(
-                    "Received update item request - SessionId: {SessionId}, ProductId: {ProductId}, Quantity: {Quantity}",
-                    msg.SessionId ?? "Unknown", msg.ProductId ?? "Unknown", msg.Quantity);
-
-                if (string.IsNullOrEmpty(msg.SessionId) || string.IsNullOrEmpty(msg.ProductId))
-                {
-                    _logger.LogWarning("Update item request missing session ID or product ID");
-                    continue;
-                }
-
-                var response =
-                    await _cartService.UpdateItemAsync(msg.SessionId, msg.ProductId, msg.Quantity, stoppingToken);
-
-                if (!string.IsNullOrEmpty(msg.ReplyTo))
-                {
-                    try
-                    {
-                        await _natsService.PublishAsync(msg.ReplyTo, response, stoppingToken);
-                        _logger.LogDebug("Sent response to {ReplyTo}", msg.ReplyTo);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error sending response to {ReplyTo}", msg.ReplyTo);
-                    }
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogInformation("Update item request handling cancelled");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling update item requests");
-        }
-    }
-
-    private async Task HandleRemoveItemRequests(CancellationToken stoppingToken)
-    {
-        const string subject = "cart.removeitem";
-        const string queueGroup = "cart-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
-            subject, queueGroup);
-
-        try
-        {
-            await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
-            {
-                _logger.LogInformation("Received remove item request - SessionId: {SessionId}, ProductId: {ProductId}",
-                    msg.SessionId ?? "Unknown", msg.ProductId ?? "Unknown");
-
-                if (string.IsNullOrEmpty(msg.SessionId) || string.IsNullOrEmpty(msg.ProductId))
-                {
-                    _logger.LogWarning("Remove item request missing session ID or product ID");
-                    continue;
-                }
-
-                var response = await _cartService.RemoveItemAsync(msg.SessionId, msg.ProductId, stoppingToken);
-
-                if (!string.IsNullOrEmpty(msg.ReplyTo))
-                {
-                    try
-                    {
-                        await _natsService.PublishAsync(msg.ReplyTo, response, stoppingToken);
-                        _logger.LogDebug("Sent response to {ReplyTo}", msg.ReplyTo);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error sending response to {ReplyTo}", msg.ReplyTo);
-                    }
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogInformation("Remove item request handling cancelled");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling remove item requests");
-        }
-    }
-
-    private async Task HandleClearCartRequests(CancellationToken stoppingToken)
-    {
-        const string subject = "cart.clear";
-        const string queueGroup = "cart-service";
-        _logger.LogInformation("Starting to handle requests from subject: {Subject} with queue group: {QueueGroup}",
-            subject, queueGroup);
-
-        try
-        {
-            await foreach (var msg in _natsService.SubscribeAsync<CartMessage>(subject, queueGroup, stoppingToken))
-            {
-                _logger.LogInformation("Received clear cart request - SessionId: {SessionId}",
-                    msg.SessionId ?? "Unknown");
-
-                if (string.IsNullOrEmpty(msg.SessionId))
-                {
-                    _logger.LogWarning("Clear cart request missing session ID");
-                    continue;
-                }
-
-                var response = await _cartService.ClearCartAsync(msg.SessionId, stoppingToken);
-
-                if (!string.IsNullOrEmpty(msg.ReplyTo))
-                {
-                    try
-                    {
-                        await _natsService.PublishAsync(msg.ReplyTo, response, stoppingToken);
-                        _logger.LogDebug("Sent response to {ReplyTo}", msg.ReplyTo);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error sending response to {ReplyTo}", msg.ReplyTo);
-                    }
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogInformation("Clear cart request handling cancelled");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling clear cart requests");
         }
     }
 }

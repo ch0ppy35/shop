@@ -80,7 +80,7 @@ else
         }
 
         _adding = true;
-        if (await CartState.AddAsync(_product.Id, _quantity))
+        if (await CartState.AddAsync(_product, _quantity))
         {
             ToastService.ShowSuccess(_quantity == 1
                 ? $"Added {_product.Name} to your cart."

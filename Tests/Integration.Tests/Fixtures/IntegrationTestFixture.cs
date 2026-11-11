@@ -99,9 +99,11 @@ public class IntegrationTestFixture : IAsyncLifetime
 
         // Add Cart services
         _services.AddSingleton<IRedisService>(_redisFixture.RedisService);
+        _services.AddSingleton<ICartStore, RedisCartStore>();
         _services.AddScoped<CartService>();
 
         // Add Recommendation services
+        _services.AddSingleton<IProductCatalog, ProductCatalog>();
         _services.AddScoped<IRecommendationService, RecommendationService>();
 
         _serviceProvider = _services.BuildServiceProvider();

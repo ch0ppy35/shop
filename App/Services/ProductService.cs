@@ -1,172 +1,185 @@
+using System.Net;
 using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
 using Frontend.Models;
 
 namespace Frontend.Services;
 
 /// <summary>
-/// Service for interacting with the product API
+/// Thrown when the shop's API can't be reached or answers with a server error
 /// </summary>
+public class ShopUnavailableException : Exception
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ShopUnavailableException"/> class
+    /// </summary>
+    public ShopUnavailableException(string message, Exception? inner = null) : base(message, inner)
+    {
+    }
+}
+
+/// <summary>
+/// A product change pushed by the gateway
+/// </summary>
+/// <param name="ProductId">The product that changed</param>
+/// <param name="ChangeType">Created, Updated, InventoryUpdated or Deleted</param>
+/// <param name="Product">The product as it is now, or null when it was deleted</param>
+public sealed record ProductChange(string ProductId, string ChangeType, Product? Product);
+
+/// <summary>
+/// Reads and writes the catalog, keeping what it has read in memory for the rest of the visit
+/// </summary>
+/// <remarks>
+/// Cached pages and products are rendered straight away. They stay current because the gateway pushes every
+/// product change (<see cref="ApplyChange"/>), and the cache is dropped after a reconnect, when pushes may have
+/// been missed. Products from a list page also seed the single-product cache, so opening one is instant.
+/// </remarks>
 public class ProductService
 {
     private readonly HttpClient _httpClient;
-    private readonly ConfigurationService _configService;
-    private readonly JsonSerializerOptions _jsonOptions;
+    private readonly Dictionary<(int Page, int Size), PaginatedList<Product>> _pages = new();
+    private readonly Dictionary<string, Product> _products = new();
+    private readonly Dictionary<(int Page, int Size), Task<PaginatedList<Product>>> _pagesInFlight = new();
+    private readonly Dictionary<string, Task<Product?>> _productsInFlight = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProductService"/> class
     /// </summary>
-    public ProductService(HttpClient httpClient, ConfigurationService configService)
+    public ProductService(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _configService = configService;
-        _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        };
     }
 
     /// <summary>
-    /// Gets a paginated list of products
+    /// Raised when cached catalog data changed: with a product ID when one product changed in place,
+    /// or null when pages may have shifted (products added or removed, or the cache was dropped)
     /// </summary>
-    /// <param name="page">The page number (1-based)</param>
-    /// <param name="pageSize">The page size</param>
+    public event Action<string?>? CatalogChanged;
+
+    /// <summary>
+    /// Gets a cached page without a request, or null
+    /// </summary>
+    public PaginatedList<Product>? PeekProducts(int page, int pageSize) =>
+        _pages.GetValueOrDefault((page, pageSize));
+
+    /// <summary>
+    /// Gets a cached product without a request, or null
+    /// </summary>
+    public Product? PeekProduct(string id) => _products.GetValueOrDefault(id);
+
+    /// <summary>
+    /// Gets a page of products, from memory when already loaded, and prefetches the page after it
+    /// </summary>
+    /// <exception cref="ShopUnavailableException">The API couldn't be reached</exception>
     public async Task<PaginatedList<Product>> GetProductsAsync(int page = 1, int pageSize = 5)
     {
-        try
+        var result = await LoadPageAsync(page, pageSize);
+
+        if (page < result.TotalPages)
         {
-            var response =
-                await _httpClient.GetFromJsonAsync<ProductListResponse>(
-                    $"/api/products?page={page}&pageSize={pageSize}");
-
-            if (response == null || response.Products == null)
-            {
-                return new PaginatedList<Product>
-                {
-                    Items = new List<Product>(),
-                    PageNumber = page,
-                    PageSize = pageSize,
-                    TotalCount = 0,
-                    TotalPages = 0
-                };
-            }
-
-            return new PaginatedList<Product>
-            {
-                Items = response.Products.Select(p => new Product
-                {
-                    Id = p.ProductId,
-                    Name = p.Name,
-                    Description = p.Description,
-                    Price = p.Price,
-                    Sku = p.Sku,
-                    Location = p.Location,
-                    QuantityInStock = p.QuantityInStock,
-                    ReorderThreshold = p.ReorderThreshold
-                }).ToList(),
-                PageNumber = response.PageNumber,
-                PageSize = response.PageSize,
-                TotalCount = response.TotalCount,
-                TotalPages = response.TotalPages
-            };
+            _ = PrefetchProductsAsync(page + 1, pageSize);
         }
-        catch (Exception)
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets a product, or null when there is no product with this ID
+    /// </summary>
+    /// <exception cref="ShopUnavailableException">The API couldn't be reached</exception>
+    public Task<Product?> GetProductAsync(string id)
+    {
+        if (_products.TryGetValue(id, out var cached))
         {
-            return new PaginatedList<Product>
+            return Task.FromResult<Product?>(cached);
+        }
+
+        if (!_productsInFlight.TryGetValue(id, out var inFlight))
+        {
+            inFlight = FetchProductAsync(id);
+            if (!inFlight.IsCompleted)
             {
-                Items = new List<Product>(),
-                PageNumber = page,
-                PageSize = pageSize,
-                TotalCount = 0,
-                TotalPages = 0
-            };
+                _productsInFlight[id] = inFlight;
+            }
+        }
+
+        return inFlight;
+    }
+
+    /// <summary>
+    /// Starts loading a product in the background, such as when the pointer moves onto it
+    /// </summary>
+    public void PrefetchProduct(string? id)
+    {
+        if (!string.IsNullOrEmpty(id) && !_products.ContainsKey(id))
+        {
+            _ = GetProductAsync(id).ContinueWith(t => _ = t.Exception, TaskScheduler.Default);
         }
     }
 
     /// <summary>
-    /// Gets a product by ID
+    /// Applies a pushed product change to everything cached
     /// </summary>
-    /// <param name="id">The product ID</param>
-    public async Task<Product?> GetProductAsync(string id)
+    public void ApplyChange(ProductChange change)
     {
-        try
-        {
-            var response = await _httpClient.GetFromJsonAsync<ProductResponse>($"/api/products/{id}");
+        var changedInPlace = change.Product != null &&
+                             change.ChangeType is "Updated" or "InventoryUpdated";
 
-            if (response == null || response.Product == null)
+        if (changedInPlace)
+        {
+            _products[change.ProductId] = change.Product!;
+            foreach (var page in _pages.Values)
             {
-                return null;
+                var index = page.Items.FindIndex(p => p.Id == change.ProductId);
+                if (index >= 0)
+                {
+                    page.Items[index] = change.Product!;
+                }
             }
 
-            return new Product
-            {
-                Id = response.Product.ProductId,
-                Name = response.Product.Name,
-                Description = response.Product.Description,
-                Price = response.Product.Price,
-                Sku = response.Product.Sku,
-                Location = response.Product.Location,
-                QuantityInStock = response.Product.QuantityInStock,
-                ReorderThreshold = response.Product.ReorderThreshold
-            };
+            CatalogChanged?.Invoke(change.ProductId);
+            return;
         }
-        catch (Exception)
+
+        // Created or deleted: page boundaries and counts shift, so drop the pages
+        _pages.Clear();
+        if (change.Product != null)
         {
-            return null;
+            _products[change.ProductId] = change.Product;
         }
+        else
+        {
+            _products.Remove(change.ProductId);
+        }
+
+        CatalogChanged?.Invoke(null);
+    }
+
+    /// <summary>
+    /// Drops everything cached, such as after the live connection was lost for a while
+    /// </summary>
+    public void InvalidateAll()
+    {
+        _pages.Clear();
+        _products.Clear();
+        CatalogChanged?.Invoke(null);
     }
 
     /// <summary>
     /// Creates a new product
     /// </summary>
-    /// <param name="product">The product to create</param>
     public async Task<Product?> CreateProductAsync(Product product)
     {
         try
         {
-            var productDto = new ProductDto
-            {
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                Sku = product.Sku,
-                Location = product.Location,
-                QuantityInStock = product.QuantityInStock,
-                ReorderThreshold = product.ReorderThreshold
-            };
-
-            var content = new StringContent(
-                JsonSerializer.Serialize(productDto, _jsonOptions),
-                Encoding.UTF8,
-                "application/json");
-
-            var response = await _httpClient.PostAsync("/api/products", content);
-
+            using var response = await _httpClient.PostAsJsonAsync("/api/products", ToDto(product));
             if (!response.IsSuccessStatusCode)
             {
                 return null;
             }
 
-            var responseContent = await response.Content.ReadFromJsonAsync<ProductResponse>();
-
-            if (responseContent == null || responseContent.Product == null)
-            {
-                return null;
-            }
-
-            return new Product
-            {
-                Id = responseContent.Product.ProductId,
-                Name = responseContent.Product.Name,
-                Description = responseContent.Product.Description,
-                Price = responseContent.Product.Price,
-                Sku = responseContent.Product.Sku,
-                Location = responseContent.Product.Location,
-                QuantityInStock = responseContent.Product.QuantityInStock,
-                ReorderThreshold = responseContent.Product.ReorderThreshold
-            };
+            var body = await response.Content.ReadFromJsonAsync<ProductResponse>();
+            InvalidateAll();
+            return body?.Product == null ? null : ToProduct(body.Product);
         }
         catch (Exception)
         {
@@ -177,33 +190,20 @@ public class ProductService
     /// <summary>
     /// Updates an existing product
     /// </summary>
-    /// <param name="product">The product to update</param>
     public async Task<bool> UpdateProductAsync(Product product)
     {
+        if (string.IsNullOrEmpty(product.Id))
+        {
+            return false;
+        }
+
         try
         {
-            if (string.IsNullOrEmpty(product.Id))
+            using var response = await _httpClient.PutAsJsonAsync($"/api/products/{product.Id}", ToDto(product));
+            if (response.IsSuccessStatusCode)
             {
-                return false;
+                InvalidateAll();
             }
-
-            var productDto = new ProductDto
-            {
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                Sku = product.Sku,
-                Location = product.Location,
-                QuantityInStock = product.QuantityInStock,
-                ReorderThreshold = product.ReorderThreshold
-            };
-
-            var content = new StringContent(
-                JsonSerializer.Serialize(productDto, _jsonOptions),
-                Encoding.UTF8,
-                "application/json");
-
-            var response = await _httpClient.PutAsync($"/api/products/{product.Id}", content);
 
             return response.IsSuccessStatusCode;
         }
@@ -216,17 +216,20 @@ public class ProductService
     /// <summary>
     /// Deletes a product
     /// </summary>
-    /// <param name="id">The ID of the product to delete</param>
     public async Task<bool> DeleteProductAsync(string id)
     {
+        if (string.IsNullOrEmpty(id))
+        {
+            return false;
+        }
+
         try
         {
-            if (string.IsNullOrEmpty(id))
+            using var response = await _httpClient.DeleteAsync($"/api/products/{id}");
+            if (response.IsSuccessStatusCode)
             {
-                return false;
+                InvalidateAll();
             }
-
-            var response = await _httpClient.DeleteAsync($"/api/products/{id}");
 
             return response.IsSuccessStatusCode;
         }
@@ -236,19 +239,148 @@ public class ProductService
         }
     }
 
-    private class BaseResponse
+    /// <summary>
+    /// Converts the API's product shape into the UI model
+    /// </summary>
+    internal static Product ToProduct(ProductDto p) => new()
     {
-        public bool Success { get; set; }
-        public string? Message { get; set; }
-        public string? Error { get; set; }
+        Id = p.ProductId,
+        Name = p.Name,
+        Description = p.Description,
+        Price = p.Price,
+        Sku = p.Sku,
+        Location = p.Location,
+        QuantityInStock = p.QuantityInStock,
+        ReorderThreshold = p.ReorderThreshold
+    };
+
+    private async Task PrefetchProductsAsync(int page, int pageSize)
+    {
+        try
+        {
+            await LoadPageAsync(page, pageSize);
+        }
+        catch (ShopUnavailableException)
+        {
+            // Only a prefetch; the page loads normally when the shopper gets there
+        }
     }
 
-    private class ProductResponse : BaseResponse
+    private Task<PaginatedList<Product>> LoadPageAsync(int page, int pageSize)
+    {
+        var key = (page, pageSize);
+        if (_pages.TryGetValue(key, out var cached))
+        {
+            return Task.FromResult(cached);
+        }
+
+        if (!_pagesInFlight.TryGetValue(key, out var inFlight))
+        {
+            inFlight = FetchPageAsync(page, pageSize);
+            if (!inFlight.IsCompleted)
+            {
+                _pagesInFlight[key] = inFlight;
+            }
+        }
+
+        return inFlight;
+    }
+
+    private async Task<PaginatedList<Product>> FetchPageAsync(int page, int pageSize)
+    {
+        try
+        {
+            var response = await GetJsonAsync<ProductListResponse>($"/api/products?page={page}&pageSize={pageSize}");
+
+            var result = new PaginatedList<Product>
+            {
+                Items = (response?.Products ?? new List<ProductDto>()).Select(ToProduct).ToList(),
+                PageNumber = response?.PageNumber ?? page,
+                PageSize = response?.PageSize ?? pageSize,
+                TotalCount = response?.TotalCount ?? 0,
+                TotalPages = response?.TotalPages ?? 0
+            };
+
+            _pages[(page, pageSize)] = result;
+            foreach (var product in result.Items.Where(p => p.Id != null))
+            {
+                _products[product.Id!] = product;
+            }
+
+            return result;
+        }
+        finally
+        {
+            _pagesInFlight.Remove((page, pageSize));
+        }
+    }
+
+    private async Task<Product?> FetchProductAsync(string id)
+    {
+        try
+        {
+            var response = await GetJsonAsync<ProductResponse>($"/api/products/{Uri.EscapeDataString(id)}");
+            if (response?.Product == null)
+            {
+                return null;
+            }
+
+            var product = ToProduct(response.Product);
+            _products[id] = product;
+            return product;
+        }
+        finally
+        {
+            _productsInFlight.Remove(id);
+        }
+    }
+
+    /// <returns>The body, or null for 404</returns>
+    private async Task<T?> GetJsonAsync<T>(string uri) where T : class
+    {
+        HttpResponseMessage response;
+        try
+        {
+            response = await _httpClient.GetAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            throw new ShopUnavailableException("The shop couldn't be reached.", ex);
+        }
+
+        using (response)
+        {
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new ShopUnavailableException($"The shop answered with HTTP {(int)response.StatusCode}.");
+            }
+
+            return await response.Content.ReadFromJsonAsync<T>();
+        }
+    }
+
+    private static object ToDto(Product product) => new
+    {
+        product.Name,
+        product.Description,
+        product.Price,
+        product.Sku,
+        product.Location,
+        product.QuantityInStock,
+        product.ReorderThreshold
+    };
+
+    private class ProductResponse
     {
         public ProductDto? Product { get; set; }
     }
 
-    private class ProductListResponse : BaseResponse
+    private class ProductListResponse
     {
         public List<ProductDto>? Products { get; set; }
         public int TotalCount { get; set; }
@@ -257,7 +389,10 @@ public class ProductService
         public int TotalPages { get; set; }
     }
 
-    private class ProductDto
+    /// <summary>
+    /// The API's product shape
+    /// </summary>
+    internal class ProductDto
     {
         public string? ProductId { get; set; }
         public string? Name { get; set; }

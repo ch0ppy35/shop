@@ -76,7 +76,7 @@ public class CartTests : TestContext
     public void Cart_ShouldClearCart_WhenConfirmed()
     {
         _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(TwoItemCart());
-        _mockCartService.Setup(s => s.ClearCartAsync()).ReturnsAsync(true);
+        _mockCartService.Setup(s => s.ClearCartAsync()).ReturnsAsync(new ShoppingCart());
         _confirmService.OnConfirmationRequested += (_, _, _, _) => Task.FromResult(true);
 
         var cut = RenderComponent<Cart>();
@@ -102,7 +102,7 @@ public class CartTests : TestContext
     public void Cart_ShouldUpdateQuantity_WhenIncreaseClicked()
     {
         _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(TwoItemCart());
-        _mockCartService.Setup(s => s.UpdateItemAsync(It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(true);
+        _mockCartService.Setup(s => s.UpdateItemAsync(It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(TwoItemCart());
 
         var cut = RenderComponent<Cart>();
         cut.Find("button[aria-label='Increase quantity of Test Product 1']").Click();
@@ -114,7 +114,7 @@ public class CartTests : TestContext
     public void Cart_ShouldRemoveItem_WhenRemoveClicked()
     {
         _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(TwoItemCart());
-        _mockCartService.Setup(s => s.RemoveItemAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockCartService.Setup(s => s.RemoveItemAsync(It.IsAny<string>())).ReturnsAsync(new ShoppingCart());
 
         var cut = RenderComponent<Cart>();
         cut.Find("button[aria-label='Remove Test Product 2']").Click();
@@ -127,7 +127,7 @@ public class CartTests : TestContext
     public void Cart_ShouldRender_WithRecommendations()
     {
         _mockCartService.Setup(s => s.GetCartAsync()).ReturnsAsync(TwoItemCart());
-        _mockRecommendationService.Setup(s => s.GetCartRecommendationsAsync(It.IsAny<int>()))
+        _mockRecommendationService.Setup(s => s.GetRecommendationsAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<int>()))
             .ReturnsAsync(new List<Product>
             {
                 new() { Id = "3", Name = "Recommended Product 1", Price = 15.99m, Description = "Description 1", QuantityInStock = 5 },

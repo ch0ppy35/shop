@@ -70,8 +70,7 @@ public class PostgresFixture : IAsyncLifetime
             .UseNpgsql(ConnectionString) // Use actual PostgreSQL container
             .Options;
 
-        var logger = _services.BuildServiceProvider().GetRequiredService<ILogger<ProductDbContext>>();
-        DbContext = new ProductDbContext(options, logger, configuration);
+        DbContext = new ProductDbContext(options);
 
         // Ensure database is created
         Console.WriteLine("Ensuring database is created...");

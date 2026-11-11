@@ -23,7 +23,7 @@ public class RecommendationServiceTests
     }
 
     [Fact]
-    public async Task GetCartRecommendationsAsync_ShouldReturnRecommendations_WhenApiReturnsSuccess()
+    public async Task GetRecommendationsAsync_ShouldReturnRecommendations_WhenApiReturnsSuccess()
     {
         var recommendations = new List<object>
         {
@@ -61,7 +61,7 @@ public class RecommendationServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(httpResponse);
 
-        var result = await _service.GetCartRecommendationsAsync(4);
+        var result = await _service.GetRecommendationsAsync(new[] { "b", "a" }, 4);
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
@@ -74,7 +74,7 @@ public class RecommendationServiceTests
     }
 
     [Fact]
-    public async Task GetCartRecommendationsAsync_ShouldReturnEmptyList_WhenApiReturnsError()
+    public async Task GetRecommendationsAsync_ShouldReturnEmptyList_WhenApiReturnsError()
     {
         _mockHttpMessageHandler
             .Protected()
@@ -84,14 +84,14 @@ public class RecommendationServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ThrowsAsync(new HttpRequestException("Error"));
 
-        var result = await _service.GetCartRecommendationsAsync(4);
+        var result = await _service.GetRecommendationsAsync(new[] { "b", "a" }, 4);
 
         Assert.NotNull(result);
         Assert.Empty(result);
     }
 
     [Fact]
-    public async Task GetCartRecommendationsAsync_ShouldReturnEmptyList_WhenApiReturnsNull()
+    public async Task GetRecommendationsAsync_ShouldReturnEmptyList_WhenApiReturnsNull()
     {
         var response = new
         {
@@ -115,9 +115,27 @@ public class RecommendationServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(httpResponse);
 
-        var result = await _service.GetCartRecommendationsAsync(4);
+        var result = await _service.GetRecommendationsAsync(new[] { "b", "a" }, 4);
 
         Assert.NotNull(result);
         Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetRecommendationsAsync_ShouldAskForTheGivenProducts_InAStableOrder()
+    {
+        HttpRequestMessage? sent = null;
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((r, _) => sent = r)
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") });
+
+        await _service.GetRecommendationsAsync(new[] { "b", "a", "b" }, 4);
+
+        Assert.Equal("/api/recommendations?productIds=a%2Cb&maxRecommendations=4", sent!.RequestUri!.PathAndQuery);
     }
 }

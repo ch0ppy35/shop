@@ -1,7 +1,5 @@
 using Common.Database.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace Common.Database;
 
@@ -10,9 +8,6 @@ namespace Common.Database;
 /// </summary>
 public class ProductDbContext : DbContext, IProductDbContext
 {
-    private readonly ILogger<ProductDbContext> _logger;
-    private readonly string _connectionString;
-
     /// <summary>
     /// Gets or sets the Products DbSet
     /// </summary>
@@ -21,19 +16,11 @@ public class ProductDbContext : DbContext, IProductDbContext
     /// <summary>
     /// Initializes a new instance of the <see cref="ProductDbContext"/> class.
     /// </summary>
-    public ProductDbContext(
-        DbContextOptions<ProductDbContext> options,
-        ILogger<ProductDbContext> logger,
-        IConfiguration configuration) : base(options)
+    /// <remarks>
+    /// Takes only options so the context can be pooled with AddDbContextPool.
+    /// </remarks>
+    public ProductDbContext(DbContextOptions<ProductDbContext> options) : base(options)
     {
-        _logger = logger;
-
-        _connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ??
-                            configuration.GetConnectionString("DefaultConnection") ??
-                            "Host=localhost;Database=products;Username=postgres;Password=postgres";
-
-        _logger.LogInformation("ProductDbContext initialized with connection string: {ConnectionString}",
-            _connectionString.Replace("Password=", "Password=***"));
     }
 
     /// <summary>
@@ -104,16 +91,5 @@ public class ProductDbContext : DbContext, IProductDbContext
                 .HasDatabaseName("ix_products_sku")
                 .IsUnique();
         });
-    }
-
-    /// <summary>
-    /// Configures the database connection
-    /// </summary>
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (!optionsBuilder.IsConfigured)
-        {
-            optionsBuilder.UseNpgsql(_connectionString);
-        }
     }
 }

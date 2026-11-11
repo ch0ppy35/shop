@@ -1,309 +1,139 @@
 using Cart.Services;
 using Common.Models;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace Cart.Tests.Services;
 
 public class CartServiceTests
 {
-    private readonly Mock<ILogger<CartService>> _loggerMock;
-    private readonly Mock<IRedisService> _redisServiceMock;
+    private const string SessionId = "test-session";
+    private readonly Mock<ICartStore> _storeMock = new();
     private readonly CartService _service;
 
     public CartServiceTests()
     {
-        _loggerMock = new Mock<ILogger<CartService>>();
-        _redisServiceMock = new Mock<IRedisService>();
-
-        // We can't mock CartTtl property since it's not virtual, so we'll just use it directly
-        // in our tests and avoid setting up expectations for it
-
-        _service = new CartService(_loggerMock.Object, _redisServiceMock.Object);
+        _service = new CartService(NullLogger<CartService>.Instance, _storeMock.Object);
     }
+
+    private static List<CartItem> TwoLines() => new()
+    {
+        new CartItem { ProductId = "1", Name = "Test Product 1", Price = 10.99m, Quantity = 2 },
+        new CartItem { ProductId = "2", Name = "Test Product 2", Price = 5.99m, Quantity = 1 }
+    };
 
     [Fact]
     public async Task GetCartAsync_ShouldReturnEmptyCart_WhenCartDoesNotExist()
     {
-        // Arrange
-        var sessionId = "test-session";
-        _redisServiceMock.Setup(r => r.GetAsync<List<CartItem>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<CartItem>?)null);
+        _storeMock.Setup(s => s.GetItemsAsync(SessionId)).ReturnsAsync(new List<CartItem>());
 
-        // Act
-        var result = await _service.GetCartAsync(sessionId);
+        var result = await _service.GetCartAsync(SessionId);
 
-        // Assert
-        result.Should().NotBeNull();
         result.Success.Should().BeTrue();
-        result.SessionId.Should().Be(sessionId);
-        result.Items.Should().NotBeNull();
+        result.SessionId.Should().Be(SessionId);
         result.Items.Should().BeEmpty();
         result.TotalPrice.Should().Be(0);
         result.ItemCount.Should().Be(0);
     }
 
     [Fact]
-    public async Task GetCartAsync_ShouldReturnCart_WhenCartExists()
+    public async Task GetCartAsync_ShouldReturnCartWithTotals()
     {
-        // Arrange
-        var sessionId = "test-session";
-        var cartItems = new List<CartItem>
-        {
-            new CartItem { ProductId = "1", Name = "Test Product 1", Price = 10.99m, Quantity = 2 },
-            new CartItem { ProductId = "2", Name = "Test Product 2", Price = 5.99m, Quantity = 1 }
-        };
+        _storeMock.Setup(s => s.GetItemsAsync(SessionId)).ReturnsAsync(TwoLines());
 
-        _redisServiceMock.Setup(r => r.GetAsync<List<CartItem>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(cartItems);
+        var result = await _service.GetCartAsync(SessionId);
 
-        // Act
-        var result = await _service.GetCartAsync(sessionId);
-
-        // Assert
-        result.Should().NotBeNull();
         result.Success.Should().BeTrue();
-        result.SessionId.Should().Be(sessionId);
-        result.Items.Should().NotBeNull();
         result.Items.Should().HaveCount(2);
-        result.TotalPrice.Should().Be(27.97m); // (10.99 * 2) + 5.99
-        result.ItemCount.Should().Be(3); // 2 + 1
+        result.TotalPrice.Should().Be(27.97m);
+        result.ItemCount.Should().Be(3);
     }
 
     [Fact]
-    public async Task AddItemAsync_ShouldAddNewItem_WhenItemDoesNotExistInCart()
+    public async Task AddItemAsync_ShouldReturnTheCartTheStoreWrote()
     {
-        // Arrange
-        var sessionId = "test-session";
-        var existingItems = new List<CartItem>();
-        var newItem = new CartItem { ProductId = "1", Name = "Test Product", Price = 10.99m, Quantity = 2 };
+        var item = new CartItem { ProductId = "1", Name = "Test Product 1", Price = 10.99m, Quantity = 2 };
+        _storeMock.Setup(s => s.AddItemAsync(SessionId, item)).ReturnsAsync(TwoLines());
 
-        _redisServiceMock.Setup(r => r.GetAsync<List<CartItem>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingItems);
+        var result = await _service.AddItemAsync(SessionId, item);
 
-        _redisServiceMock.Setup(r => r.SetAsync(
-                It.IsAny<string>(),
-                It.Is<List<CartItem>>(items => items.Count == 1 && items[0].ProductId == "1"),
-                It.IsAny<TimeSpan?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        var result = await _service.AddItemAsync(sessionId, newItem);
-
-        // Assert
-        result.Should().NotBeNull();
         result.Success.Should().BeTrue();
-        result.SessionId.Should().Be(sessionId);
-        result.Items.Should().NotBeNull();
-        result.Items.Should().HaveCount(1);
-        result.Items[0].ProductId.Should().Be("1");
-        result.Items[0].Quantity.Should().Be(2);
-        result.TotalPrice.Should().Be(21.98m); // 10.99 * 2
-        result.ItemCount.Should().Be(2);
+        result.Message.Should().Be("Item added to cart successfully");
+        result.ItemCount.Should().Be(3);
+        _storeMock.Verify(s => s.GetItemsAsync(It.IsAny<string>()), Times.Never,
+            "the write already returns the cart, so there's no second read");
     }
 
     [Fact]
-    public async Task AddItemAsync_ShouldUpdateQuantity_WhenItemExistsInCart()
+    public async Task UpdateItemAsync_ShouldReturnUpdatedCart_WhenItemIsInCart()
     {
-        // Arrange
-        var sessionId = "test-session";
-        var existingItems = new List<CartItem>
-        {
-            new CartItem { ProductId = "1", Name = "Test Product", Price = 10.99m, Quantity = 2 }
-        };
-        var newItem = new CartItem { ProductId = "1", Name = "Test Product", Price = 10.99m, Quantity = 3 };
+        _storeMock.Setup(s => s.SetQuantityAsync(SessionId, "1", 5)).ReturnsAsync(TwoLines());
 
-        _redisServiceMock.Setup(r => r.GetAsync<List<CartItem>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingItems);
+        var result = await _service.UpdateItemAsync(SessionId, "1", 5);
 
-        _redisServiceMock.Setup(r => r.SetAsync(
-                It.IsAny<string>(),
-                It.Is<List<CartItem>>(items => items.Count == 1 && items[0].Quantity == 5),
-                It.IsAny<TimeSpan?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        var result = await _service.AddItemAsync(sessionId, newItem);
-
-        // Assert
-        result.Should().NotBeNull();
         result.Success.Should().BeTrue();
-        result.SessionId.Should().Be(sessionId);
-        result.Items.Should().NotBeNull();
-        result.Items.Should().HaveCount(1);
-        result.Items[0].ProductId.Should().Be("1");
-        result.Items[0].Quantity.Should().Be(5); // 2 + 3
-        result.TotalPrice.Should().Be(54.95m); // 10.99 * 5
-        result.ItemCount.Should().Be(5);
+        result.Items.Should().HaveCount(2);
     }
 
     [Fact]
-    public async Task UpdateItemAsync_ShouldUpdateQuantity_WhenItemExistsInCart()
+    public async Task UpdateItemAsync_ShouldFailWithCurrentCart_WhenItemIsNotInCart()
     {
-        // Arrange
-        var sessionId = "test-session";
-        var existingItems = new List<CartItem>
-        {
-            new CartItem { ProductId = "1", Name = "Test Product", Price = 10.99m, Quantity = 2 }
-        };
+        _storeMock.Setup(s => s.SetQuantityAsync(SessionId, "3", 1)).ReturnsAsync((List<CartItem>?)null);
+        _storeMock.Setup(s => s.GetItemsAsync(SessionId)).ReturnsAsync(TwoLines());
 
-        _redisServiceMock.Setup(r => r.GetAsync<List<CartItem>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingItems);
+        var result = await _service.UpdateItemAsync(SessionId, "3", 1);
 
-        _redisServiceMock.Setup(r => r.SetAsync(
-                It.IsAny<string>(),
-                It.Is<List<CartItem>>(items => items.Count == 1 && items[0].Quantity == 5),
-                It.IsAny<TimeSpan?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        var result = await _service.UpdateItemAsync(sessionId, "1", 5);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Success.Should().BeTrue();
-        result.SessionId.Should().Be(sessionId);
-        result.Items.Should().NotBeNull();
-        result.Items.Should().HaveCount(1);
-        result.Items[0].ProductId.Should().Be("1");
-        result.Items[0].Quantity.Should().Be(5);
-        result.TotalPrice.Should().Be(54.95m); // 10.99 * 5
-        result.ItemCount.Should().Be(5);
-    }
-
-    [Fact]
-    public async Task UpdateItemAsync_ShouldReturnFalse_WhenItemDoesNotExistInCart()
-    {
-        // Arrange
-        var sessionId = "test-session";
-        var existingItems = new List<CartItem>
-        {
-            new CartItem { ProductId = "1", Name = "Test Product", Price = 10.99m, Quantity = 2 }
-        };
-
-        _redisServiceMock.Setup(r => r.GetAsync<List<CartItem>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingItems);
-
-        // Act
-        var result = await _service.UpdateItemAsync(sessionId, "2", 5);
-
-        // Assert
-        result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Error.Should().Contain("not found");
+        result.Error.Should().Contain("not found in cart");
+        result.ItemCount.Should().Be(3);
     }
 
     [Fact]
-    public async Task RemoveItemAsync_ShouldRemoveItem_WhenItemExistsInCart()
+    public async Task RemoveItemAsync_ShouldReturnRemainingCart_WhenItemIsInCart()
     {
-        // Arrange
-        var sessionId = "test-session";
-        var existingItems = new List<CartItem>
-        {
-            new CartItem { ProductId = "1", Name = "Test Product 1", Price = 10.99m, Quantity = 2 },
-            new CartItem { ProductId = "2", Name = "Test Product 2", Price = 5.99m, Quantity = 1 }
-        };
+        var remaining = TwoLines().Skip(1).ToList();
+        _storeMock.Setup(s => s.RemoveItemAsync(SessionId, "1")).ReturnsAsync(remaining);
 
-        _redisServiceMock.Setup(r => r.GetAsync<List<CartItem>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingItems);
+        var result = await _service.RemoveItemAsync(SessionId, "1");
 
-        _redisServiceMock.Setup(r => r.SetAsync(
-                It.IsAny<string>(),
-                It.Is<List<CartItem>>(items => items.Count == 1 && items[0].ProductId == "2"),
-                It.IsAny<TimeSpan?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        var result = await _service.RemoveItemAsync(sessionId, "1");
-
-        // Assert
-        result.Should().NotBeNull();
         result.Success.Should().BeTrue();
-        result.SessionId.Should().Be(sessionId);
-        result.Items.Should().NotBeNull();
-        result.Items.Should().HaveCount(1);
-        result.Items[0].ProductId.Should().Be("2");
+        result.Items.Should().ContainSingle(i => i.ProductId == "2");
         result.TotalPrice.Should().Be(5.99m);
-        result.ItemCount.Should().Be(1);
     }
 
     [Fact]
-    public async Task RemoveItemAsync_ShouldReturnFalse_WhenItemDoesNotExistInCart()
+    public async Task RemoveItemAsync_ShouldFail_WhenItemIsNotInCart()
     {
-        // Arrange
-        var sessionId = "test-session";
-        var existingItems = new List<CartItem>
-        {
-            new CartItem { ProductId = "1", Name = "Test Product", Price = 10.99m, Quantity = 2 }
-        };
+        _storeMock.Setup(s => s.RemoveItemAsync(SessionId, "3")).ReturnsAsync((List<CartItem>?)null);
+        _storeMock.Setup(s => s.GetItemsAsync(SessionId)).ReturnsAsync(TwoLines());
 
-        _redisServiceMock.Setup(r => r.GetAsync<List<CartItem>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingItems);
+        var result = await _service.RemoveItemAsync(SessionId, "3");
 
-        // Act
-        var result = await _service.RemoveItemAsync(sessionId, "2");
-
-        // Assert
-        result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Error.Should().Contain("not found");
+        result.Error.Should().Contain("not found in cart");
     }
 
     [Fact]
-    public async Task ClearCartAsync_ShouldClearCart()
+    public async Task ClearCartAsync_ShouldReturnEmptyCart()
     {
-        // Arrange
-        var sessionId = "test-session";
-        var existingItems = new List<CartItem>
-        {
-            new CartItem { ProductId = "1", Name = "Test Product 1", Price = 10.99m, Quantity = 2 },
-            new CartItem { ProductId = "2", Name = "Test Product 2", Price = 5.99m, Quantity = 1 }
-        };
+        var result = await _service.ClearCartAsync(SessionId);
 
-        _redisServiceMock.Setup(r => r.GetAsync<List<CartItem>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingItems);
-
-        _redisServiceMock.Setup(r => r.SetAsync(
-                It.IsAny<string>(),
-                It.Is<List<CartItem>>(items => items.Count == 0),
-                It.IsAny<TimeSpan?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        var result = await _service.ClearCartAsync(sessionId);
-
-        // Assert
-        result.Should().NotBeNull();
         result.Success.Should().BeTrue();
-        result.SessionId.Should().Be(sessionId);
-        result.Items.Should().NotBeNull();
         result.Items.Should().BeEmpty();
-        result.TotalPrice.Should().Be(0);
-        result.ItemCount.Should().Be(0);
+        _storeMock.Verify(s => s.ClearAsync(SessionId), Times.Once);
     }
 
     [Fact]
-    public async Task GetCartAsync_ShouldHandleRedisException()
+    public async Task GetCartAsync_ShouldReturnError_WhenStoreThrows()
     {
-        // Arrange
-        var sessionId = "test-session";
-        _redisServiceMock.Setup(r => r.GetAsync<List<CartItem>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _storeMock.Setup(s => s.GetItemsAsync(SessionId))
             .ThrowsAsync(new InvalidOperationException("Redis connection error"));
 
-        // Act
-        var result = await _service.GetCartAsync(sessionId);
+        var result = await _service.GetCartAsync(SessionId);
 
-        // Assert
-        result.Should().NotBeNull();
         result.Success.Should().BeFalse();
         result.Error.Should().Contain("Redis connection error");
-        result.Items.Should().NotBeNull();
         result.Items.Should().BeEmpty();
     }
 }
